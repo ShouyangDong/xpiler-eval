@@ -1,6 +1,273 @@
 [
-	"op_name" : "",
-        "dtype": 
-	"input_shape": ,
-	"output_shape": 
+    {
+        "op_name": "C1D_0",
+        "dtype": "float32",
+        "args": [1, 256, 64, 128, 3, 2, 1],
+        "performance": 0.010,
+    },
+    {
+        "op_name": "C1D",
+        "dtype": "float32",
+        "args": [1, 128, 128, 256, 1, 2, 0]
+    },
+    {
+        "op_name": "C1D",
+        "dtype": "float32",
+        "args": [1, 64, 256, 256, 5, 1, 2]
+    },
+    {
+        "op_name": "C1D",
+        "dtype": "float32",
+        "args": [1, 32, 512, 512, 3, 1, 1]
+    },
+    {
+        "op_name": "C2D_0",
+        "dtype": "float32",
+        "args": [1, 224, 224, 3, 64, 7, 2, 3],
+	"performance": 0.043,
+    },
+    {
+        "op_name": "C2D",
+        "dtype": "float32",
+        "args": [1, 56, 56, 64, 64, 1, 1, 0]
+    },
+    {
+        "op_name": "C2D",
+        "dtype": "float32",
+        "args": [1, 14, 14, 256, 256, 3, 1, 1]
+    },
+    {
+        "op_name": "C2D",
+        "dtype": "float32",
+        "args": [1, 7, 7, 512, 512, 3, 1, 1]
+    },
+    {
+        "op_name": "C3D",
+        "dtype": "float32",
+        "args": [1, 16, 224, 224, 3, 64, 7, 2, 3]
+    },
+    {
+        "op_name": "C3D",
+        "dtype": "float32",
+        "args": [1, 16, 56, 56, 64, 64, 1, 1, 0]
+    },
+    {
+        "op_name": "C3D",
+        "dtype": "float32",
+        "args": [1, 16, 14, 14, 256, 256, 3, 1, 1]
+    },
+    {
+        "op_name": "C3D",
+        "dtype": "float32",
+        "args": [1, 16, 7, 7, 512, 512, 3, 1, 1]
+    },
+    {
+        "op_name": "GMM_0",
+        "dtype": "float32",
+        "args": [1, 128, 128, 128],
+	"performance": 0.006,
+    },
+    {
+        "op_name": "GMM",
+        "dtype": "float32",
+        "args": [1, 512, 32, 512]
+    },
+    {
+        "op_name": "GMM",
+        "dtype": "float32",
+        "args": [1, 512, 512, 512]
+    },
+    {
+        "op_name": "GMM",
+        "dtype": "float32",
+        "args": [1, 1024, 1024, 1024]
+    },
+    {
+        "op_name": "GRP_0",
+        "dtype": "float32",
+        "args": [1, 56, 56, 64, 128, 3, 2, 1, 1, 4],
+	"performance":0.015,
+    },
+    {
+        "op_name": "GRP",
+        "dtype": "float32",
+        "args": [1, 56, 56, 64, 64, 1, 1, 0, 1, 4]
+    },
+    {
+        "op_name": "GRP",
+        "dtype": "float32",
+        "args": [1, 14, 14, 256, 256, 3, 1, 1, 1, 4]
+    },
+    {
+        "op_name": "GRP",
+        "dtype": "float32",
+        "args": [1, 7, 7, 512, 512, 3, 1, 1, 1, 4]
+    },
+    {
+        "op_name": "DIL_0",
+        "dtype": "float32",
+        "args": [1, 224, 224, 3, 64, 7, 2, 3, 2],
+	"performance": 0.061,
+    },
+    {
+        "op_name": "DIL",
+        "dtype": "float32",
+        "args": [1, 56, 56, 64, 64, 1, 1, 0, 2]
+    },
+    {
+        "op_name": "DIL",
+        "dtype": "float32",
+        "args": [1, 14, 14, 256, 256, 3, 1, 1, 2]
+    },
+    {
+        "op_name": "DIL",
+        "dtype": "float32",
+        "args": [1, 7, 7, 512, 512, 3, 1, 1, 2]
+    },
+    {
+        "op_name": "DEP",
+        "dtype": "float32",
+        "args": [1, 112, 112, 32, 3, 1, 1]
+    },
+    {
+        "op_name": "DEP",
+        "dtype": "float32",
+        "args": [1, 112, 112, 64, 3, 2, 1]
+    },
+    {
+        "op_name": "DEP",
+        "dtype": "float32",
+        "args": [1, 14, 14, 512, 3, 2, 1]
+    },
+    {
+        "op_name": "DEP",
+        "dtype": "float32",
+        "args": [1, 7, 7, 1024, 3, 1, 1]
+    },
+    {
+        "op_name": "T2D_0",
+        "dtype": "float32",
+        "args": [1, 4, 4, 512, 256, 4, 2, 1],
+	"Performance":0.081,
+    },
+    {
+        "op_name": "T2D",
+        "dtype": "float32",
+        "args": [1, 8, 8, 256, 128, 4, 2, 1]
+    },
+    {
+        "op_name": "T2D",
+        "dtype": "float32",
+        "args": [1, 16, 16, 128, 64, 4, 2, 1]
+    },
+    {
+        "op_name": "T2D",
+        "dtype": "float32",
+        "args": [1, 32, 32, 64, 3, 4, 2, 1]
+    },
+    {
+        "op_name": "CAP_0",
+        "dtype": "float32",
+        "args": [1, 16, 16, 32, 32, 3, 2, 1],
+	"performance":0.032,
+    },
+    {
+        "op_name": "CAP",
+        "dtype": "float32",
+        "args": [1, 8, 8, 32, 32, 3, 1, 1]
+    },
+    {
+        "op_name": "CAP",
+        "dtype": "float32",
+        "args": [1, 16, 16, 8, 16, 3, 2, 1]
+    },
+    {
+        "op_name": "CAP",
+        "dtype": "float32",
+        "args": [1, 8, 8, 16, 16, 3, 1, 1]
+    },
+    {
+        "op_name": "NRM_0",
+        "dtype": "float32",
+        "args": [1, 256, 256],
+	"performance":0.012,
+    },
+    {
+        "op_name": "NRM",
+        "dtype": "float32",
+        "args": [1, 512, 512]
+    },
+    {
+        "op_name": "NRM",
+        "dtype": "float32",
+        "args": [1, 1024, 1024]
+    },
+    {
+        "op_name": "NRM",
+        "dtype": "float32",
+        "args": [1, 4096, 1024]
+    },
+    {
+        "op_name": "SFM_0",
+        "dtype": "float32",
+        "args": [256, 256],
+	"performance": 0.006,
+    },
+    {
+        "op_name": "SFM",
+        "dtype": "float32",
+        "args": [512, 512]
+    },
+    {
+        "op_name": "SFM",
+        "dtype": "float32",
+        "args": [1024, 1024]
+    },
+    {
+        "op_name": "SFM",
+        "dtype": "float32",
+        "args": [2048, 2048]
+    },
+    {
+        "op_name": "CBR_0",
+        "dtype": "float32",
+        "args": [1, 224, 224, 3, 64, 7, 2, 3],
+	"Performance":0.043,
+    },
+    {
+        "op_name": "CBR",
+        "dtype": "float32",
+        "args": [1, 56, 56, 64, 128, 3, 2, 1]
+    },
+    {
+        "op_name": "CBR",
+        "dtype": "float32",
+        "args": [1, 28, 28, 128, 256, 1, 2, 0]
+    },
+    {
+        "op_name": "CBR",
+        "dtype": "float32",
+        "args": [1, 7, 7, 512, 512, 3, 1, 1]
+    },
+    {
+        "op_name": "TBG_0",
+        "dtype": "float32",
+        "args": [1, 128, 12, 64],
+	"Performance": 0.007,
+    },
+    {
+        "op_name": "TBG",
+        "dtype": "float32",
+        "args": [1, 128, 16, 64]
+    },
+    {
+        "op_name": "TBG",
+        "dtype": "float32",
+        "args": [1, 64, 12, 128]
+    },
+    {
+        "op_name": "TBG",
+        "dtype": "float32",
+        "args": [1, 128, 12, 128]
+    }
 ]
