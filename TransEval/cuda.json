@@ -6,19 +6,22 @@
         "performance": 0.010,
     },
     {
-        "op_name": "C1D",
+        "op_name": "C1D_1",
         "dtype": "float32",
-        "args": [1, 128, 128, 256, 1, 2, 0]
+        "args": [1, 128, 128, 256, 1, 2, 0],
+        "performance": 0.005,
     },
     {
-        "op_name": "C1D",
+        "op_name": "C1D_2",
         "dtype": "float32",
-        "args": [1, 64, 256, 256, 5, 1, 2]
+        "args": [1, 64, 256, 256, 5, 1, 2],
+        "performance":0.024, 
     },
     {
-        "op_name": "C1D",
+        "op_name": "C1D_3",
         "dtype": "float32",
-        "args": [1, 32, 512, 512, 3, 1, 1]
+        "args": [1, 32, 512, 512, 3, 1, 1],
+        "performance":
     },
     {
         "op_name": "C2D_0",
@@ -27,14 +30,16 @@
 	"performance": 0.043,
     },
     {
-        "op_name": "C2D",
+        "op_name": "C2D_1",
         "dtype": "float32",
-        "args": [1, 56, 56, 64, 64, 1, 1, 0]
+        "args": [1, 56, 56, 64, 64, 1, 1, 0],
+        "performance": 0.007,
     },
     {
-        "op_name": "C2D",
+        "op_name": "C2D_2",
         "dtype": "float32",
-        "args": [1, 14, 14, 256, 256, 3, 1, 1]
+        "args": [1, 14, 14, 256, 256, 3, 1, 1],
+        "performance": 0.074,
     },
     {
         "op_name": "C2D",
@@ -47,14 +52,16 @@
         "args": [1, 16, 224, 224, 3, 64, 7, 2, 3]
     },
     {
-        "op_name": "C3D",
+        "op_name": "C3D_1",
         "dtype": "float32",
-        "args": [1, 16, 56, 56, 64, 64, 1, 1, 0]
+        "args": [1, 16, 56, 56, 64, 64, 1, 1, 0],
+        "performance": 0.057,
     },
     {
-        "op_name": "C3D",
+        "op_name": "C3D_2",
         "dtype": "float32",
-        "args": [1, 16, 14, 14, 256, 256, 3, 1, 1]
+        "args": [1, 16, 14, 14, 256, 256, 3, 1, 1],
+        "performance": 0.842,
     },
     {
         "op_name": "C3D",
@@ -68,14 +75,16 @@
 	"performance": 0.006,
     },
     {
-        "op_name": "GMM",
+        "op_name": "GMM_1",
         "dtype": "float32",
-        "args": [1, 512, 32, 512]
+        "args": [1, 512, 32, 512],
+        "performance": 0.015,
     },
     {
-        "op_name": "GMM",
+        "op_name": "GMM_2",
         "dtype": "float32",
-        "args": [1, 512, 512, 512]
+        "args": [1, 512, 512, 512],
+        "performance":0.031,
     },
     {
         "op_name": "GMM",
@@ -94,9 +103,10 @@
         "args": [1, 56, 56, 64, 64, 1, 1, 0, 1, 4]
     },
     {
-        "op_name": "GRP",
+        "op_name": "GRPi_2",
         "dtype": "float32",
-        "args": [1, 14, 14, 256, 256, 3, 1, 1, 1, 4]
+        "args": [1, 14, 14, 256, 256, 3, 1, 1, 1, 4],
+        "performance":0.028,
     },
     {
         "op_name": "GRP",
@@ -115,9 +125,10 @@
         "args": [1, 56, 56, 64, 64, 1, 1, 0, 2]
     },
     {
-        "op_name": "DIL",
+        "op_name": "DIL_2",
         "dtype": "float32",
-        "args": [1, 14, 14, 256, 256, 3, 1, 1, 2]
+        "args": [1, 14, 14, 256, 256, 3, 1, 1, 2],
+        "performance":0.054,
     },
     {
         "op_name": "DIL",
@@ -135,9 +146,10 @@
         "args": [1, 112, 112, 64, 3, 2, 1]
     },
     {
-        "op_name": "DEP",
+        "op_name": "DEP_2",
         "dtype": "float32",
-        "args": [1, 14, 14, 512, 3, 2, 1]
+        "args": [1, 14, 14, 512, 3, 2, 1],
+        "performance":0.009,
     },
     {
         "op_name": "DEP",
@@ -151,14 +163,16 @@
 	"Performance":0.081,
     },
     {
-        "op_name": "T2D",
+        "op_name": "T2D_1",
         "dtype": "float32",
-        "args": [1, 8, 8, 256, 128, 4, 2, 1]
+        "args": [1, 8, 8, 256, 128, 4, 2, 1],
+        "Performance": 0.052,
     },
     {
-        "op_name": "T2D",
+        "op_name": "T2D_2",
         "dtype": "float32",
-        "args": [1, 16, 16, 128, 64, 4, 2, 1]
+        "args": [1, 16, 16, 128, 64, 4, 2, 1],
+        "performance":0.041,
     },
     {
         "op_name": "T2D",
@@ -172,9 +186,10 @@
 	"performance":0.032,
     },
     {
-        "op_name": "CAP",
+        "op_name": "CAP_1",
         "dtype": "float32",
-        "args": [1, 8, 8, 32, 32, 3, 1, 1]
+        "args": [1, 8, 8, 32, 32, 3, 1, 1],
+        "performance": 0.019,
     },
     {
         "op_name": "CAP",
@@ -193,14 +208,16 @@
 	"performance":0.012,
     },
     {
-        "op_name": "NRM",
+        "op_name": "NRM_1",
         "dtype": "float32",
-        "args": [1, 512, 512]
+        "args": [1, 512, 512],
+        "performance": 0.028,
     },
     {
-        "op_name": "NRM",
+        "op_name": "NRM_2",
         "dtype": "float32",
-        "args": [1, 1024, 1024]
+        "args": [1, 1024, 1024],
+        "performance": 0.093,
     },
     {
         "op_name": "NRM",
@@ -214,14 +231,16 @@
 	"performance": 0.006,
     },
     {
-        "op_name": "SFM",
+        "op_name": "SFM_1",
         "dtype": "float32",
-        "args": [512, 512]
+        "args": [512, 512],
+        "performance": 0.009,
     },
     {
-        "op_name": "SFM",
+        "op_name": "SFM_2",
         "dtype": "float32",
-        "args": [1024, 1024]
+        "args": [1024, 1024],
+        "performance": 0.013,
     },
     {
         "op_name": "SFM",
@@ -235,9 +254,10 @@
 	"Performance":0.043,
     },
     {
-        "op_name": "CBR",
+        "op_name": "CBR_1",
         "dtype": "float32",
-        "args": [1, 56, 56, 64, 128, 3, 2, 1]
+        "args": [1, 56, 56, 64, 128, 3, 2, 1],
+        "Performance": 0.038,
     },
     {
         "op_name": "CBR",
@@ -256,9 +276,10 @@
 	"Performance": 0.007,
     },
     {
-        "op_name": "TBG",
+        "op_name": "TBG_1",
         "dtype": "float32",
-        "args": [1, 128, 16, 64]
+        "args": [1, 128, 16, 64],
+        "Performance": 0.009,
     },
     {
         "op_name": "TBG",
