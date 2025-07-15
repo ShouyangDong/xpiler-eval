@@ -1,0 +1,18 @@
+extern "C" __mlu_global__ void gelu(float *input0, float *active_gelup_261) {
+  __nram__ float input0_local_nram[672];
+  if (((((int)clusterId) * 4) + ((int)coreId)) < 5) {
+    __memcpy(((float *)input0_local_nram + (0)),
+             ((float *)input0 +
+              (((((int)clusterId) * 2688) + (((int)coreId) * 672)))),
+             2688, GDRAM2NRAM);
+  }
+  if (((((int)clusterId) * 4) + ((int)coreId)) < 5) {
+    __bang_active_gelup(((float *)input0_local_nram + (0)),
+                        ((float *)input0_local_nram + (0)), 672);
+  }
+  if (((((int)clusterId) * 4) + ((int)coreId)) < 5) {
+    __memcpy(((float *)active_gelup_261 +
+              (((((int)clusterId) * 2688) + (((int)coreId) * 672)))),
+             ((float *)input0_local_nram + (0)), 2688, NRAM2GDRAM);
+  }
+}

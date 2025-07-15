@@ -1,0 +1,64 @@
+extern "C" __mlu_global__ void conv2dnchw(float *input, float *kernel,
+                                          float *output) {
+  // Map clusterId/coreId to a 0–15 thread ID
+  int tid = clusterId * 4 + coreId;
+  const int BS = 16;
+  const int IC = 64;
+  const int OC = 128;
+  const int IH = 8;
+  const int IW = 8;
+  const int KH = 2;
+  const int KW = 2;
+  const int STR = 3;                  // stride = 3
+  const int OH = (IH - KH) / STR + 1; // (8-2)/3+1 = 3
+  const int OW = (IW - KW) / STR + 1; // (8-2)/3+1 = 3
+  const int N = BS * OC * OH * OW;    // total outputs
+  const int STEP = 4 * 4;             // 16 threads
+
+  // Each thread processes indices tid, tid+16, tid+32, … < N
+  for (int idx = tid; idx < N; idx += STEP) {
+    // Decode flat index → (bs, oc, oh, ow)
+    int tmp = idx;
+    int ow = tmp % OW;
+    tmp /= OW;
+    int oh = tmp % OH;
+    tmp /= OH;
+    int oc = tmp % OC;
+    tmp /= OC;
+    int bs = tmp;
+
+    // NRAM buffers for the input patch and kernel slice
+    __nram__ float in_patch[IC * KH * KW];
+    __nram__ float filt[IC * KH * KW];
+
+    // Load the IC×KH×KW input patch into NRAM
+    int p = 0;
+    for (int ic = 0; ic < IC; ++ic) {
+      for (int kh = 0; kh < KH; ++kh) {
+        for (int kw = 0; kw < KW; ++kw) {
+          int ih = oh * STR + kh;
+          int iw = ow * STR + kw;
+          __memcpy(&in_patch[p],
+                   &input[bs * IC * IH * IW + ic * IH * IW + ih * IW + iw],
+                   sizeof(float), GDRAM2NRAM);
+          ++p;
+        }
+      }
+    }
+
+    // Load the corresponding kernel slice (for this oc) into NRAM
+    int base = oc * IC * KH * KW;
+    for (int i = 0; i < IC * KH * KW; ++i) {
+      __memcpy(&filt[i], &kernel[base + i], sizeof(float), GDRAM2NRAM);
+    }
+
+    // Compute convolution sum
+    float sum = 0.0f;
+    for (int i = 0; i < IC * KH * KW; ++i) {
+      sum += in_patch[i] * filt[i];
+    }
+
+    // Write back to global memory
+    output[bs * OC * OH * OW + oc * OH * OW + oh * OW + ow] = sum;
+  }
+}

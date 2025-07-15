@@ -1,0 +1,23 @@
+extern "C" __mlu_global__ void conv2d(float *data, float *kernel,
+                                      float *conv2d_nhwc) {
+  __nram__ float kernel_local_nram[5120];
+  __wram__ float reshape_filter[16384];
+  __memcpy(((float *)reshape_filter + (0)), ((float *)kernel + (0)), 65536,
+           GDRAM2WRAM);
+  for (int nn_inner_inner = 0; nn_inner_inner < 2; ++nn_inner_inner) {
+    __memcpy(((float *)kernel_local_nram + (0)),
+             ((float *)data +
+              (((((int)clusterId) * 32768) + (((int)coreId) * 8192)) +
+               (nn_inner_inner * 4096))),
+             16384, GDRAM2NRAM);
+
+    __bang_conv(((float *)kernel_local_nram + (4096)),
+                ((float *)kernel_local_nram + (0)),
+                ((float *)reshape_filter + (0)), 64, 8, 8, 2, 2, 2, 2, 64);
+
+    __memcpy(((float *)conv2d_nhwc +
+              (((((int)clusterId) * 8192) + (((int)coreId) * 2048) +
+                (nn_inner_inner * 1024)))),
+             ((float *)kernel_local_nram + (4096)), 4096, NRAM2GDRAM);
+  }
+}

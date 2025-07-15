@@ -1,0 +1,25 @@
+extern "C" __mlu_global__ void conv1d(float *input, float *kernel,
+                                      float *output) {
+  int tid = clusterId * 4 + coreId;
+  int num_threads = 4 * 4; // 16 threads total
+  int N = 25;              // total outputs
+
+  for (int i = tid; i < N; i += num_threads) {
+    // Local NRAM buffers
+    __nram__ float input_local[3];
+    __nram__ float kernel_local[3];
+
+    // Load the 3‐wide window starting at i
+    __memcpy(input_local, input + i, 3 * sizeof(float), GDRAM2NRAM);
+    __memcpy(kernel_local, kernel, 3 * sizeof(float), GDRAM2NRAM);
+
+    // Compute dot‐product
+    float sum = 0.0f;
+    for (int j = 0; j < 3; ++j) {
+      sum += input_local[j] * kernel_local[j];
+    }
+
+    // Write back
+    output[i] = sum;
+  }
+}

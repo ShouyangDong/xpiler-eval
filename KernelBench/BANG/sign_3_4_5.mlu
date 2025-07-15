@@ -1,0 +1,18 @@
+extern "C" __mlu_global__ void sign(float *input0, float *active_sign_177) {
+  __nram__ float input0_local_nram[5];
+  if (((int)clusterId) < 3) {
+    __memcpy(
+        ((float *)input0_local_nram + (0)),
+        ((float *)input0 + (((((int)clusterId) * 20) + (((int)coreId) * 5)))),
+        20, GDRAM2NRAM);
+  }
+  if (((int)clusterId) < 3) {
+    __bang_active_sign(((float *)input0_local_nram + (0)),
+                       ((float *)input0_local_nram + (0)), 5);
+  }
+  if (((int)clusterId) < 3) {
+    __memcpy(((float *)active_sign_177 +
+              (((((int)clusterId) * 20) + (((int)coreId) * 5)))),
+             ((float *)input0_local_nram + (0)), 20, NRAM2GDRAM);
+  }
+}

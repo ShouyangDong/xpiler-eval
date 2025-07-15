@@ -1,0 +1,35 @@
+extern "C" __mlu_global__ void add(float *lhs, float *rhs, float *add_975) {
+  __nram__ float lhs_local_nram[384];
+  for (int i0_outer_outer_outer = 0; i0_outer_outer_outer < 2;
+       ++i0_outer_outer_outer) {
+    if ((((i0_outer_outer_outer * 16) + (((int)clusterId) * 4)) +
+         ((int)coreId)) < 21) {
+      __memcpy(((float *)lhs_local_nram + (0)),
+               ((float *)lhs +
+                ((((i0_outer_outer_outer * 3072) + (((int)clusterId) * 768)) +
+                  (((int)coreId) * 192)))),
+               768, GDRAM2NRAM);
+    }
+    if ((((i0_outer_outer_outer * 16) + (((int)clusterId) * 4)) +
+         ((int)coreId)) < 21) {
+      __memcpy(((float *)lhs_local_nram + (192)),
+               ((float *)rhs +
+                ((((i0_outer_outer_outer * 3072) + (((int)clusterId) * 768)) +
+                  (((int)coreId) * 192)))),
+               768, GDRAM2NRAM);
+    }
+    if ((((i0_outer_outer_outer * 16) + (((int)clusterId) * 4)) +
+         ((int)coreId)) < 21) {
+      __bang_add(((float *)lhs_local_nram + (0)),
+                 ((float *)lhs_local_nram + (0)),
+                 ((float *)lhs_local_nram + (192)), 192);
+    }
+    if ((((i0_outer_outer_outer * 16) + (((int)clusterId) * 4)) +
+         ((int)coreId)) < 21) {
+      __memcpy(((float *)add_975 +
+                ((((i0_outer_outer_outer * 3072) + (((int)clusterId) * 768)) +
+                  (((int)coreId) * 192)))),
+               ((float *)lhs_local_nram + (0)), 768, NRAM2GDRAM);
+    }
+  }
+}

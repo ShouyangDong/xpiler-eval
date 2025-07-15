@@ -1,0 +1,16 @@
+extern "C" __mlu_global__ void bmm(int8 *data, int8 *filter, float *output) {
+  __nram__ int8 date_block[2560];
+  __wram__ int8 filter_block[262144];
+  for (int i = 0; i < 128; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      __memcpy(((int8 *)date_block + (0)),
+               ((int8 *)data + (((i * 2048) + (j * 512)))), 512, GDRAM2NRAM);
+      __memcpy(((int8 *)filter_block + (0)), ((int8 *)filter + (0)), 262144,
+               GDRAM2WRAM);
+      __bang_mlp(((float *)date_block + (512)), ((int8 *)date_block + (0)),
+                 ((int8 *)filter_block + (0)), 512, 512, 0);
+      __memcpy(((float *)output + (((i * 2048) + (j * 512)))),
+               ((float *)date_block + (512)), 2048, NRAM2GDRAM);
+    }
+  }
+}

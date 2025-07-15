@@ -1,0 +1,16 @@
+extern "C" __mlu_global__ void gemm(int8 *data, int8 *filter, float *output) {
+  __nram__ int8 date_block[768];
+  __wram__ int8 filter_block[32768];
+  for (int j = 0; j < 128; ++j) {
+    __memcpy(((int8 *)date_block + (0)), ((int8 *)data + ((j * 256))), 256,
+             GDRAM2NRAM);
+    for (int k = 0; k < 4; ++k) {
+      __memcpy(((int8 *)filter_block + (0)), ((int8 *)filter + ((k * 128))),
+               128, GDRAM2WRAM, 128, 512, 255);
+      __bang_matmul(((float *)date_block + (256)), ((int8 *)date_block + (0)),
+                    ((int8 *)filter_block + (0)), 1, 256, 128, 0);
+      __memcpy(((float *)output + (((j * 512) + (k * 128)))),
+               ((float *)date_block + (256)), 512, NRAM2GDRAM);
+    }
+  }
+}

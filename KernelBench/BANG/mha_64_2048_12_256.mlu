@@ -1,0 +1,61 @@
+
+
+extern "C" __mlu_global__ void mha(float *Q, float *K, float *V,
+                                   float *output) {
+  __nram__ float score[12 * 12];
+  __nram__ float dinominator[12];
+  __nram__ float dinominator_temp[12];
+  // The dimension 64, 2048, 12, 256
+  if (clusterId < 4) {
+    if (coreId < 4) {
+      for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 2048; j++) {
+          __nram__ float local_Q[12 * 256];
+          __nram__ float local_K[12 * 256];
+          __nram__ float local_K_trans[12 * 256];
+          __wram__ float local_K_wram[12 * 256];
+          __memcpy(local_Q,
+                   Q + (clusterId * 16 + coreId * 4 + i) * 2048 * 12 * 256 +
+                       j * 12 * 256,
+                   12 * 256 * 4, GDRAM2NRAM);
+          __memcpy(local_K,
+                   K + (clusterId * 16 + coreId * 4 + i) * 2048 * 12 * 256 +
+                       j * 12 * 256,
+                   12 * 256 * 4, GDRAM2NRAM);
+
+          // Transpose local_K
+          __bang_transpose(local_K_trans, local_K, 12, 256);
+          __memcpy(local_K_wram, local_K_trans, 256 * 12 * 4, NRAM2WRAM);
+          __bang_mlp(score, local_Q, local_K_wram, 12, 12);
+
+          // score
+          __bang_div(score, score, sqrt(256), 12 * 12);
+
+          // The Softmax code:
+          for (int j_sf = 0; j_sf < 12; ++j_sf) {
+            __bang_active_exp(score + j_sf * 12, score + j_sf * 12, 12);
+            __bang_write_zero(dinominator, 12);
+            __bang_sumpool(dinominator, score + j_sf * 12, 1, 1, 12, 1, 12, 1,
+                           1);
+            __memset_nram(dinominator_temp, 12, dinominator[0]);
+            __bang_recip(dinominator_temp, dinominator_temp, 12);
+            __bang_mul(score + j_sf * 12, score + j_sf * 12, dinominator_temp,
+                       12);
+          }
+          // The final Matmul
+          __wram__ float local_V[12 * 256];
+          __nram__ float local_output[12 * 256];
+          __memcpy(local_V,
+                   V + (clusterId * 16 + coreId * 4 + i) * 2048 * 12 * 256 +
+                       j * 12 * 256,
+                   12 * 256 * 4, GDRAM2WRAM);
+          __bang_mlp(local_output, score, local_V, 12, 256);
+          __memcpy(output +
+                       (clusterId * 16 + coreId * 4 + i) * 2048 * 12 * 256 +
+                       j * 12 * 256,
+                   local_output, 12 * 256 * 4, NRAM2GDRAM);
+        }
+      }
+    }
+  }
+}

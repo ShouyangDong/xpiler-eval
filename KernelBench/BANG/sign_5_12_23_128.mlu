@@ -1,0 +1,29 @@
+extern "C" __mlu_global__ void sign(float *input0, float *active_sign_298) {
+  __nram__ float input0_local_nram[2944];
+  for (int i1_outer_i0_fused_outer_outer = 0; i1_outer_i0_fused_outer_outer < 8;
+       ++i1_outer_i0_fused_outer_outer) {
+    if (clusterId < 2) {
+      if ((((i1_outer_i0_fused_outer_outer * 8) + (((int)clusterId) * 4)) +
+           ((int)coreId)) < 60) {
+        __memcpy(((float *)input0_local_nram + (0)),
+                 ((float *)input0 + ((((i1_outer_i0_fused_outer_outer * 23552) +
+                                       (((int)clusterId) * 11776)) +
+                                      (((int)coreId) * 2944)))),
+                 11776, GDRAM2NRAM);
+      }
+      if ((((i1_outer_i0_fused_outer_outer * 8) + (((int)clusterId) * 4)) +
+           ((int)coreId)) < 60) {
+        __bang_active_sign(((float *)input0_local_nram + (0)),
+                           ((float *)input0_local_nram + (0)), 2944);
+      }
+      if ((((i1_outer_i0_fused_outer_outer * 8) + (((int)clusterId) * 4)) +
+           ((int)coreId)) < 60) {
+        __memcpy(((float *)active_sign_298 +
+                  ((((i1_outer_i0_fused_outer_outer * 23552) +
+                     (((int)clusterId) * 11776)) +
+                    (((int)coreId) * 2944)))),
+                 ((float *)input0_local_nram + (0)), 11776, NRAM2GDRAM);
+      }
+    }
+  }
+}

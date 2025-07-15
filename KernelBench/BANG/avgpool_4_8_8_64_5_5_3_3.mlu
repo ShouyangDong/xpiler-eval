@@ -1,0 +1,9 @@
+extern "C" __mlu_global__ void avgpool(float *input0, float *avgpool_27) {
+  __nram__ float input0_local_nram[4352];
+  __memcpy(((float *)input0_local_nram + (0)),
+           ((float *)input0 + ((((int)coreId) * 4096))), 16384, GDRAM2NRAM);
+  __bang_avgpool(((float *)input0_local_nram + (4096)),
+                 ((float *)input0_local_nram + (0)), 64, 8, 8, 5, 5, 3, 3);
+  __memcpy(((float *)avgpool_27 + ((((int)coreId) * 256))),
+           ((float *)input0_local_nram + (4096)), 1024, NRAM2GDRAM);
+}

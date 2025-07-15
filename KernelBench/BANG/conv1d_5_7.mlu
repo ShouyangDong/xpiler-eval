@@ -1,0 +1,17 @@
+
+extern "C" __mlu_global__ void conv1d(float *input, float *kernel,
+                                      float *output) {
+  int tid = (clusterId * 4) + coreId;
+  if (tid < 5) {
+    __nram__ float input_local[3];
+    __nram__ float kernel_local[3];
+    __memcpy((float *)input_local, input + tid, 12, GDRAM2NRAM);
+    __memcpy((float *)kernel_local, kernel, 12, GDRAM2NRAM);
+
+    float sum = 0.0f;
+    for (int j = 0; j < 3; ++j) {
+      sum += input_local[j] * kernel_local[j];
+    }
+    output[tid] = sum;
+  }
+}

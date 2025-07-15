@@ -1,0 +1,19 @@
+extern "C" __mlu_global__ void sigmoid(float *input0,
+                                       float *active_sigmoid_236) {
+  __nram__ float input0_local_nram[384];
+  if (((((int)clusterId) * 4) + ((int)coreId)) < 12) {
+    __memcpy(((float *)input0_local_nram + (0)),
+             ((float *)input0 +
+              (((((int)clusterId) * 1536) + (((int)coreId) * 384)))),
+             1536, GDRAM2NRAM);
+  }
+  if (((((int)clusterId) * 4) + ((int)coreId)) < 12) {
+    __bang_active_sigmoid(((float *)input0_local_nram + (0)),
+                          ((float *)input0_local_nram + (0)), 384);
+  }
+  if (((((int)clusterId) * 4) + ((int)coreId)) < 12) {
+    __memcpy(((float *)active_sigmoid_236 +
+              (((((int)clusterId) * 1536) + (((int)coreId) * 384)))),
+             ((float *)input0_local_nram + (0)), 1536, NRAM2GDRAM);
+  }
+}
