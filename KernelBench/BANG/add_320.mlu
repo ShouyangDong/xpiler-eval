@@ -1,0 +1,14 @@
+extern "C" __mlu_global__ void add(float *lhs, float *rhs, float *add_315) {
+  __nram__ float lhs_local_nram[40];
+  __memcpy(((float *)lhs_local_nram + (0)),
+           ((float *)lhs + (((((int)clusterId) * 80) + (((int)coreId) * 20)))),
+           80, GDRAM2NRAM);
+  __memcpy(((float *)lhs_local_nram + (20)),
+           ((float *)rhs + (((((int)clusterId) * 80) + (((int)coreId) * 20)))),
+           80, GDRAM2NRAM);
+  __bang_add(((float *)lhs_local_nram + (0)), ((float *)lhs_local_nram + (0)),
+             ((float *)lhs_local_nram + (20)), 20);
+  __memcpy(
+      ((float *)add_315 + (((((int)clusterId) * 80) + (((int)coreId) * 20)))),
+      ((float *)lhs_local_nram + (0)), 80, NRAM2GDRAM);
+}

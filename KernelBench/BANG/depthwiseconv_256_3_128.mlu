@@ -1,0 +1,35 @@
+extern "C" __mlu_global__ void depthwiseconv(float *input, float *kernel,
+                                             float *output) {
+  const int C = 128;  // 通道数
+  const int H = 254;  // 输出高度
+  const int W = 254;  // 输出宽度
+  const int FH = 3;   // 卷积核高度
+  const int FW = 3;   // 卷积核宽度
+  const int IH = 256; // 输入高度
+  const int IW = 256; // 输入宽度
+
+  const int total = C * H * W;
+  const int num_threads = 16; // clusterNum * coreNum
+  const int tid = clusterId * 4 + coreId;
+
+  for (int idx = tid; idx < total; idx += num_threads) {
+    int tmp = idx;
+    int c = tmp % C;
+    tmp /= C;
+    int j = tmp % W;
+    tmp /= W;
+    int i = tmp;
+
+    float sum = 0.0f;
+
+    for (int fi = 0; fi < FH; ++fi) {
+      for (int fj = 0; fj < FW; ++fj) {
+        float in_val = input[(i + fi) * IW * C + (j + fj) * C + c];
+        float kernel_val = kernel[fi * FW * C + fj * C + c];
+        sum += in_val * kernel_val;
+      }
+    }
+
+    output[i * W * C + j * C + c] = sum;
+  }
+}

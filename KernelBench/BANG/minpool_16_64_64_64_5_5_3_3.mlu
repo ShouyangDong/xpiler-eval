@@ -1,0 +1,19 @@
+extern "C" __mlu_global__ void minpool(float *input0, float *minpool_17) {
+  __nram__ float input0_local_nram[73856];
+  for (int bb_inner = 0; bb_inner < 4; ++bb_inner) {
+    for (int yy_outer = 0; yy_outer < 4; ++yy_outer) {
+      __memcpy(((float *)input0_local_nram + (0)),
+               ((float *)input0 +
+                ((((((int)coreId) * 1048576) + (bb_inner * 262144)) +
+                  (yy_outer * 61440)))),
+               15872, GDRAM2NRAM, 15872, 16384, 16);
+      __bang_minpool(((float *)input0_local_nram + (67456)),
+                     ((float *)input0_local_nram + (0)), 64, 17, 62, 5, 5, 3,
+                     3);
+      __memcpy(((float *)minpool_17 +
+                ((((((int)coreId) * 102400) + (bb_inner * 25600)) +
+                  (yy_outer * 6400)))),
+               ((float *)input0_local_nram + (67456)), 25600, NRAM2GDRAM);
+    }
+  }
+}

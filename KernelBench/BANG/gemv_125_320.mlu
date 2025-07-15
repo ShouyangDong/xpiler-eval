@@ -1,0 +1,11 @@
+extern "C" __mlu_global__ void gemv(float *A, float *B, float *y) {
+  __nram__ float local_A[320];
+  __nram__ float local_B[320];
+  for (int i = 0; i < 125; i++) {
+    __memcpy(local_A, A + i * 320, 320 * 4, GDRAM2NRAM);
+    __memcpy(local_B, B, 320 * 4, GDRAM2NRAM);
+    __bang_mul(local_A, local_A, local_B, 320);
+    __bang_sumpool(local_A, local_A, 1, 1, 320, 1, 320, 1, 1);
+    y[i] = local_A[0];
+  }
+}

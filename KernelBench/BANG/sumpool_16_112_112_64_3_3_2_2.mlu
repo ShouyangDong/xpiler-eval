@@ -1,0 +1,19 @@
+extern "C" __mlu_global__ void sumpool(float *input0, float *sumpool_0) {
+  __nram__ float input0_local_nram[24832];
+  for (int bb_inner = 0; bb_inner < 4; ++bb_inner) {
+    for (int yy_outer = 0; yy_outer < 55; ++yy_outer) {
+      __memcpy(((float *)input0_local_nram + (0)),
+               ((float *)input0 +
+                ((((((int)coreId) * 3211264) + (bb_inner * 802816)) +
+                  (yy_outer * 14336)))),
+               28416, GDRAM2NRAM, 28416, 28672, 2);
+      __bang_sumpool(((float *)input0_local_nram + (21312)),
+                     ((float *)input0_local_nram + (0)), 64, 3, 111, 3, 3, 2,
+                     2);
+      __memcpy(((float *)sumpool_0 +
+                ((((((int)coreId) * 774400) + (bb_inner * 193600)) +
+                  (yy_outer * 3520)))),
+               ((float *)input0_local_nram + (21312)), 14080, NRAM2GDRAM);
+    }
+  }
+}

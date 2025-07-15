@@ -1,0 +1,18 @@
+extern "C" __mlu_global__ void softmax(float *A, float *output) {
+  __nram__ float dest[5];
+  __nram__ float dinominator[5];
+  __nram__ float dinominator_temp[5];
+  __nram__ float src1[5];
+  __nram__ float addition[5];
+
+  for (int i = clusterId * 4 + coreId; i < 12; i += 16) {
+    __memcpy(src1, A + i * 5, 5 * 4, GDRAM2NRAM);
+    __bang_active_exp(src1, src1, 5);
+    __bang_write_zero(dinominator, 5);
+    __bang_sumpool(dinominator, src1, 1, 1, 5, 1, 5, 1, 1);
+    __memset_nram(dinominator_temp, 5, dinominator[0]);
+    __bang_active_recip(dinominator_temp, dinominator_temp, 5);
+    __bang_mul(dest, src1, dinominator_temp, 5);
+    __memcpy(output + 5 * i, dest, 5 * 4, NRAM2GDRAM);
+  }
+}
