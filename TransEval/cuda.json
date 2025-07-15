@@ -208,9 +208,10 @@
         "performance": 0.012,
     },
     {
-        "op_name": "CAP",
+        "op_name": "CAP_3",
         "dtype": "float32",
-        "args": [1, 8, 8, 16, 16, 3, 1, 1]
+        "args": [1, 8, 8, 16, 16, 3, 1, 1],
+        "performance": 0.016,
     },
     {
         "op_name": "NRM_0",
@@ -231,9 +232,10 @@
         "performance": 0.093,
     },
     {
-        "op_name": "NRM",
+        "op_name": "NRM_3",
         "dtype": "float32",
-        "args": [1, 4096, 1024]
+        "args": [1, 4096, 1024],
+        "performance": 0.352,
     },
     {
         "op_name": "SFM_0",
@@ -254,9 +256,10 @@
         "performance": 0.013,
     },
     {
-        "op_name": "SFM",
+        "op_name": "SFM_3",
         "dtype": "float32",
-        "args": [2048, 2048]
+        "args": [2048, 2048],
+        "performance": 0.032,
     },
     {
         "op_name": "CBR_0",
@@ -277,9 +280,10 @@
         "performance": 0.008,
     },
     {
-        "op_name": "CBR",
+        "op_name": "CBR_3",
         "dtype": "float32",
-        "args": [1, 7, 7, 512, 512, 3, 1, 1]
+        "args": [1, 7, 7, 512, 512, 3, 1, 1],
+        "performance": 0.151,
     },
     {
         "op_name": "TBG_0",
@@ -300,8 +304,9 @@
         "performance": 0.008,
     },
     {
-        "op_name": "TBG",
+        "op_name": "TBG_3",
         "dtype": "float32",
-        "args": [1, 128, 12, 128]
+        "args": [1, 128, 12, 128],
+        "performance": 0.010,
     }
 ]
