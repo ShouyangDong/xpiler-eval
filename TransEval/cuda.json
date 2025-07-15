@@ -50,7 +50,8 @@
     {
         "op_name": "C3D",
         "dtype": "float32",
-        "args": [1, 16, 224, 224, 3, 64, 7, 2, 3]
+        "args": [1, 16, 224, 224, 3, 64, 7, 2, 3],
+	"performance": 3.176,
     },
     {
         "op_name": "C3D_1",
@@ -116,7 +117,7 @@
         "op_name": "GRP_3",
         "dtype": "float32",
         "args": [1, 7, 7, 512, 512, 3, 1, 1, 1, 4],
-        "perfotmance":0.037,
+        "performance":0.037,
     },
     {
         "op_name": "DIL_0",
@@ -145,7 +146,8 @@
     {
         "op_name": "DEP",
         "dtype": "float32",
-        "args": [1, 112, 112, 32, 3, 1, 1]
+        "args": [1, 112, 112, 32, 3, 1, 1],
+	"performance": 0.009
     },
     {
         "op_name": "DEP_1",
