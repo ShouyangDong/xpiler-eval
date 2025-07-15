@@ -14,7 +14,7 @@ from tvm.target import Target
 import tvm.meta_schedule as ms
 import numpy as np
 from tvm.runtime import ndarray as nd
-
+import tvm.tir.tensor_intrin
 
 def test_tune_matmul_cuda(op_name, order=2):
     mod = create_te_workload(op_name, order)
