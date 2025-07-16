@@ -58,7 +58,7 @@ def test_tune_matmul_cuda(op_name, order=2):
             print(f"The time of {op_name} is {eval_time:.3f} ms")
 
 if __name__ == "__main__":
-    tensor_ir = ["C1D", "C2D", "C3D", "GMM", "GRP", "DIL", "DEP","T2D", "CAP", "NRM", "SFM", "CBR", "TBG"]
+    tensor_ir = ["C3D", "GMM"]#, "GRP", "DIL", "DEP","T2D", "CAP", "NRM", "SFM", "CBR", "TBG"]
     for order in range(4):
         print("===========================")
         for op_name in tensor_ir:
