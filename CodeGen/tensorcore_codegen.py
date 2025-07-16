@@ -66,9 +66,9 @@ def test_tune_matmul_cuda(op_name, order=2):
 
 if __name__ == "__main__":
     tensor_ir = [
-        "C1D",
-        "C2D",
-        "C3D",
+        #"C1D",
+        #"C2D",
+        #"C3D",
         "GMM",
         "GRP",
         "DIL",
