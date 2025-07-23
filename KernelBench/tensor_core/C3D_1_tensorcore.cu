@@ -345,52 +345,81 @@ __host__ __device__ half4 make_half4(__half x, __half y, __half z, __half w) {
   #define int64_t long long
   #define uint64_t unsigned long long
 #endif
-extern "C" __global__ void __launch_bounds__(448) main_kernel(half* __restrict__ conv3d_ndhwc, half* __restrict__ inputs, half* __restrict__ weight);
-extern "C" __global__ void __launch_bounds__(448) main_kernel(half* __restrict__ conv3d_ndhwc, half* __restrict__ inputs, half* __restrict__ weight) {
+extern "C" __global__ void __launch_bounds__(128) main_kernel(half* __restrict__ conv3d_ndhwc, half* __restrict__ inputs, half* __restrict__ weight);
+extern "C" __global__ void __launch_bounds__(128) main_kernel(half* __restrict__ conv3d_ndhwc, half* __restrict__ inputs, half* __restrict__ weight) {
   extern __shared__ uchar buf_dyn_shmem[];
-  nvcuda::wmma::fragment<nvcuda::wmma::accumulator, 16, 16, 16, half> conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[4];
-  nvcuda::wmma::fragment<nvcuda::wmma::matrix_a, 16, 16, 16, half, nvcuda::wmma::row_major> PadInput_reindex_shared_dyn_wmma_matrix_a[8];
-  nvcuda::wmma::fragment<nvcuda::wmma::matrix_b, 16, 16, 16, half, nvcuda::wmma::row_major> weight_reindex_shared_dyn_wmma_matrix_b[8];
-  for (int ax3_0_3_init = 0; ax3_0_3_init < 2; ++ax3_0_3_init) {
-    for (int ax4_0_3_init = 0; ax4_0_3_init < 2; ++ax4_0_3_init) {
-      nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[((ax3_0_3_init * 2) + ax4_0_3_init)], 0.000000e+00f);
-    }
+  nvcuda::wmma::fragment<nvcuda::wmma::accumulator, 16, 16, 16, half> conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[16];
+  nvcuda::wmma::fragment<nvcuda::wmma::matrix_a, 16, 16, 16, half, nvcuda::wmma::row_major> PadInput_reindex_shared_dyn_wmma_matrix_a[4];
+  nvcuda::wmma::fragment<nvcuda::wmma::matrix_b, 16, 16, 16, half, nvcuda::wmma::row_major> weight_reindex_shared_dyn_wmma_matrix_b[4];
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[0], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[1], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[4], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[5], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[8], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[9], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[12], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[13], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[2], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[3], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[6], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[7], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[10], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[11], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[14], 0.000000e+00f);
+  nvcuda::wmma::fill_fragment(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[15], 0.000000e+00f);
+  for (int ax0_ax1_fused_0 = 0; ax0_ax1_fused_0 < 64; ++ax0_ax1_fused_0) {
+    *(half2*)(((half*)buf_dyn_shmem) + ((((ax0_ax1_fused_0 * 288) + (((int)threadIdx.y) * 72)) + (((int)threadIdx.x) * 2)) + 4608)) = *(half2*)(inputs + (((((((int)blockIdx.y) * 802816) + (((int)blockIdx.x) * 16384)) + (ax0_ax1_fused_0 * 256)) + (((int)threadIdx.y) * 64)) + (((int)threadIdx.x) * 2)));
   }
-  for (int ax0_ax1_fused_0 = 0; ax0_ax1_fused_0 < 16; ++ax0_ax1_fused_0) {
-    *(half2*)(((half*)buf_dyn_shmem) + ((((ax0_ax1_fused_0 * 1008) + (((int)threadIdx.y) * 72)) + (((int)threadIdx.x) * 2)) + 4608)) = *(half2*)(inputs + (((((((int)blockIdx.y) * 57344) + (((int)blockIdx.x) * 14336)) + (ax0_ax1_fused_0 * 896)) + (((int)threadIdx.y) * 64)) + (((int)threadIdx.x) * 2)));
-  }
-  for (int ax0_ax1_ax2_ax3_ax4_fused_0 = 0; ax0_ax1_ax2_ax3_ax4_fused_0 < 3; ++ax0_ax1_ax2_ax3_ax4_fused_0) {
-    if (((ax0_ax1_ax2_ax3_ax4_fused_0 * 7) + (((int)threadIdx.y) >> 1)) < 16) {
-      *(half4*)(((half*)buf_dyn_shmem) + ((((ax0_ax1_ax2_ax3_ax4_fused_0 * 2016) + (((int)threadIdx.y) * 144)) + ((((int)threadIdx.x) >> 4) * 72)) + ((((int)threadIdx.x) & 15) * 4))) = *(half4*)(weight + (((ax0_ax1_ax2_ax3_ax4_fused_0 * 1792) + (((int)threadIdx.y) * 128)) + (((int)threadIdx.x) * 4)));
-    }
-  }
+  *(half4*)(((half*)buf_dyn_shmem) + (((((int)threadIdx.y) * 144) + ((((int)threadIdx.x) >> 4) * 72)) + ((((int)threadIdx.x) & 15) * 4))) = *(half4*)(weight + ((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)));
+  *(half4*)(((half*)buf_dyn_shmem) + ((((((int)threadIdx.y) * 144) + ((((int)threadIdx.x) >> 4) * 72)) + ((((int)threadIdx.x) & 15) * 4)) + 576)) = *(half4*)(weight + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 512));
+  *(half4*)(((half*)buf_dyn_shmem) + ((((((int)threadIdx.y) * 144) + ((((int)threadIdx.x) >> 4) * 72)) + ((((int)threadIdx.x) & 15) * 4)) + 1152)) = *(half4*)(weight + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 1024));
+  *(half4*)(((half*)buf_dyn_shmem) + ((((((int)threadIdx.y) * 144) + ((((int)threadIdx.x) >> 4) * 72)) + ((((int)threadIdx.x) & 15) * 4)) + 1728)) = *(half4*)(weight + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 1536));
+  *(half4*)(((half*)buf_dyn_shmem) + ((((((int)threadIdx.y) * 144) + ((((int)threadIdx.x) >> 4) * 72)) + ((((int)threadIdx.x) & 15) * 4)) + 2304)) = *(half4*)(weight + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 2048));
+  *(half4*)(((half*)buf_dyn_shmem) + ((((((int)threadIdx.y) * 144) + ((((int)threadIdx.x) >> 4) * 72)) + ((((int)threadIdx.x) & 15) * 4)) + 2880)) = *(half4*)(weight + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 2560));
+  *(half4*)(((half*)buf_dyn_shmem) + ((((((int)threadIdx.y) * 144) + ((((int)threadIdx.x) >> 4) * 72)) + ((((int)threadIdx.x) & 15) * 4)) + 3456)) = *(half4*)(weight + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 3072));
+  *(half4*)(((half*)buf_dyn_shmem) + ((((((int)threadIdx.y) * 144) + ((((int)threadIdx.x) >> 4) * 72)) + ((((int)threadIdx.x) & 15) * 4)) + 4032)) = *(half4*)(weight + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 3584));
   __syncthreads();
-  for (int ax0_0 = 0; ax0_0 < 2; ++ax0_0) {
-    for (int ax1_0 = 0; ax1_0 < 4; ++ax1_0) {
-      nvcuda::wmma::load_matrix_sync(PadInput_reindex_shared_dyn_wmma_matrix_a[((ax0_0 * 4) + ax1_0)], (&(((half*)buf_dyn_shmem)[(((((((int)threadIdx.y) >> 1) * 2304) + (ax0_0 * 1152)) + (ax1_0 * 16)) + 4608)])), 72);
-    }
+  for (int ax5_0_1 = 0; ax5_0_1 < 4; ++ax5_0_1) {
+    nvcuda::wmma::load_matrix_sync(PadInput_reindex_shared_dyn_wmma_matrix_a[0], (&(((half*)buf_dyn_shmem)[(((((int)threadIdx.y) * 4608) + (ax5_0_1 * 16)) + 4608)])), 72);
+    nvcuda::wmma::load_matrix_sync(PadInput_reindex_shared_dyn_wmma_matrix_a[1], (&(((half*)buf_dyn_shmem)[(((((int)threadIdx.y) * 4608) + (ax5_0_1 * 16)) + 5760)])), 72);
+    nvcuda::wmma::load_matrix_sync(PadInput_reindex_shared_dyn_wmma_matrix_a[2], (&(((half*)buf_dyn_shmem)[(((((int)threadIdx.y) * 4608) + (ax5_0_1 * 16)) + 6912)])), 72);
+    nvcuda::wmma::load_matrix_sync(PadInput_reindex_shared_dyn_wmma_matrix_a[3], (&(((half*)buf_dyn_shmem)[(((((int)threadIdx.y) * 4608) + (ax5_0_1 * 16)) + 8064)])), 72);
+    nvcuda::wmma::load_matrix_sync(weight_reindex_shared_dyn_wmma_matrix_b[0], (&(((half*)buf_dyn_shmem)[(ax5_0_1 * 1152)])), 72);
+    nvcuda::wmma::load_matrix_sync(weight_reindex_shared_dyn_wmma_matrix_b[1], (&(((half*)buf_dyn_shmem)[((ax5_0_1 * 1152) + 16)])), 72);
+    nvcuda::wmma::load_matrix_sync(weight_reindex_shared_dyn_wmma_matrix_b[2], (&(((half*)buf_dyn_shmem)[((ax5_0_1 * 1152) + 32)])), 72);
+    nvcuda::wmma::load_matrix_sync(weight_reindex_shared_dyn_wmma_matrix_b[3], (&(((half*)buf_dyn_shmem)[((ax5_0_1 * 1152) + 48)])), 72);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[0], PadInput_reindex_shared_dyn_wmma_matrix_a[0], weight_reindex_shared_dyn_wmma_matrix_b[0], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[0]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[1], PadInput_reindex_shared_dyn_wmma_matrix_a[0], weight_reindex_shared_dyn_wmma_matrix_b[1], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[1]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[4], PadInput_reindex_shared_dyn_wmma_matrix_a[1], weight_reindex_shared_dyn_wmma_matrix_b[0], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[4]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[5], PadInput_reindex_shared_dyn_wmma_matrix_a[1], weight_reindex_shared_dyn_wmma_matrix_b[1], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[5]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[8], PadInput_reindex_shared_dyn_wmma_matrix_a[2], weight_reindex_shared_dyn_wmma_matrix_b[0], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[8]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[9], PadInput_reindex_shared_dyn_wmma_matrix_a[2], weight_reindex_shared_dyn_wmma_matrix_b[1], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[9]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[12], PadInput_reindex_shared_dyn_wmma_matrix_a[3], weight_reindex_shared_dyn_wmma_matrix_b[0], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[12]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[13], PadInput_reindex_shared_dyn_wmma_matrix_a[3], weight_reindex_shared_dyn_wmma_matrix_b[1], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[13]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[2], PadInput_reindex_shared_dyn_wmma_matrix_a[0], weight_reindex_shared_dyn_wmma_matrix_b[2], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[2]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[3], PadInput_reindex_shared_dyn_wmma_matrix_a[0], weight_reindex_shared_dyn_wmma_matrix_b[3], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[3]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[6], PadInput_reindex_shared_dyn_wmma_matrix_a[1], weight_reindex_shared_dyn_wmma_matrix_b[2], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[6]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[7], PadInput_reindex_shared_dyn_wmma_matrix_a[1], weight_reindex_shared_dyn_wmma_matrix_b[3], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[7]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[10], PadInput_reindex_shared_dyn_wmma_matrix_a[2], weight_reindex_shared_dyn_wmma_matrix_b[2], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[10]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[11], PadInput_reindex_shared_dyn_wmma_matrix_a[2], weight_reindex_shared_dyn_wmma_matrix_b[3], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[11]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[14], PadInput_reindex_shared_dyn_wmma_matrix_a[3], weight_reindex_shared_dyn_wmma_matrix_b[2], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[14]);
+    nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[15], PadInput_reindex_shared_dyn_wmma_matrix_a[3], weight_reindex_shared_dyn_wmma_matrix_b[3], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[15]);
   }
-  for (int ax3_0 = 0; ax3_0 < 4; ++ax3_0) {
-    for (int ax4_0 = 0; ax4_0 < 2; ++ax4_0) {
-      nvcuda::wmma::load_matrix_sync(weight_reindex_shared_dyn_wmma_matrix_b[((ax3_0 * 2) + ax4_0)], (&(((half*)buf_dyn_shmem)[(((ax3_0 * 1152) + ((((int)threadIdx.y) & 1) * 32)) + (ax4_0 * 16))])), 72);
-    }
-  }
-  for (int ax3_0_3 = 0; ax3_0_3 < 2; ++ax3_0_3) {
-    for (int ax4_0_3 = 0; ax4_0_3 < 2; ++ax4_0_3) {
-      for (int ax5_0_2 = 0; ax5_0_2 < 4; ++ax5_0_2) {
-        nvcuda::wmma::mma_sync(conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[((ax3_0_3 * 2) + ax4_0_3)], PadInput_reindex_shared_dyn_wmma_matrix_a[((ax3_0_3 * 4) + ax5_0_2)], weight_reindex_shared_dyn_wmma_matrix_b[((ax5_0_2 * 2) + ax4_0_3)], conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[((ax3_0_3 * 2) + ax4_0_3)]);
-      }
-    }
-  }
-  for (int ax2 = 0; ax2 < 2; ++ax2) {
+  for (int ax2 = 0; ax2 < 4; ++ax2) {
     __syncthreads();
-    for (int ax3 = 0; ax3 < 2; ++ax3) {
-      nvcuda::wmma::store_matrix_sync((&(((half*)buf_dyn_shmem)[(((((int)threadIdx.y) * 512) + (ax3 * 256)) + 4608)])), conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[((ax2 * 2) + ax3)], 16, nvcuda::wmma::mem_row_major);
-    }
+    nvcuda::wmma::store_matrix_sync((&(((half*)buf_dyn_shmem)[(((int)threadIdx.y) * 1024)])), conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[(ax2 * 4)], 16, nvcuda::wmma::mem_row_major);
+    nvcuda::wmma::store_matrix_sync((&(((half*)buf_dyn_shmem)[((((int)threadIdx.y) * 1024) + 256)])), conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[((ax2 * 4) + 1)], 16, nvcuda::wmma::mem_row_major);
+    nvcuda::wmma::store_matrix_sync((&(((half*)buf_dyn_shmem)[((((int)threadIdx.y) * 1024) + 512)])), conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[((ax2 * 4) + 2)], 16, nvcuda::wmma::mem_row_major);
+    nvcuda::wmma::store_matrix_sync((&(((half*)buf_dyn_shmem)[((((int)threadIdx.y) * 1024) + 768)])), conv3d_ndhwc_reindex_shared_dyn_wmma_accumulator[((ax2 * 4) + 3)], 16, nvcuda::wmma::mem_row_major);
     __syncthreads();
-    for (int ax0_ax1_ax3_ax4_ax5_fused_0 = 0; ax0_ax1_ax3_ax4_ax5_fused_0 < 4; ++ax0_ax1_ax3_ax4_ax5_fused_0) {
-      *(half4*)(conv3d_ndhwc + ((((((((((int)blockIdx.y) * 57344) + (((int)blockIdx.x) * 14336)) + ((((ax0_ax1_ax3_ax4_ax5_fused_0 * 7) + (((int)threadIdx.y) >> 1)) >> 2) * 2048)) + (ax2 * 1024)) + ((((int)threadIdx.y) & 1) * 512)) + ((((int)threadIdx.x) >> 2) * 64)) + ((((ax0_ax1_ax3_ax4_ax5_fused_0 * 3) + (((int)threadIdx.y) >> 1)) & 3) * 16)) + ((((int)threadIdx.x) & 3) * 4))) = *(half4*)(((half*)buf_dyn_shmem) + ((((ax0_ax1_ax3_ax4_ax5_fused_0 * 1792) + (((int)threadIdx.y) * 128)) + (((int)threadIdx.x) * 4)) + 4608));
-    }
+    *(half4*)(conv3d_ndhwc + (((((((((int)blockIdx.y) * 802816) + (((int)blockIdx.x) * 16384)) + (ax2 * 1024)) + ((((int)threadIdx.y) & 1) * 512)) + ((((int)threadIdx.x) >> 2) * 64)) + ((((int)threadIdx.y) >> 1) * 16)) + ((((int)threadIdx.x) & 3) * 4))) = *(half4*)(((half*)buf_dyn_shmem) + ((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)));
+    *(half4*)(conv3d_ndhwc + ((((((((((int)blockIdx.y) * 802816) + (((int)blockIdx.x) * 16384)) + (ax2 * 1024)) + ((((int)threadIdx.y) & 1) * 512)) + ((((int)threadIdx.x) >> 2) * 64)) + ((((int)threadIdx.y) >> 1) * 16)) + ((((int)threadIdx.x) & 3) * 4)) + 32)) = *(half4*)(((half*)buf_dyn_shmem) + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 512));
+    *(half4*)(conv3d_ndhwc + ((((((((((int)blockIdx.y) * 802816) + (((int)blockIdx.x) * 16384)) + (ax2 * 1024)) + ((((int)threadIdx.y) & 1) * 512)) + ((((int)threadIdx.x) >> 2) * 64)) + ((((int)threadIdx.y) >> 1) * 16)) + ((((int)threadIdx.x) & 3) * 4)) + 4096)) = *(half4*)(((half*)buf_dyn_shmem) + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 1024));
+    *(half4*)(conv3d_ndhwc + ((((((((((int)blockIdx.y) * 802816) + (((int)blockIdx.x) * 16384)) + (ax2 * 1024)) + ((((int)threadIdx.y) & 1) * 512)) + ((((int)threadIdx.x) >> 2) * 64)) + ((((int)threadIdx.y) >> 1) * 16)) + ((((int)threadIdx.x) & 3) * 4)) + 4128)) = *(half4*)(((half*)buf_dyn_shmem) + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 1536));
+    *(half4*)(conv3d_ndhwc + ((((((((((int)blockIdx.y) * 802816) + (((int)blockIdx.x) * 16384)) + (ax2 * 1024)) + ((((int)threadIdx.y) & 1) * 512)) + ((((int)threadIdx.x) >> 2) * 64)) + ((((int)threadIdx.y) >> 1) * 16)) + ((((int)threadIdx.x) & 3) * 4)) + 8192)) = *(half4*)(((half*)buf_dyn_shmem) + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 2048));
+    *(half4*)(conv3d_ndhwc + ((((((((((int)blockIdx.y) * 802816) + (((int)blockIdx.x) * 16384)) + (ax2 * 1024)) + ((((int)threadIdx.y) & 1) * 512)) + ((((int)threadIdx.x) >> 2) * 64)) + ((((int)threadIdx.y) >> 1) * 16)) + ((((int)threadIdx.x) & 3) * 4)) + 8224)) = *(half4*)(((half*)buf_dyn_shmem) + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 2560));
+    *(half4*)(conv3d_ndhwc + ((((((((((int)blockIdx.y) * 802816) + (((int)blockIdx.x) * 16384)) + (ax2 * 1024)) + ((((int)threadIdx.y) & 1) * 512)) + ((((int)threadIdx.x) >> 2) * 64)) + ((((int)threadIdx.y) >> 1) * 16)) + ((((int)threadIdx.x) & 3) * 4)) + 12288)) = *(half4*)(((half*)buf_dyn_shmem) + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 3072));
+    *(half4*)(conv3d_ndhwc + ((((((((((int)blockIdx.y) * 802816) + (((int)blockIdx.x) * 16384)) + (ax2 * 1024)) + ((((int)threadIdx.y) & 1) * 512)) + ((((int)threadIdx.x) >> 2) * 64)) + ((((int)threadIdx.y) >> 1) * 16)) + ((((int)threadIdx.x) & 3) * 4)) + 12320)) = *(half4*)(((half*)buf_dyn_shmem) + (((((int)threadIdx.y) * 128) + (((int)threadIdx.x) * 4)) + 3584));
   }
 }
 
