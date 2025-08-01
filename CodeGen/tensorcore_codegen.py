@@ -5,7 +5,7 @@ import numpy as np
 import tvm
 from tvm import meta_schedule as ms
 from tvm.meta_schedule.arg_info import ArgInfo
-from tvm.meta_schedule.testing.te_workload import create_te_workload
+from tensorcore_te_workload import create_te_workload
 from tvm.target import Target
 import tempfile
 import tvm
