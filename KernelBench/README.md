@@ -9,7 +9,7 @@ Each subdirectory corresponds to a specific backend and includes platform-optimi
 - `C/` – Source code for **CPU** platform (written in standard C)
 - `CUDA/` – Source code for **NVIDIA GPUs** (written in CUDA C)
 - `HIP/` – Source code for **AMD GPUs** (written in HIP)
-
+- `Tensor_core/` -Source code for **NVIDIA GPUs** (written in CUDA C with Tensor Cores)
 ## Description
 
 Each platform directory contains hand-optimized or auto-generated kernels for a variety of tensor operators,  
