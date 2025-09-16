@@ -1,0 +1,31 @@
+// =============================================================================
+// 3. Shape: [32, 64] → Total: 2,048 elements (FC layer or small tensor)
+// =============================================================================
+__global__ void __launch_bounds__(960)
+sub_32x64(float *__restrict__ A, float *__restrict__ B, float *__restrict__ C) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < 2048) {
+        C[idx] = A[idx] - B[idx];
+    }
+}
+
+extern "C" void sub_kernel_32x64(float *h_A, float *h_B, float *h_C) {
+    float *d_A, *d_B, *d_C;
+    const int total = 32 * 64;
+
+    cudaMalloc(&d_A, total * sizeof(float));
+    cudaMalloc(&d_B, total * sizeof(float));
+    cudaMalloc(&d_C, total * sizeof(float));
+
+    cudaMemcpy(d_A, h_A, total * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_B, h_B, total * sizeof(float), cudaMemcpyHostToDevice);
+
+    dim3 blockSize(960);
+    dim3 numBlocks((total + 959) / 960);
+
+    sub_32x64<<<numBlocks, blockSize>>>(d_A, d_B, d_C);
+
+    cudaMemcpy(h_C, d_C, total * sizeof(float), cudaMemcpyDeviceToHost);
+
+    cudaFree(d_A); cudaFree(d_B); cudaFree(d_C);
+}
