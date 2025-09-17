@@ -6,12 +6,14 @@ from concurrent.futures import ProcessPoolExecutor
 
 from tqdm import tqdm
 
-from benchmark.utils import run_dlboost_compilation as run_compilation
+from evaluation.macros import DLBOOST_MACROS as macro
+from evaluation.utils import run_dlboost_compilation as run_compilation
 
 
 def compile_cpp_file(file_path):
-    """
-    Compile a single .cpp file (with DL Boost macros) into a .so and clean up.
+    """Compile a single .cpp file (with DL Boost macros) into a .so and clean
+    up.
+
     Returns True on success, False on failure.
     """
     dir_name, base_name = os.path.split(file_path)
@@ -21,10 +23,6 @@ def compile_cpp_file(file_path):
     # Read source code
     with open(file_path, "r") as f:
         src = f.read()
-    # Read macro
-    macro_path = os.path.join("benchmark", "macro", "dlboost_macro.txt")
-    with open(macro_path, "r") as f:
-        macro = f.read()
 
     # Write temporary backup file
     bak_path = os.path.join(dir_name, f"{name_no_ext}_bak.cpp")

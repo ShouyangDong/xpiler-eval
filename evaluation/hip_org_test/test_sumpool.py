@@ -5,8 +5,9 @@ import subprocess
 
 import torch
 
-from benchmark.utils import run_hip_compilation as run_compilation
-from benchmark.utils import sumpool_np
+from evaluation.macros import HIP_MACROS as macro
+from evaluation.utils import run_hip_compilation as run_compilation
+from evaluation.utils import sumpool_np
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -37,13 +38,7 @@ if __name__ == "__main__":
     so_name = args.file.replace(".hip", ".so")
     with open(args.file, "r") as f:
         code = f.read()
-        f.close()
 
-    with open(
-        os.path.join(os.getcwd(), "benchmark/macro/hip_macro.txt"), "r"
-    ) as f:
-        macro = f.read()
-        f.close()
     code = macro + code
 
     file_name = args.file.replace(
@@ -51,7 +46,7 @@ if __name__ == "__main__":
     )
     with open(file_name, mode="w") as f:
         f.write(code)
-        f.close()
+
     success, output = run_compilation(so_name, file_name)
     os.remove(file_name)
 

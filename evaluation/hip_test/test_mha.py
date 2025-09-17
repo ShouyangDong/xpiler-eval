@@ -8,9 +8,9 @@ from ctypes import CDLL
 import numpy as np
 import torch
 import torch.nn.functional as F
-
 from benchmark.template.hip_host_template import create_hip_func
-from benchmark.utils import run_hip_compilation as run_compilation
+
+from evaluation.utils import run_hip_compilation as run_compilation
 
 
 def ref_program(q, k, v, causal=False):

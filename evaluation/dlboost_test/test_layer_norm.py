@@ -5,7 +5,8 @@ import subprocess
 
 import torch
 
-from benchmark.utils import run_dlboost_compilation as run_compilation
+from evaluation.macros import DLBOOST_MACROS as macro
+from evaluation.utils import run_dlboost_compilation as run_compilation
 
 
 def ref_program(x, gamma, beta, eps=1e-5):
@@ -18,7 +19,8 @@ def ref_program(x, gamma, beta, eps=1e-5):
 
     # Calculate output
     out = gamma * x_normalized + beta
-    return out  # Return the output in numpy format to maintain interface consistency.
+    # Return the output in numpy format to maintain interface consistency.
+    return out
 
 
 if __name__ == "__main__":
@@ -34,10 +36,6 @@ if __name__ == "__main__":
     with open(args.file, "r") as f:
         code = f.read()
 
-    with open(
-        os.path.join(os.getcwd(), "benchmark/macro/dlboost_macro.txt"), "r"
-    ) as f:
-        macro = f.read()
     code = macro + code
 
     file_name = args.file.replace(

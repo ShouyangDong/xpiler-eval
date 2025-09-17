@@ -7,7 +7,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from tqdm import tqdm
 
-from benchmark.utils import run_test
+from evaluation.utils import run_test
 
 # mapping from operator name prefix to its test script
 TEST_FILE_MAPPING = {
@@ -36,9 +36,10 @@ TEST_FILE_MAPPING = {
 
 
 def process_file(file_path, test_dir):
-    """
-    Run the corresponding test for a single .mlu or .cpp file.
-    Returns (file_path, output) where output is the subprocess result or error string.
+    """Run the corresponding test for a single .mlu or .cpp file.
+
+    Returns (file_path, output) where output is the subprocess result or error
+    string.
     """
     base_name = os.path.basename(file_path)
     name = base_name.split("_")[0]
@@ -88,7 +89,10 @@ def main():
         for future in tqdm(as_completed(future_to_file), total=total):
             future_to_file[future]
             file_path, output = future.result()
-            if hasattr(output, "stdout") and "Verification successful!" in output.stdout:
+            if (
+                hasattr(output, "stdout")
+                and "Verification successful!" in output.stdout
+            ):
                 success_count += 1
             else:
                 # print failures or warnings

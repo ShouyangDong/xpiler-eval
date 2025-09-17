@@ -6,12 +6,13 @@ from concurrent.futures import ProcessPoolExecutor
 
 from tqdm import tqdm
 
-from benchmark.utils import run_cuda_compilation as run_compilation
+from evaluation.macros import CUDA_MACROS as macro
+from evaluation.utils import run_cuda_compilation as run_compilation
 
 
 def compile_cuda_file(file_path):
-    """
-    Compile a single .cuda file into a .so and clean up.
+    """Compile a single .cuda file into a .so and clean up.
+
     Returns True if compilation succeeded, False otherwise.
     """
     # Derive names and paths
@@ -22,9 +23,6 @@ def compile_cuda_file(file_path):
     # Read source and macro
     with open(file_path, "r") as f:
         src = f.read()
-    macro_path = os.path.join("benchmark", "macro", "cuda_macro.txt")
-    with open(macro_path, "r") as f:
-        macro = f.read()
 
     # Write temporary backed-up file
     bak_path = os.path.join(dir_name, f"{name_no_ext}_bak.cu")

@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from tqdm import tqdm
 
-from benchmark.utils import run_test
+from evaluation.utils import run_test
 
 # Map operator prefix to its HIP test script name
 TEST_SCRIPT_MAP = {
@@ -36,8 +36,8 @@ TEST_SCRIPT_MAP = {
 
 
 def run_test_for_file(file_path, test_dir):
-    """
-    Run the corresponding HIP test for a single .hip file.
+    """Run the corresponding HIP test for a single .hip file.
+
     Returns (base_name, success, output).
     """
     base_name = os.path.basename(file_path)

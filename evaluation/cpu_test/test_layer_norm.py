@@ -5,7 +5,8 @@ import subprocess
 
 import torch
 
-from benchmark.utils import run_dlboost_compilation as run_compilation
+from evaluation.macros import CPP_MACROS as macro
+from evaluation.utils import run_dlboost_compilation as run_compilation
 
 
 def ref_program(x, gamma, beta, eps=1e-5):

@@ -5,7 +5,8 @@ import subprocess
 
 import numpy as np
 
-from benchmark.utils import run_cuda_compilation as run_compilation
+from evaluation.macros import CUDA_MACROS as macro
+from evaluation.utils import run_cuda_compilation as run_compilation
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -34,13 +35,12 @@ if __name__ == "__main__":
     so_name = args.file.replace(".cu", ".so")
     with open(args.file, "r") as f:
         code = f.read()
-        f.close()
 
     with open(
         os.path.join(os.getcwd(), "benchmark/macro/cuda_macro.txt"), "r"
     ) as f:
         macro = f.read()
-        f.close()
+
     code = macro + code
 
     file_name = args.file.replace(
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     )
     with open(file_name, mode="w") as f:
         f.write(code)
-        f.close()
+
     success, output = run_compilation(so_name, file_name)
     os.remove(file_name)
 

@@ -6,7 +6,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 from tqdm import tqdm
 
-from benchmark.utils import run_hip_compilation as run_compilation
+from evaluation.macros import HIP_MACROS as macro
+from evaluation.utils import run_hip_compilation as run_compilation
 
 
 def compile_file(file_name):
@@ -15,9 +16,7 @@ def compile_file(file_name):
     # 1) Read the original code + incorporate macros
     with open(file_name, "r") as f:
         code = f.read()
-    macro_path = os.path.join("benchmark", "macro", "hip_macro.txt")
-    with open(macro_path, "r") as f:
-        macro = f.read()
+
     full_code = macro + code
 
     # 2) Write backup .hip file.
@@ -54,7 +53,8 @@ def main():
     )
     args = parser.parse_args()
 
-    # Obtain the directory from the command line arguments, then search for all .hip files.
+    # Obtain the directory from the command line arguments, then search for
+    # all .hip files.
     pattern = os.path.join(args.src_dir, "*.hip")
     files = glob.glob(pattern)
     if not files:

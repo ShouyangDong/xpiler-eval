@@ -6,7 +6,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from benchmark.utils import run_cuda_compilation as run_compilation
+from evaluation.macros import CUDA_MACROS as macro
+from evaluation.utils import run_cuda_compilation as run_compilation
 
 
 @torch.no_grad()
@@ -79,13 +80,7 @@ def verify_deformable(name, file, shape):
     so_name = args.file.replace(".cpp", ".so")
     with open(args.file, "r") as f:
         code = f.read()
-        f.close()
 
-    with open(
-        os.path.join(os.getcwd(), "benchmark/macro/cpp_macro.txt"), "r"
-    ) as f:
-        macro = f.read()
-        f.close()
     code = macro + code
 
     file_name = args.file.replace(
@@ -93,7 +88,6 @@ def verify_deformable(name, file, shape):
     )
     with open(file_name, mode="w") as f:
         f.write(code)
-        f.close()
 
     success, output = run_compilation(so_name, file_name)
     os.remove(file_name)
