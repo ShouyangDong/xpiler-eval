@@ -1,6 +1,2225 @@
 [
-	"op_name" : "",
-        "dtype": 
-	"input_shape": ,
-	"output_shape": 
+    {
+        "op_name": "deformable",
+        "dtype": "float32",
+        "args": [
+            4,
+            8,
+            512,
+            100,
+            4,
+            4
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            1,
+            4,
+            5,
+            128
+        ]
+    },
+    {
+        "op_name": "maxpool",
+        "dtype": "float32",
+        "args": [
+            16,
+            64,
+            64,
+            64,
+            5,
+            5,
+            2,
+            2
+        ]
+    },
+    {
+        "op_name": "conv1d",
+        "dtype": "float32",
+        "args": [
+            190,
+            192
+        ]
+    },
+    {
+        "op_name": "sign",
+        "dtype": "float32",
+        "args": [
+            5,
+            128
+        ]
+    },
+    {
+        "op_name": "gemv",
+        "dtype": "float32",
+        "args": [
+            32,
+            36
+        ]
+    },
+    {
+        "op_name": "sumpool",
+        "dtype": "float32",
+        "args": [
+            16,
+            112,
+            112,
+            64,
+            3,
+            3,
+            2,
+            2
+        ]
+    },
+    {
+        "op_name": "conv1d",
+        "dtype": "float32",
+        "args": [
+            5,
+            7
+        ]
+    },
+    {
+        "op_name": "layernorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            4,
+            128
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            16,
+            128
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            64,
+            4096,
+            12,
+            256
+        ]
+    },
+    {
+        "op_name": "conv2d",
+        "dtype": "float32",
+        "args": [
+            32,
+            8,
+            8,
+            128,
+            64,
+            2,
+            2,
+            128,
+            3,
+            0
+        ]
+    },
+    {
+        "op_name": "add",
+        "dtype": "float32",
+        "args": [
+            21,
+            192
+        ]
+    },
+    {
+        "op_name": "sumpool",
+        "dtype": "float32",
+        "args": [
+            1,
+            5,
+            5,
+            64,
+            3,
+            3,
+            2,
+            2
+        ]
+    },
+    {
+        "op_name": "softmax",
+        "dtype": "float32",
+        "args": [
+            12,
+            3,
+            128
+        ]
+    },
+    {
+        "op_name": "deformable",
+        "dtype": "float32",
+        "args": [
+            1,
+            8,
+            512,
+            100,
+            4,
+            4
+        ]
+    },
+    {
+        "op_name": "sumpool",
+        "dtype": "float32",
+        "args": [
+            16,
+            64,
+            64,
+            64,
+            5,
+            5,
+            1,
+            1
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            64,
+            512
+        ]
+    },
+    {
+        "op_name": "conv1d",
+        "dtype": "float32",
+        "args": [
+            126,
+            128
+        ]
+    },
+    {
+        "op_name": "relu",
+        "dtype": "float32",
+        "args": [
+            5,
+            128
+        ]
+    },
+    {
+        "op_name": "gemv",
+        "dtype": "float32",
+        "args": [
+            3,
+            4
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            1,
+            32,
+            128,
+            128
+        ]
+    },
+    {
+        "op_name": "rmsnorm",
+        "dtype": "float32",
+        "args": [
+            2048,
+            2048
+        ]
+    },
+    {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            8,
+            64
+        ]
+    },
+    {
+        "op_name": "add",
+        "dtype": "float32",
+        "args": [
+            320
+        ]
+    },
+    {
+        "op_name": "add",
+        "dtype": "float32",
+        "args": [
+            18,
+            128
+        ]
+    },
+    {
+        "op_name": "rmsnorm",
+        "dtype": "float32",
+        "args": [
+            4096,
+            4096
+        ]
+    },
+    {
+        "op_name": "softmax",
+        "dtype": "float32",
+        "args": [
+            8,
+            10,
+            64
+        ]
+    },
+    {
+        "op_name": "gelu",
+        "dtype": "float32",
+        "args": [
+            45,
+            25
+        ]
+    },
+    {
+        "op_name": "conv1d",
+        "dtype": "float32",
+        "args": [
+            44,
+            46
+        ]
+    },
+    {
+        "op_name": "rmsnorm",
+        "dtype": "float32",
+        "args": [
+            8192,
+            8192
+        ]
+    },
+    {
+        "op_name": "sign",
+        "dtype": "float32",
+        "args": [
+            12,
+            3,
+            128
+        ]
+    },
+    {
+        "op_name": "gemv",
+        "dtype": "float32",
+        "args": [
+            32,
+            512
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            1,
+            32,
+            128,
+            6
+        ]
+    },
+    {
+        "op_name": "minpool",
+        "dtype": "float32",
+        "args": [
+            5,
+            112,
+            112,
+            64,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "minpool",
+        "dtype": "float32",
+        "args": [
+            5,
+            32,
+            32,
+            64,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "minpool",
+        "dtype": "float32",
+        "args": [
+            16,
+            112,
+            112,
+            64,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            1,
+            64
+        ]
+    },
+    {
+        "op_name": "layernorm",
+        "dtype": "float32",
+        "args": [
+            2,
+            8,
+            128
+        ]
+    },
+    {
+        "op_name": "depthwiseconv",
+        "dtype": "float32",
+        "args": [
+            6,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "gemm",
+        "dtype": "float32",
+        "args": [
+            4,
+            128,
+            128
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            1,
+            2048,
+            12,
+            256
+        ]
+    },
+    {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            1,
+            1
+        ]
+    },
+    {
+        "op_name": "sign",
+        "dtype": "float32",
+        "args": [
+            3,
+            4,
+            5
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            128,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "gelu",
+        "dtype": "float32",
+        "args": [
+            5,
+            12,
+            23,
+            128
+        ]
+    },
+    {
+        "op_name": "minpool",
+        "dtype": "float32",
+        "args": [
+            4,
+            8,
+            8,
+            64,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            1,
+            32,
+            5,
+            128
+        ]
+    },
+    {
+        "op_name": "gemm",
+        "dtype": "float32",
+        "args": [
+            4,
+            128,
+            6
+        ]
+    },
+    {
+        "op_name": "softmax",
+        "dtype": "float32",
+        "args": [
+            7,
+            1,
+            6,
+            7
+        ]
+    },
+    {
+        "op_name": "sigmoid",
+        "dtype": "float32",
+        "args": [
+            3,
+            4,
+            5
+        ]
+    },
+    {
+        "op_name": "gemm",
+        "dtype": "float32",
+        "args": [
+            4,
+            5,
+            6
+        ]
+    },
+    {
+        "op_name": "add",
+        "dtype": "float32",
+        "args": [
+            1,
+            15,
+            64
+        ]
+    },
+    {
+        "op_name": "sumpool",
+        "dtype": "float32",
+        "args": [
+            5,
+            32,
+            32,
+            64,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "conv2d",
+        "dtype": "float32",
+        "args": [
+            16,
+            8,
+            8,
+            128,
+            64,
+            2,
+            2,
+            128,
+            3,
+            0
+        ]
+    },
+    {
+        "op_name": "layernorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            8,
+            8
+        ]
+    },
+    {
+        "op_name": "gemm",
+        "dtype": "float32",
+        "args": [
+            4,
+            16,
+            6
+        ]
+    },
+    {
+        "op_name": "gemm",
+        "dtype": "float32",
+        "args": [
+            4,
+            5,
+            128
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            3,
+            32,
+            5,
+            6
+        ]
+    },
+    {
+        "op_name": "avgpool",
+        "dtype": "float32",
+        "args": [
+            16,
+            64,
+            64,
+            64,
+            5,
+            5,
+            2,
+            2
+        ]
+    },
+    {
+        "op_name": "relu",
+        "dtype": "float32",
+        "args": [
+            3,
+            4,
+            5
+        ]
+    },
+    {
+        "op_name": "sigmoid",
+        "dtype": "float32",
+        "args": [
+            192
+        ]
+    },
+    {
+        "op_name": "gemv",
+        "dtype": "float32",
+        "args": [
+            125,
+            128
+        ]
+    },
+    {
+        "op_name": "sigmoid",
+        "dtype": "float32",
+        "args": [
+            5,
+            7,
+            3,
+            32
+        ]
+    },
+    {
+        "op_name": "maxpool",
+        "dtype": "float32",
+        "args": [
+            1,
+            5,
+            5,
+            64,
+            5,
+            5,
+            1,
+            1
+        ]
+    },
+    {
+        "op_name": "gemm",
+        "dtype": "float32",
+        "args": [
+            32,
+            128,
+            6
+        ]
+    },
+    {
+        "op_name": "gelu",
+        "dtype": "float32",
+        "args": [
+            8,
+            10,
+            64
+        ]
+    },
+    {
+        "op_name": "add",
+        "dtype": "float32",
+        "args": [
+            1
+        ]
+    },
+    {
+        "op_name": "gemm",
+        "dtype": "float32",
+        "args": [
+            32,
+            5,
+            128
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            1,
+            4096,
+            12,
+            512
+        ]
+    },
+    {
+        "op_name": "depthwiseconv",
+        "dtype": "float32",
+        "args": [
+            6,
+            3,
+            128
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            4,
+            128,
+            128,
+            128
+        ]
+    },
+    {
+        "op_name": "rmsnorm",
+        "dtype": "float32",
+        "args": [
+            8192,
+            4096
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            1,
+            1
+        ]
+    },
+    {
+        "op_name": "gelu",
+        "dtype": "float32",
+        "args": [
+            3,
+            4,
+            5
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            1,
+            4096,
+            16,
+            256
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            4,
+            32
+        ]
+    },
+    {
+        "op_name": "gelu",
+        "dtype": "float32",
+        "args": [
+            12,
+            3,
+            128
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            256,
+            2,
+            2
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            64,
+            4,
+            4
+        ]
+    },
+    {
+        "op_name": "depthwiseconv",
+        "dtype": "float32",
+        "args": [
+            128,
+            3,
+            128
+        ]
+    },
+    {
+        "op_name": "avgpool",
+        "dtype": "float32",
+        "args": [
+            1,
+            5,
+            5,
+            64,
+            5,
+            5,
+            1,
+            1
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            1,
+            4096,
+            6,
+            256
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            8,
+            16,
+            16
+        ]
+    },
+    {
+        "op_name": "relu",
+        "dtype": "float32",
+        "args": [
+            12,
+            3,
+            128
+        ]
+    },
+    {
+        "op_name": "maxpool",
+        "dtype": "float32",
+        "args": [
+            16,
+            112,
+            112,
+            64,
+            5,
+            5,
+            2,
+            2
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            1,
+            4,
+            5,
+            6
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            16,
+            8,
+            8
+        ]
+    },
+    {
+        "op_name": "conv2d",
+        "dtype": "float32",
+        "args": [
+            32,
+            8,
+            8,
+            128,
+            64,
+            2,
+            2,
+            128,
+            2,
+            0
+        ]
+    },
+    {
+        "op_name": "sigmoid",
+        "dtype": "float32",
+        "args": [
+            7,
+            1,
+            6,
+            7
+        ]
+    },
+    {
+        "op_name": "sign",
+        "dtype": "float32",
+        "args": [
+            45,
+            25
+        ]
+    },
+    {
+        "op_name": "deformable",
+        "dtype": "float32",
+        "args": [
+            1,
+            8,
+            256,
+            100,
+            4,
+            4
+        ]
+    },
+    {
+        "op_name": "gemm",
+        "dtype": "float32",
+        "args": [
+            32,
+            32,
+            128
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            64,
+            2048,
+            12,
+            512
+        ]
+    },
+    {
+        "op_name": "gelu",
+        "dtype": "float32",
+        "args": [
+            7,
+            1,
+            6,
+            7
+        ]
+    },
+    {
+        "op_name": "layernorm",
+        "dtype": "float32",
+        "args": [
+            2,
+            8,
+            8
+        ]
+    },
+    {
+        "op_name": "gemv",
+        "dtype": "float32",
+        "args": [
+            112,
+            128
+        ]
+    },
+    {
+        "op_name": "conv2d",
+        "dtype": "float32",
+        "args": [
+            16,
+            8,
+            8,
+            128,
+            64,
+            2,
+            2,
+            128,
+            2,
+            0
+        ]
+    },
+    {
+        "op_name": "sigmoid",
+        "dtype": "float32",
+        "args": [
+            8,
+            10,
+            64
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            32,
+            7,
+            7
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            64,
+            2048,
+            16,
+            256
+        ]
+    },
+    {
+        "op_name": "rmsnorm",
+        "dtype": "float32",
+        "args": [
+            4096,
+            8192
+        ]
+    },
+    {
+        "op_name": "relu",
+        "dtype": "float32",
+        "args": [
+            45,
+            25
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            1,
+            32,
+            5,
+            6
+        ]
+    },
+    {
+        "op_name": "conv1d",
+        "dtype": "float32",
+        "args": [
+            25,
+            27
+        ]
+    },
+    {
+        "op_name": "avgpool",
+        "dtype": "float32",
+        "args": [
+            5,
+            112,
+            112,
+            64,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            512,
+            1,
+            1
+        ]
+    },
+    {
+        "op_name": "avgpool",
+        "dtype": "float32",
+        "args": [
+            16,
+            112,
+            112,
+            64,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            3,
+            32,
+            32,
+            6
+        ]
+    },
+    {
+        "op_name": "gelu",
+        "dtype": "float32",
+        "args": [
+            5,
+            128
+        ]
+    },
+    {
+        "op_name": "sumpool",
+        "dtype": "float32",
+        "args": [
+            5,
+            112,
+            112,
+            64,
+            3,
+            3,
+            2,
+            2
+        ]
+    },
+    {
+        "op_name": "deformable",
+        "dtype": "float32",
+        "args": [
+            4,
+            8,
+            256,
+            100,
+            4,
+            4
+        ]
+    },
+    {
+        "op_name": "sigmoid",
+        "dtype": "float32",
+        "args": [
+            45,
+            25
+        ]
+    },
+    {
+        "op_name": "gemv",
+        "dtype": "float32",
+        "args": [
+            125,
+            312
+        ]
+    },
+    {
+        "op_name": "minpool",
+        "dtype": "float32",
+        "args": [
+            16,
+            64,
+            64,
+            64,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            32,
+            256
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            1,
+            4096,
+            16,
+            512
+        ]
+    },
+    {
+        "op_name": "rmsnorm",
+        "dtype": "float32",
+        "args": [
+            2048,
+            4096
+        ]
+    },
+    {
+        "op_name": "gemm",
+        "dtype": "float32",
+        "args": [
+            32,
+            32,
+            6
+        ]
+    },
+    {
+        "op_name": "relu",
+        "dtype": "float32",
+        "args": [
+            5,
+            7,
+            3,
+            32
+        ]
+    },
+    {
+        "op_name": "rmsnorm",
+        "dtype": "float32",
+        "args": [
+            4096,
+            2048
+        ]
+    },
+    {
+        "op_name": "sumpool",
+        "dtype": "float32",
+        "args": [
+            4,
+            8,
+            8,
+            64,
+            3,
+            3,
+            2,
+            2
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            1,
+            4,
+            16,
+            6
+        ]
+    },
+    {
+        "op_name": "depthwiseconv",
+        "dtype": "float32",
+        "args": [
+            256,
+            3,
+            128
+        ]
+    },
+    {
+        "op_name": "gelu",
+        "dtype": "float32",
+        "args": [
+            5,
+            7,
+            3,
+            32
+        ]
+    },
+    {
+        "op_name": "conv2d",
+        "dtype": "float32",
+        "args": [
+            32,
+            8,
+            8,
+            64,
+            128,
+            2,
+            2,
+            64,
+            3,
+            0
+        ]
+    },
+    {
+        "op_name": "relu",
+        "dtype": "float32",
+        "args": [
+            8,
+            10,
+            64
+        ]
+    },
+    {
+        "op_name": "sumpool",
+        "dtype": "float32",
+        "args": [
+            4,
+            56,
+            56,
+            128,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "add",
+        "dtype": "float32",
+        "args": [
+            100,
+            2,
+            10,
+            1024
+        ]
+    },
+    {
+        "op_name": "avgpool",
+        "dtype": "float32",
+        "args": [
+            4,
+            35,
+            35,
+            192,
+            5,
+            5,
+            2,
+            2
+        ]
+    },
+    {
+        "op_name": "softmax",
+        "dtype": "float32",
+        "args": [
+            3,
+            4,
+            5
+        ]
+    },
+    {
+        "op_name": "layernorm",
+        "dtype": "float32",
+        "args": [
+            2,
+            4,
+            8
+        ]
+    },
+    {
+        "op_name": "gemv",
+        "dtype": "float32",
+        "args": [
+            125,
+            320
+        ]
+    },
+    {
+        "op_name": "add",
+        "dtype": "float32",
+        "args": [
+            64
+        ]
+    },
+    {
+        "op_name": "sign",
+        "dtype": "float32",
+        "args": [
+            5,
+            12,
+            23,
+            128
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            3,
+            4,
+            128,
+            128
+        ]
+    },
+    {
+        "op_name": "conv2d",
+        "dtype": "float32",
+        "args": [
+            16,
+            8,
+            8,
+            64,
+            128,
+            2,
+            2,
+            64,
+            2,
+            0
+        ]
+    },
+    {
+        "op_name": "conv2dnchw",
+        "dtype": "float32",
+        "args": [
+            32,
+            128,
+            8,
+            8,
+            64,
+            128,
+            2,
+            2,
+            2,
+            0
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            1,
+            4096,
+            12,
+            256
+        ]
+    },
+    {
+        "op_name": "gemm",
+        "dtype": "float32",
+        "args": [
+            32,
+            128,
+            128
+        ]
+    },
+    {
+        "op_name": "maxpool",
+        "dtype": "float32",
+        "args": [
+            4,
+            56,
+            56,
+            128,
+            5,
+            5,
+            2,
+            2
+        ]
+    },
+    {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            4,
+            32
+        ]
+    },
+    {
+        "op_name": "avgpool",
+        "dtype": "float32",
+        "args": [
+            5,
+            32,
+            32,
+            64,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "depthwiseconv",
+        "dtype": "float32",
+        "args": [
+            128,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "gemv",
+        "dtype": "float32",
+        "args": [
+            112,
+            124
+        ]
+    },
+    {
+        "op_name": "sigmoid",
+        "dtype": "float32",
+        "args": [
+            12,
+            3,
+            128
+        ]
+    },
+    {
+        "op_name": "conv1d",
+        "dtype": "float32",
+        "args": [
+            256,
+            258
+        ]
+    },
+    {
+        "op_name": "relu",
+        "dtype": "float32",
+        "args": [
+            7,
+            1,
+            6,
+            7
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            64,
+            2048,
+            16,
+            512
+        ]
+    },
+    {
+        "op_name": "conv2dnchw",
+        "dtype": "float32",
+        "args": [
+            16,
+            64,
+            8,
+            8,
+            128,
+            64,
+            2,
+            2,
+            3,
+            0
+        ]
+    },
+    {
+        "op_name": "gemv",
+        "dtype": "float32",
+        "args": [
+            3,
+            512
+        ]
+    },
+    {
+        "op_name": "avgpool",
+        "dtype": "float32",
+        "args": [
+            4,
+            56,
+            56,
+            128,
+            5,
+            5,
+            2,
+            2
+        ]
+    },
+    {
+        "op_name": "deformable",
+        "dtype": "float32",
+        "args": [
+            1,
+            8,
+            256,
+            200,
+            4,
+            4
+        ]
+    },
+    {
+        "op_name": "conv1d",
+        "dtype": "float32",
+        "args": [
+            222,
+            224
+        ]
+    },
+    {
+        "op_name": "conv2dnchw",
+        "dtype": "float32",
+        "args": [
+            16,
+            128,
+            8,
+            8,
+            64,
+            128,
+            2,
+            2,
+            2,
+            0
+        ]
+    },
+    {
+        "op_name": "deformable",
+        "dtype": "float32",
+        "args": [
+            4,
+            8,
+            256,
+            200,
+            4,
+            4
+        ]
+    },
+    {
+        "op_name": "gemm",
+        "dtype": "float32",
+        "args": [
+            4,
+            16,
+            128
+        ]
+    },
+    {
+        "op_name": "conv2dnchw",
+        "dtype": "float32",
+        "args": [
+            32,
+            64,
+            8,
+            8,
+            128,
+            64,
+            2,
+            2,
+            2,
+            0
+        ]
+    },
+    {
+        "op_name": "softmax",
+        "dtype": "float32",
+        "args": [
+            5,
+            128
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            1,
+            2048,
+            6,
+            256
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            32,
+            256
+        ]
+    },
+    {
+        "op_name": "minpool",
+        "dtype": "float32",
+        "args": [
+            1,
+            5,
+            5,
+            64,
+            5,
+            5,
+            1,
+            1
+        ]
+    },
+    {
+        "op_name": "depthwiseconv",
+        "dtype": "float32",
+        "args": [
+            256,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            64,
+            2048,
+            12,
+            256
+        ]
+    },
+    {
+        "op_name": "gemv",
+        "dtype": "float32",
+        "args": [
+            32,
+            64
+        ]
+    },
+    {
+        "op_name": "gemv",
+        "dtype": "float32",
+        "args": [
+            3,
+            16
+        ]
+    },
+    {
+        "op_name": "gemm",
+        "dtype": "float32",
+        "args": [
+            32,
+            5,
+            6
+        ]
+    },
+    {
+        "op_name": "conv2d",
+        "dtype": "float32",
+        "args": [
+            16,
+            8,
+            8,
+            64,
+            128,
+            2,
+            2,
+            64,
+            3,
+            0
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            64,
+            4096,
+            16,
+            256
+        ]
+    },
+    {
+        "op_name": "avgpool",
+        "dtype": "float32",
+        "args": [
+            4,
+            8,
+            8,
+            64,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "layernorm",
+        "dtype": "float32",
+        "args": [
+            2,
+            4,
+            128
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            3,
+            4,
+            5,
+            128
+        ]
+    },
+    {
+        "op_name": "layernorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            4,
+            8
+        ]
+    },
+    {
+        "op_name": "depthwiseconv",
+        "dtype": "float32",
+        "args": [
+            192,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            3,
+            4,
+            128,
+            6
+        ]
+    },
+    {
+        "op_name": "sign",
+        "dtype": "float32",
+        "args": [
+            8,
+            10,
+            64
+        ]
+    },
+    {
+        "op_name": "deformable",
+        "dtype": "float32",
+        "args": [
+            4,
+            8,
+            512,
+            200,
+            4,
+            4
+        ]
+    },
+    {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            16,
+            128
+        ]
+    },
+    {
+        "op_name": "conv2dnchw",
+        "dtype": "float32",
+        "args": [
+            32,
+            128,
+            8,
+            8,
+            64,
+            128,
+            2,
+            2,
+            3,
+            0
+        ]
+    },
+    {
+        "op_name": "softmax",
+        "dtype": "float32",
+        "args": [
+            5,
+            7,
+            3,
+            32
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            1,
+            4,
+            16,
+            128
+        ]
+    },
+    {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            64,
+            512
+        ]
+    },
+    {
+        "op_name": "minpool",
+        "dtype": "float32",
+        "args": [
+            4,
+            35,
+            35,
+            192,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "add",
+        "dtype": "float32",
+        "args": [
+            3,
+            3,
+            256
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            3,
+            32,
+            32,
+            128
+        ]
+    },
+    {
+        "op_name": "maxpool",
+        "dtype": "float32",
+        "args": [
+            5,
+            32,
+            32,
+            64,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "bmm",
+        "dtype": "float32",
+        "args": [
+            3,
+            4,
+            5,
+            6
+        ]
+    },
+    {
+        "op_name": "gemv",
+        "dtype": "float32",
+        "args": [
+            112,
+            224
+        ]
+    },
+    {
+        "op_name": "maxpool",
+        "dtype": "float32",
+        "args": [
+            4,
+            8,
+            8,
+            64,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            8,
+            64
+        ]
+    },
+    {
+        "op_name": "conv2d",
+        "dtype": "float32",
+        "args": [
+            32,
+            8,
+            8,
+            64,
+            128,
+            2,
+            2,
+            64,
+            2,
+            0
+        ]
+    },
+    {
+        "op_name": "add",
+        "dtype": "float32",
+        "args": [
+            4,
+            4,
+            4,
+            64
+        ]
+    },
+    {
+        "op_name": "deformable",
+        "dtype": "float32",
+        "args": [
+            1,
+            8,
+            512,
+            200,
+            4,
+            4
+        ]
+    },
+    {
+        "op_name": "softmax",
+        "dtype": "float32",
+        "args": [
+            45,
+            25
+        ]
+    },
+    {
+        "op_name": "mha",
+        "dtype": "float32",
+        "args": [
+            1,
+            2048,
+            16,
+            256
+        ]
+    },
+    {
+        "op_name": "sign",
+        "dtype": "float32",
+        "args": [
+            7,
+            1,
+            6,
+            7
+        ]
+    },
+    {
+        "op_name": "sumpool",
+        "dtype": "float32",
+        "args": [
+            4,
+            35,
+            35,
+            192,
+            5,
+            5,
+            2,
+            2
+        ]
+    },
+    {
+        "op_name": "layernorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            8,
+            128
+        ]
+    },
+    {
+        "op_name": "depthwiseconv",
+        "dtype": "float32",
+        "args": [
+            192,
+            3,
+            128
+        ]
+    },
+    {
+        "op_name": "minpool",
+        "dtype": "float32",
+        "args": [
+            4,
+            56,
+            56,
+            128,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            1,
+            64
+        ]
+    },
+    {
+        "op_name": "rmsnorm",
+        "dtype": "float32",
+        "args": [
+            2048,
+            8192
+        ]
+    },
+    {
+        "op_name": "conv2dnchw",
+        "dtype": "float32",
+        "args": [
+            32,
+            64,
+            8,
+            8,
+            128,
+            64,
+            2,
+            2,
+            3,
+            0
+        ]
+    },
+    {
+        "op_name": "sigmoid",
+        "dtype": "float32",
+        "args": [
+            5,
+            12,
+            23,
+            128
+        ]
+    },
+    {
+        "op_name": "conv2dnchw",
+        "dtype": "float32",
+        "args": [
+            16,
+            64,
+            8,
+            8,
+            128,
+            64,
+            2,
+            2,
+            2,
+            0
+        ]
+    },
+    {
+        "op_name": "maxpool",
+        "dtype": "float32",
+        "args": [
+            4,
+            35,
+            35,
+            192,
+            5,
+            5,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            4,
+            32,
+            32
+        ]
+    },
+    {
+        "op_name": "relu",
+        "dtype": "float32",
+        "args": [
+            5,
+            12,
+            23,
+            128
+        ]
+    },
+    {
+        "op_name": "maxpool",
+        "dtype": "float32",
+        "args": [
+            5,
+            112,
+            112,
+            64,
+            5,
+            5,
+            2,
+            2
+        ]
+    },
+    {
+        "op_name": "conv1d",
+        "dtype": "float32",
+        "args": [
+            312,
+            314
+        ]
+    },
+    {
+        "op_name": "conv2dnchw",
+        "dtype": "float32",
+        "args": [
+            16,
+            128,
+            8,
+            8,
+            64,
+            128,
+            2,
+            2,
+            3,
+            0
+        ]
+    },
+    {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            128,
+            1024
+        ]
+    },
+    {
+        "op_name": "sign",
+        "dtype": "float32",
+        "args": [
+            5,
+            7,
+            3,
+            32
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            128,
+            1024
+        ]
+    },
+    {
+        "op_name": "softmax",
+        "dtype": "float32",
+        "args": [
+            5,
+            12,
+            23,
+            128
+        ]
+    }
 ]
