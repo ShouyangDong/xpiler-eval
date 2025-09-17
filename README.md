@@ -15,3 +15,4 @@ It focuses on translating tensor operators between different hardware platforms,
 - **Performance Comparison**  
   Runtime performance compared to vendor-provided library implementations.
 
+Add research kernel
