@@ -1,1092 +1,0 @@
-===========================
-2025-07-29 02:37:08 [INFO] Logging directory: /tmp/tmpg765wv1h/logs
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 02:39:57 [DEBUG] XGB iter   0: tr-p-rmse: 0.537167	tr-a-peak@32: 0.993996	tr-rmse: 0.362891	tr-rmse: 0.362891
-2025-07-29 02:39:57 [DEBUG] XGB iter  25: tr-p-rmse: 0.043160	tr-a-peak@32: 1.000000	tr-rmse: 0.409287	tr-rmse: 0.409287
-2025-07-29 02:39:57 [DEBUG] XGB iter  50: tr-p-rmse: 0.043160	tr-a-peak@32: 1.000000	tr-rmse: 0.409287	tr-rmse: 0.409287
-2025-07-29 02:39:57 [DEBUG] XGB stopped. Best iteration: [12] tr-p-rmse:0.04316	tr-a-peak@32:1.00000	tr-rmse:0.40929	tr-rmse:0.40929 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 02:42:26 [DEBUG] XGB validation: p-rmse: 0.176149	a-peak@32: 0.959869
-2025-07-29 02:42:26 [DEBUG] XGB iter   0: tr-p-rmse: 0.597224	tr-a-peak@32: 0.521775	tr-rmse: 0.332584	tr-rmse: 0.332584
-2025-07-29 02:42:26 [DEBUG] XGB iter  25: tr-p-rmse: 0.042069	tr-a-peak@32: 1.000000	tr-rmse: 0.349382	tr-rmse: 0.349382
-2025-07-29 02:42:26 [DEBUG] XGB iter  50: tr-p-rmse: 0.042069	tr-a-peak@32: 1.000000	tr-rmse: 0.349382	tr-rmse: 0.349382
-2025-07-29 02:42:26 [DEBUG] XGB stopped. Best iteration: [12] tr-p-rmse:0.04207	tr-a-peak@32:1.00000	tr-rmse:0.34938	tr-rmse:0.34938 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 02:45:29 [DEBUG] XGB validation: p-rmse: 0.245560	a-peak@32: 0.963904
-2025-07-29 02:45:29 [DEBUG] XGB iter   0: tr-p-rmse: 0.483145	tr-a-peak@32: 0.964828	tr-rmse: 0.467293	tr-rmse: 0.467293
-2025-07-29 02:45:29 [DEBUG] XGB iter  25: tr-p-rmse: 0.038811	tr-a-peak@32: 0.999960	tr-rmse: 0.517523	tr-rmse: 0.517523
-2025-07-29 02:45:29 [DEBUG] XGB iter  50: tr-p-rmse: 0.038811	tr-a-peak@32: 0.999960	tr-rmse: 0.517523	tr-rmse: 0.517523
-2025-07-29 02:45:29 [DEBUG] XGB stopped. Best iteration: [13] tr-p-rmse:0.03881	tr-a-peak@32:0.99996	tr-rmse:0.51752	tr-rmse:0.51752 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 02:48:21 [DEBUG] XGB validation: p-rmse: 0.135046	a-peak@32: 0.938074
-2025-07-29 02:48:21 [DEBUG] XGB iter   0: tr-p-rmse: 0.530417	tr-a-peak@32: 0.908172	tr-rmse: 0.493554	tr-rmse: 0.493554
-2025-07-29 02:48:21 [DEBUG] XGB iter  25: tr-p-rmse: 0.036718	tr-a-peak@32: 0.998673	tr-rmse: 0.544923	tr-rmse: 0.544923
-2025-07-29 02:48:21 [DEBUG] XGB iter  50: tr-p-rmse: 0.036718	tr-a-peak@32: 0.998673	tr-rmse: 0.544923	tr-rmse: 0.544923
-2025-07-29 02:48:21 [DEBUG] XGB stopped. Best iteration: [13] tr-p-rmse:0.03672	tr-a-peak@32:0.99867	tr-rmse:0.54492	tr-rmse:0.54492 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 02:51:18 [DEBUG] XGB validation: p-rmse: 0.088559	a-peak@32: 0.920210
-2025-07-29 02:51:18 [DEBUG] XGB iter   0: tr-p-rmse: 0.490661	tr-a-peak@32: 0.902485	tr-rmse: 0.500249	tr-rmse: 0.500249
-2025-07-29 02:51:18 [DEBUG] XGB iter  25: tr-p-rmse: 0.030793	tr-a-peak@32: 1.000000	tr-rmse: 0.553938	tr-rmse: 0.553938
-2025-07-29 02:51:19 [DEBUG] XGB iter  50: tr-p-rmse: 0.030793	tr-a-peak@32: 1.000000	tr-rmse: 0.553938	tr-rmse: 0.553938
-2025-07-29 02:51:19 [DEBUG] XGB stopped. Best iteration: [15] tr-p-rmse:0.03079	tr-a-peak@32:1.00000	tr-rmse:0.55394	tr-rmse:0.55394 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 02:54:24 [DEBUG] XGB validation: p-rmse: 0.064871	a-peak@32: 0.960236
-2025-07-29 02:54:24 [DEBUG] XGB iter   0: tr-p-rmse: 0.462310	tr-a-peak@32: 0.920103	tr-rmse: 0.539668	tr-rmse: 0.539668
-2025-07-29 02:54:24 [DEBUG] XGB iter  25: tr-p-rmse: 0.035010	tr-a-peak@32: 0.999650	tr-rmse: 0.592531	tr-rmse: 0.592531
-2025-07-29 02:54:24 [DEBUG] XGB iter  50: tr-p-rmse: 0.035010	tr-a-peak@32: 0.999650	tr-rmse: 0.592531	tr-rmse: 0.592531
-2025-07-29 02:54:24 [DEBUG] XGB stopped. Best iteration: [12] tr-p-rmse:0.03501	tr-a-peak@32:0.99965	tr-rmse:0.59253	tr-rmse:0.59253 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 02:57:27 [DEBUG] XGB validation: p-rmse: 0.064428	a-peak@32: 0.978247
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:00:23 [DEBUG] XGB validation: p-rmse: 0.077399	a-peak@32: 0.988263
-2025-07-29 03:00:23 [DEBUG] XGB iter   0: tr-p-rmse: 0.421245	tr-a-peak@32: 0.925771	tr-rmse: 0.572380	tr-rmse: 0.572380
-2025-07-29 03:00:23 [DEBUG] XGB iter  25: tr-p-rmse: 0.037471	tr-a-peak@32: 0.991566	tr-rmse: 0.625107	tr-rmse: 0.625107
-2025-07-29 03:00:23 [DEBUG] XGB iter  50: tr-p-rmse: 0.037471	tr-a-peak@32: 0.991566	tr-rmse: 0.625107	tr-rmse: 0.625107
-2025-07-29 03:00:23 [DEBUG] XGB stopped. Best iteration: [13] tr-p-rmse:0.03747	tr-a-peak@32:0.99157	tr-rmse:0.62511	tr-rmse:0.62511 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:03:27 [DEBUG] XGB validation: p-rmse: 0.065855	a-peak@32: 0.983943
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:06:44 [DEBUG] XGB validation: p-rmse: 0.082638	a-peak@32: 0.983256
-2025-07-29 03:06:44 [DEBUG] XGB iter   0: tr-p-rmse: 0.392461	tr-a-peak@32: 0.957635	tr-rmse: 0.593362	tr-rmse: 0.593362
-2025-07-29 03:06:44 [DEBUG] XGB iter  25: tr-p-rmse: 0.042024	tr-a-peak@32: 0.999861	tr-rmse: 0.646181	tr-rmse: 0.646181
-2025-07-29 03:06:47 [DEBUG] XGB iter  50: tr-p-rmse: 0.042024	tr-a-peak@32: 0.999861	tr-rmse: 0.646181	tr-rmse: 0.646181
-2025-07-29 03:06:47 [DEBUG] XGB stopped. Best iteration: [15] tr-p-rmse:0.04202	tr-a-peak@32:0.99986	tr-rmse:0.64618	tr-rmse:0.64618 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:08:56 [DEBUG] XGB validation: p-rmse: 0.058970	a-peak@32: 0.988397
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:11:36 [DEBUG] XGB validation: p-rmse: 0.061941	a-peak@32: 0.983182
-2025-07-29 03:11:36 [DEBUG] XGB iter   0: tr-p-rmse: 0.371633	tr-a-peak@32: 0.956843	tr-rmse: 0.600936	tr-rmse: 0.600936
-2025-07-29 03:11:36 [DEBUG] XGB iter  25: tr-p-rmse: 0.043133	tr-a-peak@32: 0.996480	tr-rmse: 0.653916	tr-rmse: 0.653916
-2025-07-29 03:11:36 [DEBUG] XGB iter  50: tr-p-rmse: 0.043133	tr-a-peak@32: 0.996480	tr-rmse: 0.653916	tr-rmse: 0.653916
-2025-07-29 03:11:36 [DEBUG] XGB stopped. Best iteration: [18] tr-p-rmse:0.04313	tr-a-peak@32:0.99648	tr-rmse:0.65391	tr-rmse:0.65391 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:14:30 [DEBUG] XGB validation: p-rmse: 0.063018	a-peak@32: 0.988759
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:17:17 [DEBUG] XGB validation: p-rmse: 0.067818	a-peak@32: 0.981103
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:20:24 [DEBUG] XGB validation: p-rmse: 0.071800	a-peak@32: 0.983015
-2025-07-29 03:20:24 [DEBUG] XGB iter   0: tr-p-rmse: 0.352210	tr-a-peak@32: 0.980462	tr-rmse: 0.613268	tr-rmse: 0.613268
-2025-07-29 03:20:24 [DEBUG] XGB iter  25: tr-p-rmse: 0.041130	tr-a-peak@32: 0.993962	tr-rmse: 0.665975	tr-rmse: 0.665975
-2025-07-29 03:20:24 [DEBUG] XGB iter  50: tr-p-rmse: 0.041130	tr-a-peak@32: 0.993962	tr-rmse: 0.665975	tr-rmse: 0.665975
-2025-07-29 03:20:24 [DEBUG] XGB stopped. Best iteration: [15] tr-p-rmse:0.04113	tr-a-peak@32:0.99396	tr-rmse:0.66597	tr-rmse:0.66597 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:23:15 [DEBUG] XGB validation: p-rmse: 0.072449	a-peak@32: 0.987550
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K==== CUDA Kernel Source ====
-
-#if (((__CUDACC_VER_MAJOR__ == 11) && (__CUDACC_VER_MINOR__ >= 4)) || \
-     (__CUDACC_VER_MAJOR__ > 11))
-#define TVM_ENABLE_L2_PREFETCH 1
-#else
-#define TVM_ENABLE_L2_PREFETCH 0
-#endif
-
-#ifdef _WIN32
-  using uint = unsigned int;
-  using uchar = unsigned char;
-  using ushort = unsigned short;
-  using int64_t = long long;
-  using uint64_t = unsigned long long;
-#else
-  #define uint unsigned int
-  #define uchar unsigned char
-  #define ushort unsigned short
-  #define int64_t long long
-  #define uint64_t unsigned long long
-#endif
-extern "C" __global__ void __launch_bounds__(192) main_kernel(float* __restrict__ conv2d_nhwc, float* __restrict__ inputs, float* __restrict__ weight);
-extern "C" __global__ void __launch_bounds__(192) main_kernel(float* __restrict__ conv2d_nhwc, float* __restrict__ inputs, float* __restrict__ weight) {
-  float conv2d_nhwc_local[8];
-  __shared__ float PadInput_shared[768];
-  __shared__ float weight_shared[768];
-  conv2d_nhwc_local[0] = 0.000000e+00f;
-  conv2d_nhwc_local[4] = 0.000000e+00f;
-  conv2d_nhwc_local[1] = 0.000000e+00f;
-  conv2d_nhwc_local[5] = 0.000000e+00f;
-  conv2d_nhwc_local[2] = 0.000000e+00f;
-  conv2d_nhwc_local[6] = 0.000000e+00f;
-  conv2d_nhwc_local[3] = 0.000000e+00f;
-  conv2d_nhwc_local[7] = 0.000000e+00f;
-  for (int rh_0 = 0; rh_0 < 3; ++rh_0) {
-    for (int rc_0 = 0; rc_0 < 32; ++rc_0) {
-      __syncthreads();
-      float4 condval;
-      if (((((1 <= (((((((int)blockIdx.x) % 96) / 24) * 3) + (rh_0 * 2)) + ((((int)threadIdx.x) % 48) >> 4))) && ((((((int)blockIdx.x) % 96) / 24) + (((rh_0 * 2) + ((((int)threadIdx.x) % 48) >> 4)) / 3)) < 5)) && (1 <= ((((((int)blockIdx.x) % 24) >> 3) * 4) + ((((int)threadIdx.x) & 15) >> 1)))) && (((((((int)blockIdx.x) % 24) >> 3) * 4) + ((((int)threadIdx.x) & 15) >> 1)) < 15))) {
-        condval = *(float4*)(inputs + (((((((((((((int)blockIdx.x) / 96) * 200704) + ((((int)threadIdx.x) / 48) * 50176)) + (((((int)blockIdx.x) % 96) / 24) * 10752)) + (rh_0 * 7168)) + (((((int)threadIdx.x) % 48) >> 4) * 3584)) + (((((int)blockIdx.x) % 24) >> 3) * 1024)) + (((((int)threadIdx.x) & 15) >> 1) * 256)) + (rc_0 * 8)) + ((((int)threadIdx.x) & 1) * 4)) - 3840));
-      } else {
-        condval = make_float4(0.000000e+00f, 0.000000e+00f, 0.000000e+00f, 0.000000e+00f);
-      }
-      *(float4*)(PadInput_shared + (((int)threadIdx.x) * 4)) = condval;
-      *(float4*)(weight_shared + (((int)threadIdx.x) * 4)) = *(float4*)(weight + ((((((rh_0 * 196608) + ((((int)threadIdx.x) >> 6) * 65536)) + (rc_0 * 2048)) + (((((int)threadIdx.x) & 63) >> 3) * 256)) + ((((int)blockIdx.x) & 7) * 32)) + ((((int)threadIdx.x) & 7) * 4)));
-      __syncthreads();
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[((((int)threadIdx.x) >> 4) * 64)] * weight_shared[((((int)threadIdx.x) & 15) * 2)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 16)] * weight_shared[((((int)threadIdx.x) & 15) * 2)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[((((int)threadIdx.x) >> 4) * 64)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 1)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 16)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 1)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 8)] * weight_shared[((((int)threadIdx.x) & 15) * 2)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 24)] * weight_shared[((((int)threadIdx.x) & 15) * 2)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 8)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 1)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 24)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 1)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 1)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 32)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 17)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 32)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 1)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 33)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 17)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 33)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 9)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 32)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 25)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 32)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 9)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 33)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 25)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 33)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 2)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 64)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 18)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 64)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 2)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 65)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 18)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 65)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 10)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 64)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 26)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 64)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 10)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 65)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 26)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 65)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 3)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 96)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 19)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 96)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 3)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 97)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 19)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 97)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 11)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 96)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 27)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 96)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 11)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 97)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 27)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 97)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 16)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 256)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 32)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 256)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 16)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 257)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 32)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 257)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 24)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 256)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 40)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 256)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 24)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 257)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 40)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 257)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 17)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 288)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 33)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 288)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 17)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 289)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 33)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 289)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 25)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 288)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 41)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 288)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 25)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 289)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 41)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 289)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 18)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 320)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 34)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 320)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 18)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 321)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 34)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 321)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 26)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 320)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 42)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 320)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 26)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 321)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 42)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 321)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 19)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 352)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 35)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 352)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 19)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 353)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 35)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 353)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 27)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 352)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 43)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 352)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 27)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 353)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 43)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 353)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 32)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 512)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 48)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 512)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 32)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 513)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 48)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 513)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 40)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 512)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 56)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 512)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 40)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 513)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 56)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 513)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 33)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 544)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 49)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 544)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 33)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 545)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 49)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 545)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 41)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 544)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 57)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 544)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 41)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 545)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 57)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 545)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 34)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 576)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 50)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 576)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 34)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 577)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 50)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 577)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 42)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 576)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 58)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 576)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 42)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 577)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 58)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 577)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 35)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 608)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 51)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 608)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 35)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 609)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 51)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 609)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 43)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 608)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 59)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 608)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 43)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 609)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 59)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 609)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 4)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 128)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 20)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 128)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 4)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 129)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 20)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 129)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 12)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 128)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 28)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 128)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 12)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 129)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 28)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 129)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 5)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 160)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 21)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 160)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 5)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 161)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 21)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 161)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 13)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 160)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 29)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 160)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 13)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 161)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 29)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 161)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 6)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 192)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 22)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 192)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 6)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 193)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 22)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 193)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 14)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 192)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 30)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 192)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 14)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 193)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 30)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 193)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 7)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 224)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 23)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 224)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 7)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 225)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 23)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 225)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 15)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 224)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 31)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 224)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 15)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 225)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 31)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 225)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 20)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 384)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 36)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 384)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 20)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 385)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 36)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 385)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 28)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 384)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 44)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 384)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 28)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 385)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 44)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 385)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 21)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 416)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 37)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 416)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 21)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 417)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 37)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 417)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 29)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 416)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 45)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 416)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 29)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 417)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 45)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 417)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 22)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 448)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 38)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 448)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 22)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 449)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 38)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 449)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 30)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 448)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 46)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 448)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 30)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 449)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 46)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 449)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 23)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 480)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 39)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 480)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 23)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 481)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 39)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 481)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 31)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 480)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 47)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 480)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 31)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 481)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 47)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 481)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 36)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 640)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 52)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 640)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 36)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 641)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 52)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 641)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 44)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 640)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 60)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 640)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 44)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 641)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 60)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 641)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 37)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 672)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 53)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 672)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 37)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 673)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 53)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 673)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 45)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 672)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 61)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 672)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 45)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 673)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 61)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 673)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 38)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 704)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 54)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 704)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 38)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 705)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 54)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 705)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 46)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 704)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 62)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 704)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 46)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 705)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 62)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 705)]));
-      conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 39)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 736)]));
-      conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 55)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 736)]));
-      conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 39)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 737)]));
-      conv2d_nhwc_local[5] = (conv2d_nhwc_local[5] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 55)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 737)]));
-      conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 47)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 736)]));
-      conv2d_nhwc_local[6] = (conv2d_nhwc_local[6] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 63)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 736)]));
-      conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 47)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 737)]));
-      conv2d_nhwc_local[7] = (conv2d_nhwc_local[7] + (PadInput_shared[(((((int)threadIdx.x) >> 4) * 64) + 63)] * weight_shared[(((((int)threadIdx.x) & 15) * 2) + 737)]));
-    }
-  }
-  conv2d_nhwc[((((((((((int)blockIdx.x) / 96) * 147456) + ((((int)threadIdx.x) / 48) * 36864)) + (((((int)blockIdx.x) % 96) / 24) * 9216)) + (((((int)threadIdx.x) % 48) >> 4) * 3072)) + (((((int)blockIdx.x) % 24) >> 3) * 1024)) + ((((int)blockIdx.x) & 7) * 32)) + ((((int)threadIdx.x) & 15) * 2))] = conv2d_nhwc_local[0];
-  conv2d_nhwc[(((((((((((int)blockIdx.x) / 96) * 147456) + ((((int)threadIdx.x) / 48) * 36864)) + (((((int)blockIdx.x) % 96) / 24) * 9216)) + (((((int)threadIdx.x) % 48) >> 4) * 3072)) + (((((int)blockIdx.x) % 24) >> 3) * 1024)) + ((((int)blockIdx.x) & 7) * 32)) + ((((int)threadIdx.x) & 15) * 2)) + 512)] = conv2d_nhwc_local[4];
-  conv2d_nhwc[(((((((((((int)blockIdx.x) / 96) * 147456) + ((((int)threadIdx.x) / 48) * 36864)) + (((((int)blockIdx.x) % 96) / 24) * 9216)) + (((((int)threadIdx.x) % 48) >> 4) * 3072)) + (((((int)blockIdx.x) % 24) >> 3) * 1024)) + ((((int)blockIdx.x) & 7) * 32)) + ((((int)threadIdx.x) & 15) * 2)) + 1)] = conv2d_nhwc_local[1];
-  conv2d_nhwc[(((((((((((int)blockIdx.x) / 96) * 147456) + ((((int)threadIdx.x) / 48) * 36864)) + (((((int)blockIdx.x) % 96) / 24) * 9216)) + (((((int)threadIdx.x) % 48) >> 4) * 3072)) + (((((int)blockIdx.x) % 24) >> 3) * 1024)) + ((((int)blockIdx.x) & 7) * 32)) + ((((int)threadIdx.x) & 15) * 2)) + 513)] = conv2d_nhwc_local[5];
-  conv2d_nhwc[(((((((((((int)blockIdx.x) / 96) * 147456) + ((((int)threadIdx.x) / 48) * 36864)) + (((((int)blockIdx.x) % 96) / 24) * 9216)) + (((((int)threadIdx.x) % 48) >> 4) * 3072)) + (((((int)blockIdx.x) % 24) >> 3) * 1024)) + ((((int)blockIdx.x) & 7) * 32)) + ((((int)threadIdx.x) & 15) * 2)) + 256)] = conv2d_nhwc_local[2];
-  conv2d_nhwc[(((((((((((int)blockIdx.x) / 96) * 147456) + ((((int)threadIdx.x) / 48) * 36864)) + (((((int)blockIdx.x) % 96) / 24) * 9216)) + (((((int)threadIdx.x) % 48) >> 4) * 3072)) + (((((int)blockIdx.x) % 24) >> 3) * 1024)) + ((((int)blockIdx.x) & 7) * 32)) + ((((int)threadIdx.x) & 15) * 2)) + 768)] = conv2d_nhwc_local[6];
-  conv2d_nhwc[(((((((((((int)blockIdx.x) / 96) * 147456) + ((((int)threadIdx.x) / 48) * 36864)) + (((((int)blockIdx.x) % 96) / 24) * 9216)) + (((((int)threadIdx.x) % 48) >> 4) * 3072)) + (((((int)blockIdx.x) % 24) >> 3) * 1024)) + ((((int)blockIdx.x) & 7) * 32)) + ((((int)threadIdx.x) & 15) * 2)) + 257)] = conv2d_nhwc_local[3];
-  conv2d_nhwc[(((((((((((int)blockIdx.x) / 96) * 147456) + ((((int)threadIdx.x) / 48) * 36864)) + (((((int)blockIdx.x) % 96) / 24) * 9216)) + (((((int)threadIdx.x) % 48) >> 4) * 3072)) + (((((int)blockIdx.x) % 24) >> 3) * 1024)) + ((((int)blockIdx.x) & 7) * 32)) + ((((int)threadIdx.x) & 15) * 2)) + 769)] = conv2d_nhwc_local[7];
-}
-
-
-The time of DIL is 0.118 ms
-===========================
-2025-07-29 03:23:16 [INFO] Logging directory: /tmp/tmp3jo5wal7/logs
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:25:56 [DEBUG] XGB iter   0: tr-p-rmse: 0.511990	tr-a-peak@32: 0.976414	tr-rmse: 0.341881	tr-rmse: 0.341881
-2025-07-29 03:25:56 [DEBUG] XGB iter  25: tr-p-rmse: 0.045554	tr-a-peak@32: 1.000000	tr-rmse: 0.389274	tr-rmse: 0.389274
-2025-07-29 03:25:56 [DEBUG] XGB iter  50: tr-p-rmse: 0.045554	tr-a-peak@32: 1.000000	tr-rmse: 0.389274	tr-rmse: 0.389274
-2025-07-29 03:25:56 [DEBUG] XGB stopped. Best iteration: [11] tr-p-rmse:0.04555	tr-a-peak@32:1.00000	tr-rmse:0.38927	tr-rmse:0.38927 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:28:17 [DEBUG] XGB validation: p-rmse: 0.108585	a-peak@32: 0.999990
-2025-07-29 03:28:17 [DEBUG] XGB iter   0: tr-p-rmse: 0.490360	tr-a-peak@32: 0.982787	tr-rmse: 0.326452	tr-rmse: 0.326452
-2025-07-29 03:28:17 [DEBUG] XGB iter  25: tr-p-rmse: 0.042307	tr-a-peak@32: 1.000000	tr-rmse: 0.371194	tr-rmse: 0.371194
-2025-07-29 03:28:17 [DEBUG] XGB iter  50: tr-p-rmse: 0.042307	tr-a-peak@32: 1.000000	tr-rmse: 0.371194	tr-rmse: 0.371194
-2025-07-29 03:28:17 [DEBUG] XGB stopped. Best iteration: [15] tr-p-rmse:0.04231	tr-a-peak@32:1.00000	tr-rmse:0.37119	tr-rmse:0.37119 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:31:15 [DEBUG] XGB validation: p-rmse: 0.394540	a-peak@32: 0.871362
-2025-07-29 03:31:15 [DEBUG] XGB iter   0: tr-p-rmse: 0.477591	tr-a-peak@32: 0.951825	tr-rmse: 0.430221	tr-rmse: 0.430221
-2025-07-29 03:31:15 [DEBUG] XGB iter  25: tr-p-rmse: 0.038916	tr-a-peak@32: 1.000000	tr-rmse: 0.472979	tr-rmse: 0.472979
-2025-07-29 03:31:15 [DEBUG] XGB iter  50: tr-p-rmse: 0.038916	tr-a-peak@32: 1.000000	tr-rmse: 0.472979	tr-rmse: 0.472979
-2025-07-29 03:31:15 [DEBUG] XGB stopped. Best iteration: [13] tr-p-rmse:0.03892	tr-a-peak@32:1.00000	tr-rmse:0.47298	tr-rmse:0.47298 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:34:18 [DEBUG] XGB validation: p-rmse: 0.151116	a-peak@32: 0.986973
-2025-07-29 03:34:18 [DEBUG] XGB iter   0: tr-p-rmse: 0.442226	tr-a-peak@32: 0.965008	tr-rmse: 0.507774	tr-rmse: 0.507774
-2025-07-29 03:34:18 [DEBUG] XGB iter  25: tr-p-rmse: 0.043350	tr-a-peak@32: 0.992047	tr-rmse: 0.556766	tr-rmse: 0.556766
-2025-07-29 03:34:18 [DEBUG] XGB iter  50: tr-p-rmse: 0.043350	tr-a-peak@32: 0.992047	tr-rmse: 0.556766	tr-rmse: 0.556766
-2025-07-29 03:34:18 [DEBUG] XGB stopped. Best iteration: [19] tr-p-rmse:0.04335	tr-a-peak@32:0.99205	tr-rmse:0.55677	tr-rmse:0.55677 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:37:04 [DEBUG] XGB validation: p-rmse: 0.084606	a-peak@32: 0.980302
-2025-07-29 03:37:04 [DEBUG] XGB iter   0: tr-p-rmse: 0.413227	tr-a-peak@32: 0.949802	tr-rmse: 0.556085	tr-rmse: 0.556085
-2025-07-29 03:37:04 [DEBUG] XGB iter  25: tr-p-rmse: 0.046284	tr-a-peak@32: 0.998218	tr-rmse: 0.606006	tr-rmse: 0.606006
-2025-07-29 03:37:04 [DEBUG] XGB iter  50: tr-p-rmse: 0.046284	tr-a-peak@32: 0.998218	tr-rmse: 0.606006	tr-rmse: 0.606006
-2025-07-29 03:37:04 [DEBUG] XGB stopped. Best iteration: [22] tr-p-rmse:0.04628	tr-a-peak@32:0.99822	tr-rmse:0.60601	tr-rmse:0.60601 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:39:49 [DEBUG] XGB validation: p-rmse: 0.169652	a-peak@32: 0.989809
-2025-07-29 03:39:49 [DEBUG] XGB iter   0: tr-p-rmse: 0.391371	tr-a-peak@32: 0.975122	tr-rmse: 0.571002	tr-rmse: 0.571002
-2025-07-29 03:39:49 [DEBUG] XGB iter  25: tr-p-rmse: 0.050299	tr-a-peak@32: 0.990487	tr-rmse: 0.622346	tr-rmse: 0.622346
-2025-07-29 03:39:49 [DEBUG] XGB iter  50: tr-p-rmse: 0.050299	tr-a-peak@32: 0.990487	tr-rmse: 0.622346	tr-rmse: 0.622346
-2025-07-29 03:39:49 [DEBUG] XGB stopped. Best iteration: [21] tr-p-rmse:0.05030	tr-a-peak@32:0.99049	tr-rmse:0.62235	tr-rmse:0.62235 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:42:47 [DEBUG] XGB validation: p-rmse: 0.092105	a-peak@32: 0.959897
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:45:36 [DEBUG] XGB validation: p-rmse: 0.097707	a-peak@32: 0.971211
-2025-07-29 03:45:36 [DEBUG] XGB iter   0: tr-p-rmse: 0.363718	tr-a-peak@32: 0.997329	tr-rmse: 0.596389	tr-rmse: 0.596389
-2025-07-29 03:45:36 [DEBUG] XGB iter  25: tr-p-rmse: 0.059436	tr-a-peak@32: 0.996239	tr-rmse: 0.648239	tr-rmse: 0.648239
-2025-07-29 03:45:36 [DEBUG] XGB iter  50: tr-p-rmse: 0.059436	tr-a-peak@32: 0.996239	tr-rmse: 0.648239	tr-rmse: 0.648239
-2025-07-29 03:45:36 [DEBUG] XGB stopped. Best iteration: [14] tr-p-rmse:0.05942	tr-a-peak@32:0.99624	tr-rmse:0.64823	tr-rmse:0.64823 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:48:43 [DEBUG] XGB validation: p-rmse: 0.078988	a-peak@32: 0.992550
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:51:28 [DEBUG] XGB validation: p-rmse: 0.084923	a-peak@32: 0.988423
-2025-07-29 03:51:28 [DEBUG] XGB iter   0: tr-p-rmse: 0.346258	tr-a-peak@32: 0.985514	tr-rmse: 0.598935	tr-rmse: 0.598935
-2025-07-29 03:51:28 [DEBUG] XGB iter  25: tr-p-rmse: 0.061136	tr-a-peak@32: 1.000000	tr-rmse: 0.651648	tr-rmse: 0.651648
-2025-07-29 03:51:28 [DEBUG] XGB iter  50: tr-p-rmse: 0.061136	tr-a-peak@32: 1.000000	tr-rmse: 0.651648	tr-rmse: 0.651648
-2025-07-29 03:51:28 [DEBUG] XGB stopped. Best iteration: [15] tr-p-rmse:0.06113	tr-a-peak@32:1.00000	tr-rmse:0.65164	tr-rmse:0.65164 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:54:20 [DEBUG] XGB validation: p-rmse: 0.091671	a-peak@32: 0.959638
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:57:06 [DEBUG] XGB validation: p-rmse: 0.096562	a-peak@32: 0.989882
-2025-07-29 03:57:06 [DEBUG] XGB iter   0: tr-p-rmse: 0.337672	tr-a-peak@32: 0.971363	tr-rmse: 0.592092	tr-rmse: 0.592092
-2025-07-29 03:57:06 [DEBUG] XGB iter  25: tr-p-rmse: 0.062081	tr-a-peak@32: 0.999127	tr-rmse: 0.645423	tr-rmse: 0.645423
-2025-07-29 03:57:06 [DEBUG] XGB iter  50: tr-p-rmse: 0.062081	tr-a-peak@32: 0.999127	tr-rmse: 0.645423	tr-rmse: 0.645423
-2025-07-29 03:57:06 [DEBUG] XGB stopped. Best iteration: [18] tr-p-rmse:0.06208	tr-a-peak@32:0.99913	tr-rmse:0.64542	tr-rmse:0.64542 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 03:59:50 [DEBUG] XGB validation: p-rmse: 0.203567	a-peak@32: 0.992292
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 04:02:34 [DEBUG] XGB validation: p-rmse: 0.313385	a-peak@32: 0.989418
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 04:05:19 [DEBUG] XGB validation: p-rmse: 0.356905	a-peak@32: 0.968256
-2025-07-29 04:05:19 [DEBUG] XGB iter   0: tr-p-rmse: 0.339326	tr-a-peak@32: 0.977179	tr-rmse: 0.580400	tr-rmse: 0.580400
-2025-07-29 04:05:19 [DEBUG] XGB iter  25: tr-p-rmse: 0.059964	tr-a-peak@32: 0.999296	tr-rmse: 0.634116	tr-rmse: 0.634116
-2025-07-29 04:05:19 [DEBUG] XGB iter  50: tr-p-rmse: 0.059964	tr-a-peak@32: 0.999296	tr-rmse: 0.634116	tr-rmse: 0.634116
-2025-07-29 04:05:19 [DEBUG] XGB stopped. Best iteration: [18] tr-p-rmse:0.05996	tr-a-peak@32:0.99930	tr-rmse:0.63412	tr-rmse:0.63412 
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K2025-07-29 04:08:10 [DEBUG] XGB validation: p-rmse: 0.099606	a-peak@32: 0.973339
-[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K[2K==== CUDA Kernel Source ====
-
-#if (((__CUDACC_VER_MAJOR__ == 11) && (__CUDACC_VER_MINOR__ >= 4)) || \
-     (__CUDACC_VER_MAJOR__ > 11))
-#define TVM_ENABLE_L2_PREFETCH 1
-#else
-#define TVM_ENABLE_L2_PREFETCH 0
-#endif
-
-#ifdef _WIN32
-  using uint = unsigned int;
-  using uchar = unsigned char;
-  using ushort = unsigned short;
-  using int64_t = long long;
-  using uint64_t = unsigned long long;
-#else
-  #define uint unsigned int
-  #define uchar unsigned char
-  #define ushort unsigned short
-  #define int64_t long long
-  #define uint64_t unsigned long long
-#endif
-extern "C" __global__ void __launch_bounds__(64) main_kernel(float* __restrict__ conv2d_nhwc, float* __restrict__ inputs, float* __restrict__ weight);
-extern "C" __global__ void __launch_bounds__(64) main_kernel(float* __restrict__ conv2d_nhwc, float* __restrict__ inputs, float* __restrict__ weight) {
-  float conv2d_nhwc_local[5];
-  __shared__ float PadInput_shared[2880];
-  __shared__ float weight_shared[576];
-  conv2d_nhwc_local[0] = 0.000000e+00f;
-  conv2d_nhwc_local[1] = 0.000000e+00f;
-  conv2d_nhwc_local[2] = 0.000000e+00f;
-  conv2d_nhwc_local[3] = 0.000000e+00f;
-  conv2d_nhwc_local[4] = 0.000000e+00f;
-  for (int rc_0 = 0; rc_0 < 64; ++rc_0) {
-    __syncthreads();
-    float condval;
-    if ((((40 <= ((int)threadIdx.x)) && (1 <= ((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3)))) && (((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3)) < 8))) {
-      condval = inputs[(((((((((int)threadIdx.x) / 40) * 3584) + ((((int)blockIdx.x) >> 6) * 512)) + (((((int)threadIdx.x) % 40) >> 3) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval = 0.000000e+00f;
-    }
-    PadInput_shared[((int)threadIdx.x)] = condval;
-    float condval_1;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5)) < 8))) {
-      condval_1 = inputs[((((((((((int)threadIdx.x) + 64) / 40) * 3584) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_1 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 64) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_1;
-    float condval_2;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5)) < 8))) {
-      condval_2 = inputs[((((((((((int)threadIdx.x) + 128) / 40) * 3584) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_2 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 128) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_2;
-    float condval_3;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5)) < 8))) {
-      condval_3 = inputs[((((((((((int)threadIdx.x) + 192) / 40) * 3584) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_3 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 192) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_3;
-    float condval_4;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5)) < 8))) {
-      condval_4 = inputs[((((((((((int)threadIdx.x) + 256) / 40) * 3584) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_4 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 256) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_4;
-    float condval_5;
-    if (((((1 <= (((((int)threadIdx.x) / 40) + 8) % 9)) && (((((int)threadIdx.x) + 320) % 360) < 320)) && (1 <= ((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3)))) && (((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3)) < 8))) {
-      condval_5 = inputs[(((((((((((int)threadIdx.x) + 320) / 360) * 25088) + ((((((int)threadIdx.x) / 40) + 8) % 9) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + (((((int)threadIdx.x) % 40) >> 3) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_5 = 0.000000e+00f;
-    }
-    PadInput_shared[(((int)threadIdx.x) + 320)] = condval_5;
-    float condval_6;
-    if ((((16 <= ((int)threadIdx.x)) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5)) < 8))) {
-      condval_6 = inputs[(((((((((((int)threadIdx.x) + 384) / 360) * 25088) + (((((int)threadIdx.x) + 24) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_6 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 384) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_6;
-    float condval_7;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5)) < 8))) {
-      condval_7 = inputs[(((((((((((int)threadIdx.x) + 448) / 360) * 25088) + (((((int)threadIdx.x) + 88) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_7 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 448) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_7;
-    float condval_8;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5)) < 8))) {
-      condval_8 = inputs[(((((((((((int)threadIdx.x) + 512) / 360) * 25088) + (((((int)threadIdx.x) + 152) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_8 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 512) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_8;
-    float condval_9;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5)) < 8))) {
-      condval_9 = inputs[(((((((((((int)threadIdx.x) + 576) / 360) * 25088) + (((((int)threadIdx.x) + 216) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_9 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 576) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_9;
-    float condval_10;
-    if ((((((int)threadIdx.x) < 40) && (1 <= ((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3)))) && (((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3)) < 8))) {
-      condval_10 = inputs[((((((((((int)threadIdx.x) + 640) / 360) * 25088) + ((((int)blockIdx.x) >> 6) * 512)) + ((((int)threadIdx.x) >> 3) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) + 20992)];
-    } else {
-      condval_10 = 0.000000e+00f;
-    }
-    PadInput_shared[(((int)threadIdx.x) + 640)] = condval_10;
-    float condval_11;
-    if (((((5 <= (((((int)threadIdx.x) >> 3) + 43) % 45)) && (((((int)threadIdx.x) + 344) % 360) < 320)) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5)) < 8))) {
-      condval_11 = inputs[(((((((((((int)threadIdx.x) + 704) / 360) * 25088) + (((((((int)threadIdx.x) >> 3) + 43) % 45) / 5) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_11 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 704) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_11;
-    float condval_12;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5)) < 8))) {
-      condval_12 = inputs[(((((((((((int)threadIdx.x) + 768) / 360) * 25088) + (((((int)threadIdx.x) + 48) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_12 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 768) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_12;
-    float condval_13;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5)) < 8))) {
-      condval_13 = inputs[(((((((((((int)threadIdx.x) + 832) / 360) * 25088) + (((((int)threadIdx.x) + 112) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_13 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 832) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_13;
-    float condval_14;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5)) < 8))) {
-      condval_14 = inputs[(((((((((((int)threadIdx.x) + 896) / 360) * 25088) + (((((int)threadIdx.x) + 176) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_14 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 896) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_14;
-    float condval_15;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3))) && (((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3)) < 8))) {
-      condval_15 = inputs[(((((((((((int)threadIdx.x) + 960) / 360) * 25088) + ((((int)threadIdx.x) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + (((((int)threadIdx.x) % 40) >> 3) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) + 17408)];
-    } else {
-      condval_15 = 0.000000e+00f;
-    }
-    PadInput_shared[(((int)threadIdx.x) + 960)] = condval_15;
-    float condval_16;
-    if (((((5 <= (((((int)threadIdx.x) >> 3) + 38) % 45)) && (((((int)threadIdx.x) + 304) % 360) < 320)) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5)) < 8))) {
-      condval_16 = inputs[(((((((((((int)threadIdx.x) + 1024) / 360) * 25088) + (((((((int)threadIdx.x) >> 3) + 38) % 45) / 5) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_16 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 1024) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_16;
-    float condval_17;
-    if ((((32 <= ((int)threadIdx.x)) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5)) < 8))) {
-      condval_17 = inputs[(((((((((((int)threadIdx.x) + 1088) / 360) * 25088) + (((((int)threadIdx.x) + 8) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_17 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 1088) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_17;
-    float condval_18;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5)) < 8))) {
-      condval_18 = inputs[(((((((((((int)threadIdx.x) + 1152) / 360) * 25088) + (((((int)threadIdx.x) + 72) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_18 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 1152) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_18;
-    float condval_19;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5)) < 8))) {
-      condval_19 = inputs[(((((((((((int)threadIdx.x) + 1216) / 360) * 25088) + (((((int)threadIdx.x) + 136) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_19 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 1216) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_19;
-    float condval_20;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3))) && (((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3)) < 8))) {
-      condval_20 = inputs[(((((((((((int)threadIdx.x) + 1280) / 360) * 25088) + ((((int)threadIdx.x) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + (((((int)threadIdx.x) % 40) >> 3) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) + 13824)];
-    } else {
-      condval_20 = 0.000000e+00f;
-    }
-    PadInput_shared[(((int)threadIdx.x) + 1280)] = condval_20;
-    float condval_21;
-    if ((((((int)threadIdx.x) < 56) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5)) < 8))) {
-      condval_21 = inputs[(((((((((((int)threadIdx.x) + 1344) / 360) * 25088) + (((((int)threadIdx.x) + 264) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_21 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 1344) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_21;
-    float condval_22;
-    if (((((5 <= (((((int)threadIdx.x) >> 3) + 41) % 45)) && (((((int)threadIdx.x) + 328) % 360) < 320)) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5)) < 8))) {
-      condval_22 = inputs[(((((((((((int)threadIdx.x) + 1408) / 360) * 25088) + (((((((int)threadIdx.x) >> 3) + 41) % 45) / 5) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_22 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 1408) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_22;
-    float condval_23;
-    if ((((8 <= ((int)threadIdx.x)) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5)) < 8))) {
-      condval_23 = inputs[(((((((((((int)threadIdx.x) + 1472) / 360) * 25088) + (((((int)threadIdx.x) + 32) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_23 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 1472) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_23;
-    float condval_24;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5)) < 8))) {
-      condval_24 = inputs[(((((((((((int)threadIdx.x) + 1536) / 360) * 25088) + (((((int)threadIdx.x) + 96) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_24 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 1536) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_24;
-    float condval_25;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3))) && (((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3)) < 8))) {
-      condval_25 = inputs[(((((((((((int)threadIdx.x) + 1600) / 360) * 25088) + ((((int)threadIdx.x) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + (((((int)threadIdx.x) % 40) >> 3) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) + 10240)];
-    } else {
-      condval_25 = 0.000000e+00f;
-    }
-    PadInput_shared[(((int)threadIdx.x) + 1600)] = condval_25;
-    float condval_26;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5)) < 8))) {
-      condval_26 = inputs[(((((((((((int)threadIdx.x) + 1664) / 360) * 25088) + (((((int)threadIdx.x) + 224) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_26 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 1664) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_26;
-    float condval_27;
-    if ((((((int)threadIdx.x) < 32) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5)) < 8))) {
-      condval_27 = inputs[(((((((((((int)threadIdx.x) + 1728) / 360) * 25088) + (((((int)threadIdx.x) + 288) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((int)threadIdx.x) >> 3) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 3584)];
-    } else {
-      condval_27 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 1728) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_27;
-    float condval_28;
-    if (((((5 <= (((((int)threadIdx.x) >> 3) + 44) % 45)) && (((((int)threadIdx.x) + 352) % 360) < 320)) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5)) < 8))) {
-      condval_28 = inputs[(((((((((((int)threadIdx.x) + 1792) / 360) * 25088) + (((((((int)threadIdx.x) >> 3) + 44) % 45) / 5) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_28 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 1792) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_28;
-    float condval_29;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5)) < 8))) {
-      condval_29 = inputs[(((((((((((int)threadIdx.x) + 1856) / 360) * 25088) + (((((int)threadIdx.x) + 56) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_29 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 1856) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_29;
-    float condval_30;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3))) && (((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3)) < 8))) {
-      condval_30 = inputs[(((((((((((int)threadIdx.x) + 1920) / 360) * 25088) + ((((int)threadIdx.x) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + (((((int)threadIdx.x) % 40) >> 3) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) + 6656)];
-    } else {
-      condval_30 = 0.000000e+00f;
-    }
-    PadInput_shared[(((int)threadIdx.x) + 1920)] = condval_30;
-    float condval_31;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5)) < 8))) {
-      condval_31 = inputs[(((((((((((int)threadIdx.x) + 1984) / 360) * 25088) + (((((int)threadIdx.x) + 184) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_31 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 1984) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_31;
-    float condval_32;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5)) < 8))) {
-      condval_32 = inputs[(((((((((((int)threadIdx.x) + 2048) / 360) * 25088) + (((((int)threadIdx.x) + 248) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_32 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 2048) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_32;
-    float condval_33;
-    if (((((5 <= (((((int)threadIdx.x) >> 3) + 39) % 45)) && (((((int)threadIdx.x) + 312) % 360) < 320)) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5)) < 8))) {
-      condval_33 = inputs[(((((((((((int)threadIdx.x) + 2112) / 360) * 25088) + (((((((int)threadIdx.x) >> 3) + 39) % 45) / 5) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_33 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 2112) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_33;
-    float condval_34;
-    if ((((24 <= ((int)threadIdx.x)) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5)) < 8))) {
-      condval_34 = inputs[(((((((((((int)threadIdx.x) + 2176) / 360) * 25088) + (((((int)threadIdx.x) + 16) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_34 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 2176) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_34;
-    float condval_35;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3))) && (((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3)) < 8))) {
-      condval_35 = inputs[(((((((((((int)threadIdx.x) + 2240) / 360) * 25088) + ((((int)threadIdx.x) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + (((((int)threadIdx.x) % 40) >> 3) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) + 3072)];
-    } else {
-      condval_35 = 0.000000e+00f;
-    }
-    PadInput_shared[(((int)threadIdx.x) + 2240)] = condval_35;
-    float condval_36;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5)) < 8))) {
-      condval_36 = inputs[(((((((((((int)threadIdx.x) + 2304) / 360) * 25088) + (((((int)threadIdx.x) + 144) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_36 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 2304) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_36;
-    float condval_37;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5)) < 8))) {
-      condval_37 = inputs[(((((((((((int)threadIdx.x) + 2368) / 360) * 25088) + (((((int)threadIdx.x) + 208) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_37 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 2368) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_37;
-    float condval_38;
-    if ((((((int)threadIdx.x) < 48) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5)) < 8))) {
-      condval_38 = inputs[(((((((((((int)threadIdx.x) + 2432) / 360) * 25088) + (((((int)threadIdx.x) + 272) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_38 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 2432) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_38;
-    float condval_39;
-    if (((((5 <= (((((int)threadIdx.x) >> 3) + 42) % 45)) && (((((int)threadIdx.x) + 336) % 360) < 320)) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5)) < 8))) {
-      condval_39 = inputs[(((((((((((int)threadIdx.x) + 2496) / 360) * 25088) + (((((((int)threadIdx.x) >> 3) + 42) % 45) / 5) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_39 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 2496) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_39;
-    float condval_40;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3))) && (((((int)blockIdx.x) >> 6) + ((((int)threadIdx.x) % 40) >> 3)) < 8))) {
-      condval_40 = inputs[(((((((((((int)threadIdx.x) + 2560) / 360) * 25088) + ((((int)threadIdx.x) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + (((((int)threadIdx.x) % 40) >> 3) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 512)];
-    } else {
-      condval_40 = 0.000000e+00f;
-    }
-    PadInput_shared[(((int)threadIdx.x) + 2560)] = condval_40;
-    float condval_41;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 3) % 5)) < 8))) {
-      condval_41 = inputs[(((((((((((int)threadIdx.x) + 2624) / 360) * 25088) + (((((int)threadIdx.x) + 104) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_41 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 2624) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 3) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_41;
-    float condval_42;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 1) % 5)) < 8))) {
-      condval_42 = inputs[(((((((((((int)threadIdx.x) + 2688) / 360) * 25088) + (((((int)threadIdx.x) + 168) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_42 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 2688) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 1) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_42;
-    float condval_43;
-    if (((1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 4) % 5)) < 8))) {
-      condval_43 = inputs[(((((((((((int)threadIdx.x) + 2752) / 360) * 25088) + (((((int)threadIdx.x) + 232) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 4096)];
-    } else {
-      condval_43 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 2752) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 4) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_43;
-    float condval_44;
-    if ((((((int)threadIdx.x) < 24) && (1 <= ((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5)))) && (((((int)blockIdx.x) >> 6) + (((((int)threadIdx.x) >> 3) + 2) % 5)) < 8))) {
-      condval_44 = inputs[(((((((((((int)threadIdx.x) + 2816) / 360) * 25088) + (((((int)threadIdx.x) + 296) / 40) * 3584)) + ((((int)blockIdx.x) >> 6) * 512)) + ((((int)threadIdx.x) >> 3) * 512)) + (rc_0 * 8)) + (((int)threadIdx.x) & 7)) - 3072)];
-    } else {
-      condval_44 = 0.000000e+00f;
-    }
-    PadInput_shared[(((((((int)threadIdx.x) + 2816) / 40) * 40) + ((((((int)threadIdx.x) >> 3) + 2) % 5) * 8)) + (((int)threadIdx.x) & 7))] = condval_44;
-    *(float4*)(weight_shared + (((int)threadIdx.x) * 4)) = *(float4*)(weight + ((((((((int)threadIdx.x) >> 4) * 262144) + (rc_0 * 4096)) + (((((int)threadIdx.x) & 15) >> 1) * 512)) + ((((int)blockIdx.x) & 63) * 8)) + ((((int)threadIdx.x) & 1) * 4)));
-    *(float4*)(weight_shared + ((((int)threadIdx.x) * 4) + 256)) = *(float4*)(weight + (((((((((int)threadIdx.x) >> 4) * 262144) + (rc_0 * 4096)) + (((((int)threadIdx.x) & 15) >> 1) * 512)) + ((((int)blockIdx.x) & 63) * 8)) + ((((int)threadIdx.x) & 1) * 4)) + 1048576));
-    if (((int)threadIdx.x) < 16) {
-      *(float4*)(weight_shared + ((((int)threadIdx.x) * 4) + 512)) = *(float4*)(weight + (((((rc_0 * 4096) + ((((int)threadIdx.x) >> 1) * 512)) + ((((int)blockIdx.x) & 63) * 8)) + ((((int)threadIdx.x) & 1) * 4)) + 2097152));
-    }
-    __syncthreads();
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[((((int)threadIdx.x) >> 3) * 360)] * weight_shared[(((int)threadIdx.x) & 7)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 1)] * weight_shared[((((int)threadIdx.x) & 7) + 8)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 2)] * weight_shared[((((int)threadIdx.x) & 7) + 16)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 3)] * weight_shared[((((int)threadIdx.x) & 7) + 24)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 40)] * weight_shared[(((int)threadIdx.x) & 7)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 41)] * weight_shared[((((int)threadIdx.x) & 7) + 8)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 42)] * weight_shared[((((int)threadIdx.x) & 7) + 16)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 43)] * weight_shared[((((int)threadIdx.x) & 7) + 24)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 80)] * weight_shared[(((int)threadIdx.x) & 7)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 81)] * weight_shared[((((int)threadIdx.x) & 7) + 8)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 82)] * weight_shared[((((int)threadIdx.x) & 7) + 16)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 83)] * weight_shared[((((int)threadIdx.x) & 7) + 24)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 120)] * weight_shared[(((int)threadIdx.x) & 7)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 121)] * weight_shared[((((int)threadIdx.x) & 7) + 8)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 122)] * weight_shared[((((int)threadIdx.x) & 7) + 16)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 123)] * weight_shared[((((int)threadIdx.x) & 7) + 24)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 160)] * weight_shared[(((int)threadIdx.x) & 7)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 161)] * weight_shared[((((int)threadIdx.x) & 7) + 8)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 162)] * weight_shared[((((int)threadIdx.x) & 7) + 16)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 163)] * weight_shared[((((int)threadIdx.x) & 7) + 24)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 4)] * weight_shared[((((int)threadIdx.x) & 7) + 32)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 5)] * weight_shared[((((int)threadIdx.x) & 7) + 40)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 6)] * weight_shared[((((int)threadIdx.x) & 7) + 48)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 7)] * weight_shared[((((int)threadIdx.x) & 7) + 56)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 44)] * weight_shared[((((int)threadIdx.x) & 7) + 32)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 45)] * weight_shared[((((int)threadIdx.x) & 7) + 40)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 46)] * weight_shared[((((int)threadIdx.x) & 7) + 48)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 47)] * weight_shared[((((int)threadIdx.x) & 7) + 56)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 84)] * weight_shared[((((int)threadIdx.x) & 7) + 32)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 85)] * weight_shared[((((int)threadIdx.x) & 7) + 40)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 86)] * weight_shared[((((int)threadIdx.x) & 7) + 48)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 87)] * weight_shared[((((int)threadIdx.x) & 7) + 56)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 124)] * weight_shared[((((int)threadIdx.x) & 7) + 32)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 125)] * weight_shared[((((int)threadIdx.x) & 7) + 40)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 126)] * weight_shared[((((int)threadIdx.x) & 7) + 48)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 127)] * weight_shared[((((int)threadIdx.x) & 7) + 56)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 164)] * weight_shared[((((int)threadIdx.x) & 7) + 32)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 165)] * weight_shared[((((int)threadIdx.x) & 7) + 40)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 166)] * weight_shared[((((int)threadIdx.x) & 7) + 48)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 167)] * weight_shared[((((int)threadIdx.x) & 7) + 56)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 16)] * weight_shared[((((int)threadIdx.x) & 7) + 64)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 17)] * weight_shared[((((int)threadIdx.x) & 7) + 72)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 18)] * weight_shared[((((int)threadIdx.x) & 7) + 80)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 19)] * weight_shared[((((int)threadIdx.x) & 7) + 88)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 56)] * weight_shared[((((int)threadIdx.x) & 7) + 64)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 57)] * weight_shared[((((int)threadIdx.x) & 7) + 72)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 58)] * weight_shared[((((int)threadIdx.x) & 7) + 80)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 59)] * weight_shared[((((int)threadIdx.x) & 7) + 88)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 96)] * weight_shared[((((int)threadIdx.x) & 7) + 64)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 97)] * weight_shared[((((int)threadIdx.x) & 7) + 72)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 98)] * weight_shared[((((int)threadIdx.x) & 7) + 80)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 99)] * weight_shared[((((int)threadIdx.x) & 7) + 88)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 136)] * weight_shared[((((int)threadIdx.x) & 7) + 64)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 137)] * weight_shared[((((int)threadIdx.x) & 7) + 72)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 138)] * weight_shared[((((int)threadIdx.x) & 7) + 80)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 139)] * weight_shared[((((int)threadIdx.x) & 7) + 88)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 176)] * weight_shared[((((int)threadIdx.x) & 7) + 64)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 177)] * weight_shared[((((int)threadIdx.x) & 7) + 72)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 178)] * weight_shared[((((int)threadIdx.x) & 7) + 80)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 179)] * weight_shared[((((int)threadIdx.x) & 7) + 88)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 20)] * weight_shared[((((int)threadIdx.x) & 7) + 96)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 21)] * weight_shared[((((int)threadIdx.x) & 7) + 104)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 22)] * weight_shared[((((int)threadIdx.x) & 7) + 112)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 23)] * weight_shared[((((int)threadIdx.x) & 7) + 120)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 60)] * weight_shared[((((int)threadIdx.x) & 7) + 96)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 61)] * weight_shared[((((int)threadIdx.x) & 7) + 104)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 62)] * weight_shared[((((int)threadIdx.x) & 7) + 112)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 63)] * weight_shared[((((int)threadIdx.x) & 7) + 120)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 100)] * weight_shared[((((int)threadIdx.x) & 7) + 96)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 101)] * weight_shared[((((int)threadIdx.x) & 7) + 104)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 102)] * weight_shared[((((int)threadIdx.x) & 7) + 112)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 103)] * weight_shared[((((int)threadIdx.x) & 7) + 120)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 140)] * weight_shared[((((int)threadIdx.x) & 7) + 96)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 141)] * weight_shared[((((int)threadIdx.x) & 7) + 104)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 142)] * weight_shared[((((int)threadIdx.x) & 7) + 112)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 143)] * weight_shared[((((int)threadIdx.x) & 7) + 120)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 180)] * weight_shared[((((int)threadIdx.x) & 7) + 96)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 181)] * weight_shared[((((int)threadIdx.x) & 7) + 104)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 182)] * weight_shared[((((int)threadIdx.x) & 7) + 112)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 183)] * weight_shared[((((int)threadIdx.x) & 7) + 120)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 32)] * weight_shared[((((int)threadIdx.x) & 7) + 128)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 33)] * weight_shared[((((int)threadIdx.x) & 7) + 136)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 34)] * weight_shared[((((int)threadIdx.x) & 7) + 144)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 35)] * weight_shared[((((int)threadIdx.x) & 7) + 152)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 72)] * weight_shared[((((int)threadIdx.x) & 7) + 128)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 73)] * weight_shared[((((int)threadIdx.x) & 7) + 136)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 74)] * weight_shared[((((int)threadIdx.x) & 7) + 144)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 75)] * weight_shared[((((int)threadIdx.x) & 7) + 152)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 112)] * weight_shared[((((int)threadIdx.x) & 7) + 128)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 113)] * weight_shared[((((int)threadIdx.x) & 7) + 136)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 114)] * weight_shared[((((int)threadIdx.x) & 7) + 144)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 115)] * weight_shared[((((int)threadIdx.x) & 7) + 152)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 152)] * weight_shared[((((int)threadIdx.x) & 7) + 128)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 153)] * weight_shared[((((int)threadIdx.x) & 7) + 136)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 154)] * weight_shared[((((int)threadIdx.x) & 7) + 144)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 155)] * weight_shared[((((int)threadIdx.x) & 7) + 152)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 192)] * weight_shared[((((int)threadIdx.x) & 7) + 128)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 193)] * weight_shared[((((int)threadIdx.x) & 7) + 136)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 194)] * weight_shared[((((int)threadIdx.x) & 7) + 144)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 195)] * weight_shared[((((int)threadIdx.x) & 7) + 152)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 36)] * weight_shared[((((int)threadIdx.x) & 7) + 160)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 37)] * weight_shared[((((int)threadIdx.x) & 7) + 168)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 38)] * weight_shared[((((int)threadIdx.x) & 7) + 176)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 39)] * weight_shared[((((int)threadIdx.x) & 7) + 184)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 76)] * weight_shared[((((int)threadIdx.x) & 7) + 160)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 77)] * weight_shared[((((int)threadIdx.x) & 7) + 168)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 78)] * weight_shared[((((int)threadIdx.x) & 7) + 176)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 79)] * weight_shared[((((int)threadIdx.x) & 7) + 184)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 116)] * weight_shared[((((int)threadIdx.x) & 7) + 160)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 117)] * weight_shared[((((int)threadIdx.x) & 7) + 168)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 118)] * weight_shared[((((int)threadIdx.x) & 7) + 176)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 119)] * weight_shared[((((int)threadIdx.x) & 7) + 184)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 156)] * weight_shared[((((int)threadIdx.x) & 7) + 160)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 157)] * weight_shared[((((int)threadIdx.x) & 7) + 168)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 158)] * weight_shared[((((int)threadIdx.x) & 7) + 176)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 159)] * weight_shared[((((int)threadIdx.x) & 7) + 184)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 196)] * weight_shared[((((int)threadIdx.x) & 7) + 160)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 197)] * weight_shared[((((int)threadIdx.x) & 7) + 168)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 198)] * weight_shared[((((int)threadIdx.x) & 7) + 176)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 199)] * weight_shared[((((int)threadIdx.x) & 7) + 184)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 80)] * weight_shared[((((int)threadIdx.x) & 7) + 192)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 81)] * weight_shared[((((int)threadIdx.x) & 7) + 200)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 82)] * weight_shared[((((int)threadIdx.x) & 7) + 208)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 83)] * weight_shared[((((int)threadIdx.x) & 7) + 216)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 120)] * weight_shared[((((int)threadIdx.x) & 7) + 192)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 121)] * weight_shared[((((int)threadIdx.x) & 7) + 200)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 122)] * weight_shared[((((int)threadIdx.x) & 7) + 208)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 123)] * weight_shared[((((int)threadIdx.x) & 7) + 216)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 160)] * weight_shared[((((int)threadIdx.x) & 7) + 192)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 161)] * weight_shared[((((int)threadIdx.x) & 7) + 200)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 162)] * weight_shared[((((int)threadIdx.x) & 7) + 208)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 163)] * weight_shared[((((int)threadIdx.x) & 7) + 216)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 200)] * weight_shared[((((int)threadIdx.x) & 7) + 192)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 201)] * weight_shared[((((int)threadIdx.x) & 7) + 200)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 202)] * weight_shared[((((int)threadIdx.x) & 7) + 208)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 203)] * weight_shared[((((int)threadIdx.x) & 7) + 216)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 240)] * weight_shared[((((int)threadIdx.x) & 7) + 192)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 241)] * weight_shared[((((int)threadIdx.x) & 7) + 200)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 242)] * weight_shared[((((int)threadIdx.x) & 7) + 208)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 243)] * weight_shared[((((int)threadIdx.x) & 7) + 216)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 84)] * weight_shared[((((int)threadIdx.x) & 7) + 224)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 85)] * weight_shared[((((int)threadIdx.x) & 7) + 232)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 86)] * weight_shared[((((int)threadIdx.x) & 7) + 240)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 87)] * weight_shared[((((int)threadIdx.x) & 7) + 248)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 124)] * weight_shared[((((int)threadIdx.x) & 7) + 224)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 125)] * weight_shared[((((int)threadIdx.x) & 7) + 232)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 126)] * weight_shared[((((int)threadIdx.x) & 7) + 240)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 127)] * weight_shared[((((int)threadIdx.x) & 7) + 248)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 164)] * weight_shared[((((int)threadIdx.x) & 7) + 224)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 165)] * weight_shared[((((int)threadIdx.x) & 7) + 232)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 166)] * weight_shared[((((int)threadIdx.x) & 7) + 240)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 167)] * weight_shared[((((int)threadIdx.x) & 7) + 248)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 204)] * weight_shared[((((int)threadIdx.x) & 7) + 224)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 205)] * weight_shared[((((int)threadIdx.x) & 7) + 232)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 206)] * weight_shared[((((int)threadIdx.x) & 7) + 240)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 207)] * weight_shared[((((int)threadIdx.x) & 7) + 248)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 244)] * weight_shared[((((int)threadIdx.x) & 7) + 224)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 245)] * weight_shared[((((int)threadIdx.x) & 7) + 232)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 246)] * weight_shared[((((int)threadIdx.x) & 7) + 240)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 247)] * weight_shared[((((int)threadIdx.x) & 7) + 248)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 96)] * weight_shared[((((int)threadIdx.x) & 7) + 256)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 97)] * weight_shared[((((int)threadIdx.x) & 7) + 264)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 98)] * weight_shared[((((int)threadIdx.x) & 7) + 272)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 99)] * weight_shared[((((int)threadIdx.x) & 7) + 280)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 136)] * weight_shared[((((int)threadIdx.x) & 7) + 256)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 137)] * weight_shared[((((int)threadIdx.x) & 7) + 264)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 138)] * weight_shared[((((int)threadIdx.x) & 7) + 272)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 139)] * weight_shared[((((int)threadIdx.x) & 7) + 280)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 176)] * weight_shared[((((int)threadIdx.x) & 7) + 256)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 177)] * weight_shared[((((int)threadIdx.x) & 7) + 264)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 178)] * weight_shared[((((int)threadIdx.x) & 7) + 272)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 179)] * weight_shared[((((int)threadIdx.x) & 7) + 280)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 216)] * weight_shared[((((int)threadIdx.x) & 7) + 256)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 217)] * weight_shared[((((int)threadIdx.x) & 7) + 264)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 218)] * weight_shared[((((int)threadIdx.x) & 7) + 272)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 219)] * weight_shared[((((int)threadIdx.x) & 7) + 280)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 256)] * weight_shared[((((int)threadIdx.x) & 7) + 256)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 257)] * weight_shared[((((int)threadIdx.x) & 7) + 264)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 258)] * weight_shared[((((int)threadIdx.x) & 7) + 272)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 259)] * weight_shared[((((int)threadIdx.x) & 7) + 280)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 100)] * weight_shared[((((int)threadIdx.x) & 7) + 288)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 101)] * weight_shared[((((int)threadIdx.x) & 7) + 296)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 102)] * weight_shared[((((int)threadIdx.x) & 7) + 304)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 103)] * weight_shared[((((int)threadIdx.x) & 7) + 312)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 140)] * weight_shared[((((int)threadIdx.x) & 7) + 288)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 141)] * weight_shared[((((int)threadIdx.x) & 7) + 296)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 142)] * weight_shared[((((int)threadIdx.x) & 7) + 304)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 143)] * weight_shared[((((int)threadIdx.x) & 7) + 312)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 180)] * weight_shared[((((int)threadIdx.x) & 7) + 288)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 181)] * weight_shared[((((int)threadIdx.x) & 7) + 296)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 182)] * weight_shared[((((int)threadIdx.x) & 7) + 304)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 183)] * weight_shared[((((int)threadIdx.x) & 7) + 312)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 220)] * weight_shared[((((int)threadIdx.x) & 7) + 288)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 221)] * weight_shared[((((int)threadIdx.x) & 7) + 296)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 222)] * weight_shared[((((int)threadIdx.x) & 7) + 304)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 223)] * weight_shared[((((int)threadIdx.x) & 7) + 312)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 260)] * weight_shared[((((int)threadIdx.x) & 7) + 288)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 261)] * weight_shared[((((int)threadIdx.x) & 7) + 296)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 262)] * weight_shared[((((int)threadIdx.x) & 7) + 304)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 263)] * weight_shared[((((int)threadIdx.x) & 7) + 312)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 112)] * weight_shared[((((int)threadIdx.x) & 7) + 320)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 113)] * weight_shared[((((int)threadIdx.x) & 7) + 328)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 114)] * weight_shared[((((int)threadIdx.x) & 7) + 336)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 115)] * weight_shared[((((int)threadIdx.x) & 7) + 344)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 152)] * weight_shared[((((int)threadIdx.x) & 7) + 320)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 153)] * weight_shared[((((int)threadIdx.x) & 7) + 328)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 154)] * weight_shared[((((int)threadIdx.x) & 7) + 336)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 155)] * weight_shared[((((int)threadIdx.x) & 7) + 344)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 192)] * weight_shared[((((int)threadIdx.x) & 7) + 320)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 193)] * weight_shared[((((int)threadIdx.x) & 7) + 328)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 194)] * weight_shared[((((int)threadIdx.x) & 7) + 336)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 195)] * weight_shared[((((int)threadIdx.x) & 7) + 344)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 232)] * weight_shared[((((int)threadIdx.x) & 7) + 320)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 233)] * weight_shared[((((int)threadIdx.x) & 7) + 328)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 234)] * weight_shared[((((int)threadIdx.x) & 7) + 336)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 235)] * weight_shared[((((int)threadIdx.x) & 7) + 344)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 272)] * weight_shared[((((int)threadIdx.x) & 7) + 320)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 273)] * weight_shared[((((int)threadIdx.x) & 7) + 328)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 274)] * weight_shared[((((int)threadIdx.x) & 7) + 336)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 275)] * weight_shared[((((int)threadIdx.x) & 7) + 344)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 116)] * weight_shared[((((int)threadIdx.x) & 7) + 352)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 117)] * weight_shared[((((int)threadIdx.x) & 7) + 360)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 118)] * weight_shared[((((int)threadIdx.x) & 7) + 368)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 119)] * weight_shared[((((int)threadIdx.x) & 7) + 376)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 156)] * weight_shared[((((int)threadIdx.x) & 7) + 352)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 157)] * weight_shared[((((int)threadIdx.x) & 7) + 360)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 158)] * weight_shared[((((int)threadIdx.x) & 7) + 368)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 159)] * weight_shared[((((int)threadIdx.x) & 7) + 376)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 196)] * weight_shared[((((int)threadIdx.x) & 7) + 352)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 197)] * weight_shared[((((int)threadIdx.x) & 7) + 360)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 198)] * weight_shared[((((int)threadIdx.x) & 7) + 368)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 199)] * weight_shared[((((int)threadIdx.x) & 7) + 376)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 236)] * weight_shared[((((int)threadIdx.x) & 7) + 352)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 237)] * weight_shared[((((int)threadIdx.x) & 7) + 360)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 238)] * weight_shared[((((int)threadIdx.x) & 7) + 368)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 239)] * weight_shared[((((int)threadIdx.x) & 7) + 376)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 276)] * weight_shared[((((int)threadIdx.x) & 7) + 352)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 277)] * weight_shared[((((int)threadIdx.x) & 7) + 360)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 278)] * weight_shared[((((int)threadIdx.x) & 7) + 368)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 279)] * weight_shared[((((int)threadIdx.x) & 7) + 376)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 160)] * weight_shared[((((int)threadIdx.x) & 7) + 384)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 161)] * weight_shared[((((int)threadIdx.x) & 7) + 392)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 162)] * weight_shared[((((int)threadIdx.x) & 7) + 400)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 163)] * weight_shared[((((int)threadIdx.x) & 7) + 408)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 200)] * weight_shared[((((int)threadIdx.x) & 7) + 384)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 201)] * weight_shared[((((int)threadIdx.x) & 7) + 392)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 202)] * weight_shared[((((int)threadIdx.x) & 7) + 400)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 203)] * weight_shared[((((int)threadIdx.x) & 7) + 408)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 240)] * weight_shared[((((int)threadIdx.x) & 7) + 384)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 241)] * weight_shared[((((int)threadIdx.x) & 7) + 392)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 242)] * weight_shared[((((int)threadIdx.x) & 7) + 400)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 243)] * weight_shared[((((int)threadIdx.x) & 7) + 408)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 280)] * weight_shared[((((int)threadIdx.x) & 7) + 384)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 281)] * weight_shared[((((int)threadIdx.x) & 7) + 392)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 282)] * weight_shared[((((int)threadIdx.x) & 7) + 400)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 283)] * weight_shared[((((int)threadIdx.x) & 7) + 408)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 320)] * weight_shared[((((int)threadIdx.x) & 7) + 384)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 321)] * weight_shared[((((int)threadIdx.x) & 7) + 392)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 322)] * weight_shared[((((int)threadIdx.x) & 7) + 400)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 323)] * weight_shared[((((int)threadIdx.x) & 7) + 408)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 164)] * weight_shared[((((int)threadIdx.x) & 7) + 416)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 165)] * weight_shared[((((int)threadIdx.x) & 7) + 424)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 166)] * weight_shared[((((int)threadIdx.x) & 7) + 432)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 167)] * weight_shared[((((int)threadIdx.x) & 7) + 440)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 204)] * weight_shared[((((int)threadIdx.x) & 7) + 416)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 205)] * weight_shared[((((int)threadIdx.x) & 7) + 424)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 206)] * weight_shared[((((int)threadIdx.x) & 7) + 432)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 207)] * weight_shared[((((int)threadIdx.x) & 7) + 440)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 244)] * weight_shared[((((int)threadIdx.x) & 7) + 416)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 245)] * weight_shared[((((int)threadIdx.x) & 7) + 424)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 246)] * weight_shared[((((int)threadIdx.x) & 7) + 432)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 247)] * weight_shared[((((int)threadIdx.x) & 7) + 440)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 284)] * weight_shared[((((int)threadIdx.x) & 7) + 416)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 285)] * weight_shared[((((int)threadIdx.x) & 7) + 424)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 286)] * weight_shared[((((int)threadIdx.x) & 7) + 432)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 287)] * weight_shared[((((int)threadIdx.x) & 7) + 440)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 324)] * weight_shared[((((int)threadIdx.x) & 7) + 416)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 325)] * weight_shared[((((int)threadIdx.x) & 7) + 424)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 326)] * weight_shared[((((int)threadIdx.x) & 7) + 432)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 327)] * weight_shared[((((int)threadIdx.x) & 7) + 440)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 176)] * weight_shared[((((int)threadIdx.x) & 7) + 448)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 177)] * weight_shared[((((int)threadIdx.x) & 7) + 456)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 178)] * weight_shared[((((int)threadIdx.x) & 7) + 464)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 179)] * weight_shared[((((int)threadIdx.x) & 7) + 472)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 216)] * weight_shared[((((int)threadIdx.x) & 7) + 448)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 217)] * weight_shared[((((int)threadIdx.x) & 7) + 456)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 218)] * weight_shared[((((int)threadIdx.x) & 7) + 464)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 219)] * weight_shared[((((int)threadIdx.x) & 7) + 472)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 256)] * weight_shared[((((int)threadIdx.x) & 7) + 448)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 257)] * weight_shared[((((int)threadIdx.x) & 7) + 456)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 258)] * weight_shared[((((int)threadIdx.x) & 7) + 464)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 259)] * weight_shared[((((int)threadIdx.x) & 7) + 472)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 296)] * weight_shared[((((int)threadIdx.x) & 7) + 448)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 297)] * weight_shared[((((int)threadIdx.x) & 7) + 456)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 298)] * weight_shared[((((int)threadIdx.x) & 7) + 464)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 299)] * weight_shared[((((int)threadIdx.x) & 7) + 472)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 336)] * weight_shared[((((int)threadIdx.x) & 7) + 448)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 337)] * weight_shared[((((int)threadIdx.x) & 7) + 456)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 338)] * weight_shared[((((int)threadIdx.x) & 7) + 464)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 339)] * weight_shared[((((int)threadIdx.x) & 7) + 472)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 180)] * weight_shared[((((int)threadIdx.x) & 7) + 480)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 181)] * weight_shared[((((int)threadIdx.x) & 7) + 488)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 182)] * weight_shared[((((int)threadIdx.x) & 7) + 496)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 183)] * weight_shared[((((int)threadIdx.x) & 7) + 504)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 220)] * weight_shared[((((int)threadIdx.x) & 7) + 480)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 221)] * weight_shared[((((int)threadIdx.x) & 7) + 488)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 222)] * weight_shared[((((int)threadIdx.x) & 7) + 496)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 223)] * weight_shared[((((int)threadIdx.x) & 7) + 504)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 260)] * weight_shared[((((int)threadIdx.x) & 7) + 480)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 261)] * weight_shared[((((int)threadIdx.x) & 7) + 488)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 262)] * weight_shared[((((int)threadIdx.x) & 7) + 496)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 263)] * weight_shared[((((int)threadIdx.x) & 7) + 504)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 300)] * weight_shared[((((int)threadIdx.x) & 7) + 480)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 301)] * weight_shared[((((int)threadIdx.x) & 7) + 488)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 302)] * weight_shared[((((int)threadIdx.x) & 7) + 496)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 303)] * weight_shared[((((int)threadIdx.x) & 7) + 504)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 340)] * weight_shared[((((int)threadIdx.x) & 7) + 480)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 341)] * weight_shared[((((int)threadIdx.x) & 7) + 488)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 342)] * weight_shared[((((int)threadIdx.x) & 7) + 496)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 343)] * weight_shared[((((int)threadIdx.x) & 7) + 504)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 192)] * weight_shared[((((int)threadIdx.x) & 7) + 512)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 193)] * weight_shared[((((int)threadIdx.x) & 7) + 520)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 194)] * weight_shared[((((int)threadIdx.x) & 7) + 528)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 195)] * weight_shared[((((int)threadIdx.x) & 7) + 536)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 232)] * weight_shared[((((int)threadIdx.x) & 7) + 512)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 233)] * weight_shared[((((int)threadIdx.x) & 7) + 520)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 234)] * weight_shared[((((int)threadIdx.x) & 7) + 528)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 235)] * weight_shared[((((int)threadIdx.x) & 7) + 536)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 272)] * weight_shared[((((int)threadIdx.x) & 7) + 512)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 273)] * weight_shared[((((int)threadIdx.x) & 7) + 520)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 274)] * weight_shared[((((int)threadIdx.x) & 7) + 528)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 275)] * weight_shared[((((int)threadIdx.x) & 7) + 536)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 312)] * weight_shared[((((int)threadIdx.x) & 7) + 512)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 313)] * weight_shared[((((int)threadIdx.x) & 7) + 520)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 314)] * weight_shared[((((int)threadIdx.x) & 7) + 528)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 315)] * weight_shared[((((int)threadIdx.x) & 7) + 536)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 352)] * weight_shared[((((int)threadIdx.x) & 7) + 512)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 353)] * weight_shared[((((int)threadIdx.x) & 7) + 520)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 354)] * weight_shared[((((int)threadIdx.x) & 7) + 528)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 355)] * weight_shared[((((int)threadIdx.x) & 7) + 536)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 196)] * weight_shared[((((int)threadIdx.x) & 7) + 544)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 197)] * weight_shared[((((int)threadIdx.x) & 7) + 552)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 198)] * weight_shared[((((int)threadIdx.x) & 7) + 560)]));
-    conv2d_nhwc_local[0] = (conv2d_nhwc_local[0] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 199)] * weight_shared[((((int)threadIdx.x) & 7) + 568)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 236)] * weight_shared[((((int)threadIdx.x) & 7) + 544)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 237)] * weight_shared[((((int)threadIdx.x) & 7) + 552)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 238)] * weight_shared[((((int)threadIdx.x) & 7) + 560)]));
-    conv2d_nhwc_local[1] = (conv2d_nhwc_local[1] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 239)] * weight_shared[((((int)threadIdx.x) & 7) + 568)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 276)] * weight_shared[((((int)threadIdx.x) & 7) + 544)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 277)] * weight_shared[((((int)threadIdx.x) & 7) + 552)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 278)] * weight_shared[((((int)threadIdx.x) & 7) + 560)]));
-    conv2d_nhwc_local[2] = (conv2d_nhwc_local[2] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 279)] * weight_shared[((((int)threadIdx.x) & 7) + 568)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 316)] * weight_shared[((((int)threadIdx.x) & 7) + 544)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 317)] * weight_shared[((((int)threadIdx.x) & 7) + 552)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 318)] * weight_shared[((((int)threadIdx.x) & 7) + 560)]));
-    conv2d_nhwc_local[3] = (conv2d_nhwc_local[3] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 319)] * weight_shared[((((int)threadIdx.x) & 7) + 568)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 356)] * weight_shared[((((int)threadIdx.x) & 7) + 544)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 357)] * weight_shared[((((int)threadIdx.x) & 7) + 552)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 358)] * weight_shared[((((int)threadIdx.x) & 7) + 560)]));
-    conv2d_nhwc_local[4] = (conv2d_nhwc_local[4] + (PadInput_shared[(((((int)threadIdx.x) >> 3) * 360) + 359)] * weight_shared[((((int)threadIdx.x) & 7) + 568)]));
-  }
-  conv2d_nhwc[((((((int)threadIdx.x) >> 3) * 12800) + (((int)blockIdx.x) * 8)) + (((int)threadIdx.x) & 7))] = conv2d_nhwc_local[0];
-  conv2d_nhwc[(((((((int)threadIdx.x) >> 3) * 12800) + (((int)blockIdx.x) * 8)) + (((int)threadIdx.x) & 7)) + 2560)] = conv2d_nhwc_local[1];
-  conv2d_nhwc[(((((((int)threadIdx.x) >> 3) * 12800) + (((int)blockIdx.x) * 8)) + (((int)threadIdx.x) & 7)) + 5120)] = conv2d_nhwc_local[2];
-  conv2d_nhwc[(((((((int)threadIdx.x) >> 3) * 12800) + (((int)blockIdx.x) * 8)) + (((int)threadIdx.x) & 7)) + 7680)] = conv2d_nhwc_local[3];
-  conv2d_nhwc[(((((((int)threadIdx.x) >> 3) * 12800) + (((int)blockIdx.x) * 8)) + (((int)threadIdx.x) & 7)) + 10240)] = conv2d_nhwc_local[4];
-}
-
-
-The time of DIL is 0.258 ms
