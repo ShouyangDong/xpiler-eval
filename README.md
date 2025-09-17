@@ -2,7 +2,7 @@
 
 **Xpiler-eval** is a benchmark for testing large language models (LLMs) on **cross-system code translation** tasks in deep learning compilers.
 
-It focuses on translating tensor operators between different hardware platforms, such as CUDA, CPU, and NPU.
+It focuses on translating tensor operators between different hardware platforms, such as Nvidia GPU, AMD GPU,Intel CPU, and Cambricon MLU.
 
 ## Evaluation Metrics
 
