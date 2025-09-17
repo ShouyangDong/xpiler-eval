@@ -3,8 +3,8 @@ extern "C" void gemm(float *A, float *B, float *result) {
   uint8_t arr_b[64];
   uint32_t arr_d[16];
 
-  for (int j = 0; j < 32; j++) {
-    for (int k = 0; k < 6; k++) {
+  for (int j = 0; j < 4; j++) {
+    for (int k = 0; k < 128; k++) {
       uint32_t sum = 0;
       // 使用VNNI指令进行乘加操作
       __m512i acc = _mm512_setzero_si512(); // 初始化累加器为0
@@ -15,7 +15,7 @@ extern "C" void gemm(float *A, float *B, float *result) {
           arr_a[local_i] =
               static_cast<uint8_t>(A[j * 128 + local_s * 64 + local_i]);
           arr_b[local_i] =
-              static_cast<uint8_t>(B[(local_s * 64 + local_i) * 6 + k]);
+              static_cast<uint8_t>(B[(local_s * 64 + local_i) * 128 + k]);
         }
 
         // 加载量化后的数据到512位SIMD寄存器中
@@ -35,7 +35,7 @@ extern "C" void gemm(float *A, float *B, float *result) {
       }
 
       // 反量化并存储到输出矩阵result中
-      result[j * 6 + k] = static_cast<float>(sum);
+      result[j * 128 + k] = static_cast<float>(sum);
     }
   }
 }

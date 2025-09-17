@@ -1,4 +1,3 @@
-
 extern "C" void sumpool(float *x, float *output) {
   int N = 5;
   int H = 32;

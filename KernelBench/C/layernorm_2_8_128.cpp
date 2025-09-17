@@ -1,8 +1,6 @@
 
-extern "C" void layernorm(float *input, // shape=[2, 8, 128]
-                                 float *gamma, float *beta,
-                                 float *output) // shape=[2, 8, 128]
-{
+extern "C" void layernorm(float *input, float *gamma, float *beta,
+                                 float *output) {
   for (int i_bs = 0; i_bs < 2; i_bs++) {
     for (int i_seq = 0; i_seq < 8; i_seq++) {
       float mean = 0.0;

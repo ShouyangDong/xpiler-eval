@@ -1,4 +1,3 @@
-
 extern "C" void sumpool(float *x, float *output) {
   int N = 16;
   int H = 64;
@@ -8,7 +7,6 @@ extern "C" void sumpool(float *x, float *output) {
   int stride = 1;
   int output_H = (H - kernel_size) / stride + 1;
   int output_W = (W - kernel_size) / stride + 1;
-
   for (int n = 0; n < N; n++) {
     for (int h = 0; h < output_H; h++) {
       for (int w = 0; w < output_W; w++) {

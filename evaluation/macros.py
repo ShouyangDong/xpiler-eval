@@ -1,9 +1,3 @@
-CPP_MACROS = """
-#include <stdio.h>
-#include <math.h>
-#include <float.h>
-"""
-
 MLU_MACROS = """
 #include <bang.h>
 """
