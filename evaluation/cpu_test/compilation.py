@@ -5,7 +5,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 from tqdm import tqdm
 
-from benchmark.utils import run_cpp_compilation as run_compilation
+from evaluation.macros import CPP_MACROS as macro
+from evaluation.utils import run_cpp_compilation as run_compilation
 
 
 def compile_file(file_name):
@@ -13,11 +14,6 @@ def compile_file(file_name):
 
     with open(file_name, "r") as f:
         code = f.read()
-
-    with open(
-        os.path.join(os.getcwd(), "benchmark/macro/cpp_macro.txt"), "r"
-    ) as f:
-        macro = f.read()
 
     code = macro + code
     bak_file_name = file_name.replace(".cpp", "_bak.cpp")
@@ -27,7 +23,7 @@ def compile_file(file_name):
 
     so_name = base_name.replace(".cpp", ".so")
     so_name = os.path.join(
-        os.path.join(os.getcwd(), "benchmark/data/cuda_code_test/"), so_name
+        os.path.join(os.getcwd(), "evaluation/data/cpp_code_test/"), so_name
     )
 
     success, output = run_compilation(so_name, bak_file_name)
@@ -43,7 +39,7 @@ def compile_file(file_name):
 
 if __name__ == "__main__":
     files = glob.glob(
-        os.path.join(os.getcwd(), "benchmark/data/cpp_code_test/*.cpp")
+        os.path.join(os.getcwd(), "evaluation/data/cpp_code_test/*.cpp")
     )
 
     # Use ThreadPoolExecutor to execute file compilation in parallel.

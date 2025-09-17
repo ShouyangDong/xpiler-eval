@@ -5,10 +5,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 from tqdm import tqdm
 
-from utils import run_cpp_compilation
-from utils import run_cuda_compilation
-from utils import run_mlu_compilation
-from utils import run_hip_compilation
+from evaluation.utils import run_cpp_compilation
+from evaluation.utils import run_cuda_compilation
+from evaluation.utils import run_mlu_compilation
+from evaluation.utils import run_hip_compilation
 
 
 def compile_file(file_name, target):

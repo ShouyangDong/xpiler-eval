@@ -6,7 +6,8 @@ from ctypes import CDLL
 
 import torch  # Introducing PyTorch
 
-from benchmark.utils import run_dlboost_compilation as run_compilation
+from evaluation.macros import DLBOOST_MACROS as macro
+from evaluation.utils import run_dlboost_compilation as run_compilation
 
 
 def ref_program(x):
@@ -26,10 +27,6 @@ if __name__ == "__main__":
     with open(args.file, "r") as f:
         code = f.read()
 
-    with open(
-        os.path.join(os.getcwd(), "benchmark/macro/dlboost_macro.txt"), "r"
-    ) as f:
-        macro = f.read()
     code = macro + code
 
     file_name = args.file.replace(

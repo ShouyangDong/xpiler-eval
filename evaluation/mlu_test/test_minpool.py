@@ -5,10 +5,10 @@ import subprocess
 
 import numpy as np
 import torch
-
 from benchmark.template.mlu_host_template import create_mlu_func
-from benchmark.utils import minpool_np
-from benchmark.utils import run_mlu_compilation as run_compilation
+
+from evaluation.utils import minpool_np
+from evaluation.utils import run_mlu_compilation as run_compilation
 
 
 def verify_pooling(base_name, file, shape, kernel_stride):

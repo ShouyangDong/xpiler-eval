@@ -4,9 +4,9 @@ import os
 import subprocess
 
 import numpy as np
-
 from benchmark.template.hip_host_template import create_hip_func
-from benchmark.utils import run_hip_compilation as run_compilation
+
+from evaluation.utils import run_hip_compilation as run_compilation
 
 
 # Define the add function using numpy

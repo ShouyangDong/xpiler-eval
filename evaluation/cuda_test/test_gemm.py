@@ -4,9 +4,9 @@ import os
 import subprocess
 
 import numpy as np
-
 from benchmark.template.cuda_host_template import create_cuda_func
-from benchmark.utils import run_cuda_compilation as run_compilation
+
+from evaluation.utils import run_cuda_compilation as run_compilation
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -5,10 +5,10 @@ import subprocess
 
 import numpy as np
 import torch
-
 from benchmark.template.hip_host_template import create_hip_func
-from benchmark.utils import conv2d_nchw
-from benchmark.utils import run_hip_compilation as run_compilation
+
+from evaluation.utils import conv2d_nchw
+from evaluation.utils import run_hip_compilation as run_compilation
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

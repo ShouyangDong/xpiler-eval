@@ -8,9 +8,9 @@ from ctypes import CDLL
 import numpy as np
 import torch
 import torch.nn.functional as F
-
 from benchmark.template.mlu_host_template import create_mlu_func
-from benchmark.utils import run_mlu_compilation as run_compilation
+
+from evaluation.utils import run_mlu_compilation as run_compilation
 
 
 def ref_program(q, k, v, causal=False):
