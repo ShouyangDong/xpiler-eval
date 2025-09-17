@@ -1,4 +1,4 @@
-extern "C" void sin(float *input, float *output) {
+extern "C" void sin_kernel(float *input, float *output) {
   int rows = 16;
   int cols = 128;
 
