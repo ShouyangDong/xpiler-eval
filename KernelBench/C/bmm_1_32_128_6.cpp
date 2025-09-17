@@ -1,4 +1,4 @@
-extern "C" void gemm(float *A, float *B, float *result) {
+extern "C" void bmm(float *A, float *B, float *result) {
   uint8_t arr_a[64];
   uint8_t arr_b[64];
   uint32_t arr_d[16];

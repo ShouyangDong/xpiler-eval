@@ -3,7 +3,7 @@ extern "C" void gemm(float *A, float *B, float *result) {
   uint8_t arr_b[64];
   uint32_t arr_d[16];
 
-  for (int j = 0; j < 32; j++) {
+  for (int j = 0; j < 4; j++) {
     for (int k = 0; k < 6; k++) {
       uint32_t sum = 0;
       // 使用VNNI指令进行乘加操作

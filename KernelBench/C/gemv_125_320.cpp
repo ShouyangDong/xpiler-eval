@@ -3,14 +3,14 @@ extern "C" void gemv(float *A, float *x, float *y) {
   uint8_t arr_b[64];
   uint32_t arr_d[16];
 
-  for (int i = 0; i < 32; ++i) {
+  for (int i = 0; i < 125; ++i) {
     uint32_t sum = 0;
     __m512i acc = _mm512_setzero_si512(); // 累加器初始化为0
 
-    for (int local_s = 0; local_s < 8; ++local_s) {
+    for (int local_s = 0; local_s < 5; ++local_s) {
       // 加载A和x到arr_a和arr_b
       for (int j = 0; j < 64; ++j) {
-        arr_a[j] = A[i * 512 + local_s * 64 + j];
+        arr_a[j] = A[i * 320 + local_s * 64 + j];
         arr_b[j] = x[local_s * 64 + j];
       }
 
