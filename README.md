@@ -15,3 +15,19 @@ It focuses on translating tensor operators between different hardware platforms,
 - **Performance Comparison**  
   Runtime performance compared to vendor-provided library implementations.
 
+# How to Run
+## Method 1: Using Command-Line Arguments (Recommended)
+``./run_benchmark.sh -b /path/to/benchmarks [-o /output/path]``
+
+Example:
+
+``
+./run_benchmark.sh -b ./benchmarks -o ./results
+``
+
+## Method 2: Using Environment Variables (Legacy)
+``
+export BENCH_DIR=/path/to/benchmarks
+export OUT_ROOT_DIR=./results  # optional
+./run_benchmark.sh
+``
