@@ -42,6 +42,7 @@ TEST_SCRIPT_MAP = {
     "mean": "test_mean.py",
     "batchnorm": "test_batchnorm.py",
     "sub": "test_sub.py",
+    "sin": "test_sin.py",
 }
 
 

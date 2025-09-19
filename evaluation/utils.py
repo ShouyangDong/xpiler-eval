@@ -201,7 +201,6 @@ def run_hip_compilation(so_name, file_name):
         return False, e.output
 
 
-
 def run_test(file_path, test_script, kernel_config, target):
     """
     Run a test script for a compiled kernel.
