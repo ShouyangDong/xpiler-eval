@@ -7,6 +7,5 @@
 | Normalization     | Normalize inputs/features       | batchnorm, layernorm, RMSnorm               |
 | Activation        | Non-linear transformations      | relu, gelu, sigmoid, softmax                |
 | Pooling           | Downsample feature maps         | maxpool2d, avgpool2d, minpool2d, sumpool2d  |
-| Layout Transform  | Reorganize data layout          | reshape, transpose                          |
+| Layout Transform  | Reorganize data layout          | gather, transpose                          |
 | LLM               | Ops used in LLM                 | self-atten, DAT                             |
-
