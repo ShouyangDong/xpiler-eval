@@ -564,6 +564,7 @@
         "dtype": "float32",
         "args": [
             16,
+            32,
             32
         ],
         "axes": 1
@@ -983,7 +984,8 @@
         "dtype": "float32",
         "args": [
             4,
-            8
+            8,
+            32
         ],
         "axes": 1
     },
@@ -2439,10 +2441,9 @@
         "op_name": "max",
         "dtype": "float32",
         "args": [
-            1,
-            1
+            128
         ],
-        "axes": 1
+        "axes": 0
     },
     {
         "op_name": "softmax",
