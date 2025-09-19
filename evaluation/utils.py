@@ -201,25 +201,7 @@ def run_hip_compilation(so_name, file_name):
         return False, e.output
 
 
-def run_test(file_name, test_file):
-    try:
-        output = subprocess.run(
-            ["python", test_file, "--file", file_name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            encoding="utf-8",
-            check=True,
-            text=True,
-            timeout=400,
-        )
-        return True, output
-    except subprocess.TimeoutExpired:
-        return False, "timeout"
-    except subprocess.CalledProcessError as e:
-        return False, e.output
-
-
-def run_test_for_config(file_path, test_script, kernel_config, target):
+def run_test(file_path, test_script, kernel_config, target):
     """
     Run a test script for a compiled kernel.
     :param file_path: Path to the .cu/.cpp file (or .so if already compiled)
