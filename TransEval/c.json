@@ -15,9 +15,11 @@
         "op_name": "transpose",
         "dtype": "float32",
         "args": [
-            3,
-            2
-        ]
+            36,
+            24,
+            16
+        ],
+        "perm": [1, 0, 2]
     },
     {
         "op_name": "maxpool",
@@ -369,10 +371,11 @@
         "dtype": "float32",
         "args": [
             2,
-            3,
+            32,
             4,
-            5
-        ]
+            64
+        ],
+        "perm": [0, 2, 3, 1]
     },
     {
         "op_name": "sin",
@@ -626,10 +629,11 @@
         "op_name": "transpose",
         "dtype": "float32",
         "args": [
-            4,
-            3,
-            5
-        ]
+            42,
+            36,
+            55
+        ],
+        "perm": [1, 0, 2]
     },
     {
         "op_name": "sigmoid",
@@ -871,9 +875,10 @@
         "op_name": "transpose",
         "dtype": "float32",
         "args": [
-            2,
-            3
-        ]
+            24,
+            36
+        ],
+        "perm": [1, 0]
     },
     {
         "op_name": "maxpool",
@@ -1489,10 +1494,11 @@
         "op_name": "transpose",
         "dtype": "float32",
         "args": [
-            2,
-            3,
-            4
-        ]
+            24,
+            32,
+            48
+        ],
+        "perm": [2, 0 ,1]
     },
     {
         "op_name": "avgpool",
@@ -1525,7 +1531,8 @@
             3,
             224,
             224
-        ]
+        ],
+        "perm": [0, 3, 1, 2]
     },
     {
         "op_name": "sigmoid",
@@ -1671,10 +1678,11 @@
         "op_name": "transpose",
         "dtype": "float32",
         "args": [
-            3,
-            1,
-            4
-        ]
+            36,
+            16,
+            48
+        ],
+        "perm": [0, 2, 1]
     },
     {
         "op_name": "deformable",
@@ -1951,10 +1959,11 @@
         "op_name": "transpose",
         "dtype": "float32",
         "args": [
-            3,
-            4,
+            33,
+            40,
             5
-        ]
+        ],
+        "perm": [0, 2, 1]
     },
     {
         "op_name": "mean",
