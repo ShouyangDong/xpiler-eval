@@ -30,8 +30,6 @@ if __name__ == "__main__":
     with open(args.file, "r") as f:
         code = f.read()
 
-    with open("benchmark/macro/dlboost_macro.txt", "r") as f:
-        macro = f.read()
 
     code = macro + code
 

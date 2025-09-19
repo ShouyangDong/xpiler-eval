@@ -5,7 +5,7 @@ import os
 import subprocess
 import torch
 
-
+from evaluation.macros import DLBOOST_MACROS as macro
 from evaluation.utils import run_dlboost_compilation as run_compilation
 
 
