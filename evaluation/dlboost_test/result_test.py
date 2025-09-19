@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
+"""
+Multi-platform correctness tester for compiled kernels (.so).
+Reads kernel configs from kernels.json, maps to test scripts, and runs tests.
+"""
 import argparse
-import glob
+import json
 import os
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 from tqdm import tqdm
 
-from evaluation.utils import run_test
 
-# operator → test script filename
-TEST_FILE_MAP = {
+# --- 算子到测试脚本的映射 ---
+TEST_SCRIPT_MAP = {
     "deformable": "test_deformable_attention.py",
     "layernorm": "test_layer_norm.py",
     "mha": "test_mha.py",
@@ -43,75 +45,124 @@ TEST_FILE_MAP = {
 }
 
 
-def process_file(file_path, test_dir):
-    """Run the corresponding DLBoost test for a single .cpp file.
-
-    Returns (base_name, success, output).
+def run_test_for_config(config, source_dir, test_dir, target):
     """
-    base_name = os.path.basename(file_path)
-    op_name = base_name.split("_")[0]
-    script_name = TEST_FILE_MAP.get(op_name)
+    Run test for a single kernel config.
+    Returns: (success: bool, message: str)
+    """
+    op_name = config["op_name"]
+    args = config["args"]
+
+    # 构造文件名
+    file_name = f"{op_name}_{'_'.join(map(str, args))}.{'cu' if target != 'cpu' else 'cpp'}"
+    file_path = os.path.join(source_dir, file_name)
+
+    if not os.path.exists(file_path):
+        return False, f"[ERROR] File not found: {file_path} (op={op_name})"
+
+    # 查找测试脚本
+    script_name = TEST_SCRIPT_MAP.get(op_name)
     if not script_name:
-        return base_name, False, f"[WARN] no test mapping for '{op_name}'"
+        return False, f"[WARN] No test script for op='{op_name}'"
 
     test_script = os.path.join(test_dir, script_name)
     if not os.path.isfile(test_script):
-        return (
-            base_name,
-            False,
-            f"[ERROR] test script not found: {test_script}",
-        )
+        return False, f"[ERROR] Test script not found: {test_script}"
 
-    success, output = run_test(file_path, test_script)
-    return base_name, success, output
+    # 调用 evaluation.utils.run_test
+    try:
+        from evaluation.utils import run_test
+        success, output = run_test(
+            file_path=file_path,
+            test_script=test_script,
+            kernel_config=config,
+            target=target
+        )
+        if success:
+            return True, "OK"
+        else:
+            return False, f"[FAIL] {file_name}\n{output}"
+    except Exception as e:
+        return False, f"[EXCEPTION] {file_name}: {str(e)}"
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run DLBoost correctness tests on translated .cpp files"
+        description="Run correctness tests on compiled kernels using kernels.json"
+    )
+    parser.add_argument(
+        "json_path",
+        help="Path to kernels.json config file"
     )
     parser.add_argument(
         "source_dir",
-        help="Directory containing translated .cpp files (e.g. translated/cpu_to_dlboost/)",
+        help="Directory containing compiled .cu/.cpp files"
     )
     parser.add_argument(
         "test_dir",
-        help="Directory containing DLBoost test scripts (e.g. benchmark/evaluation/dlboost_test/)",
+        help="Directory containing test scripts (e.g., test_add.py)"
     )
+    parser.add_argument(
+        "--target",
+        choices=["cuda", "hip", "bang", "cpu"],
+        required=True,
+        help="Target platform"
+    )
+    parser.add_argument(
+        "--jobs", "-j",
+        type=int,
+        default=os.cpu_count(),
+        help="Number of parallel jobs"
+    )
+
     args = parser.parse_args()
 
-    pattern = os.path.join(args.source_dir, "*.cpp")
-    files = glob.glob(pattern)
-    if not files:
-        print(
-            f"[WARN] no .cpp files found in {args.source_dir}", file=sys.stderr
-        )
+    # 读取 kernels.json
+    if not os.path.exists(args.json_path):
+        print(f"[ERROR] kernels.json not found: {args.json_path}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        with open(args.json_path, 'r') as f:
+            kernel_configs = json.load(f)
+    except Exception as e:
+        print(f"[ERROR] Failed to parse JSON: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    if not kernel_configs:
+        print("[INFO] No kernels to test.")
         sys.exit(0)
 
-    total = len(files)
+    total = len(kernel_configs)
     success_count = 0
 
-    with ThreadPoolExecutor() as executor:
-        futures = {
-            executor.submit(process_file, fp, args.test_dir): fp
-            for fp in files
-        }
-        for future in tqdm(as_completed(futures), total=total):
-            base_name, success, output = future.result()
+    # 并行测试
+    with ThreadPoolExecutor(max_workers=args.jobs) as executor:
+        futures = [
+            executor.submit(
+                run_test_for_config,
+                config=cfg,
+                source_dir=args.source_dir,
+                test_dir=args.test_dir,
+                target=args.target
+            )
+            for cfg in kernel_configs
+        ]
 
-            if (
-                success
-                and hasattr(output, "stdout")
-                and "Verification successful!" in output.stdout
-            ):
-                success_count += 1
-            else:
-                # print failures or mapping warnings
-                print(f"--- {base_name} ---")
-                print(output)
+        # 收集结果
+        with tqdm(total=total, desc=f"[{args.target.upper()}] Testing") as pbar:
+            for future in as_completed(futures):
+                pbar.update(1)
+                success, msg = future.result()
+                if not success:
+                    print(msg, file=sys.stderr)
+                else:
+                    success_count += 1
 
-    rate = success_count / total if total else 0.0
-    print(f"Successful tests: {success_count}/{total} ({rate:.2%})")
+    # 汇总
+    rate = success_count / total
+    print(f"\n✅ {args.target.upper()} Test Result: {success_count}/{total} = {rate:.2%}")
+    sys.exit(0 if rate == 1.0 else 1)
 
 
 if __name__ == "__main__":

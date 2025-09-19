@@ -4,7 +4,7 @@ import os
 import torch
 import re
 
-from benchmark.utils import run_dlboost_compilation as run_compilation
+from evaluation.utils import run_dlboost_compilation as run_compilation
 
 # Define the transpose function using torch
 def transpose(A, axes):
