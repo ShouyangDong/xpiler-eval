@@ -5,7 +5,7 @@ import subprocess
 
 import torch
 from evaluation.utils import run_dlboost_compilation as run_compilation
-
+from evaluation.macros import DLBOOST_MACROS as macro
 
 def transpose_2d(input_tensor):
     return input_tensor.t().contiguous()  # 或 torch.transpose(input, 0, 1)
@@ -56,11 +56,6 @@ if __name__ == "__main__":
     # 读取并注入宏
     with open(args.file, "r") as f:
         code = f.read()
-
-    with open(
-        os.path.join(os.getcwd(), "benchmark/macro/cpp_macro.txt"), "r"
-    ) as f:
-        macro = f.read()
 
     code = macro + code
 

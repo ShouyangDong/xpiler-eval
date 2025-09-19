@@ -214,9 +214,9 @@ def run_test(file_path, test_script, kernel_config, target):
         result = subprocess.run(
             [
                 "python", test_script,
-                file_path,
-                json.dumps(kernel_config),
-                target
+                "--file", file_path,
+                "--config", json.dumps(kernel_config),
+                "--target", target
             ],
             capture_output=True,
             text=True,

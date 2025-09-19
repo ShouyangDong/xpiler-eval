@@ -6,7 +6,7 @@ import subprocess
 import torch
 import torch.nn.functional as F
 from evaluation.utils import run_dlboost_compilation as run_compilation
-
+from evaluation.macros import DLBOOST_MACROS as macro
 
 def batchnorm_inference(input, weight, bias,
                         running_mean, running_var, eps=1e-5):
@@ -27,6 +27,8 @@ if __name__ == "__main__":
     type=str,
     required=True,
      help="Path to the C++ source file (e.g., batchnorm_1_3_224_224.cpp)")
+    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
+    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
@@ -61,7 +63,7 @@ if __name__ == "__main__":
 
     # Prepare parameter pointers
     mean_ptr = running_mean.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    var_ptr = running_var.numpy().ctypes.data_as(ctypes.c_float))
+    var_ptr = running_var.numpy().ctypes.data_as(ctypes.c_float)
     weight_ptr = weight.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     bias_ptr = bias.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
@@ -75,8 +77,6 @@ if __name__ == "__main__":
     # Read and patch C++ code
     with open(args.file, "r") as f:
         code = f.read()
-
-
 
     code = macro + code
 

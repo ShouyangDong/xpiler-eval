@@ -44,6 +44,8 @@ def parse_filename(filename):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test C++ GATHER kernel against PyTorch")
     parser.add_argument("--file", type=str, required=True, help="Path to the .cpp source file")
+    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
+    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
     args = parser.parse_args()
 
     # === 1. Parse shapes from filename ===
@@ -83,13 +85,8 @@ if __name__ == "__main__":
         code = f.read()
 
     # Optional: inject macro (e.g., for debug or config)
-    try:
-        with open(os.path.join(os.getcwd(), "benchmark/macro/cpp_macro.txt"), "r") as f:
-            macro = f.read()
-        code = macro + code
-    except FileNotFoundError:
-        print("⚠️  Macro file not found, skipping macro injection.")
-        pass
+    code = macro + code
+
 
     # Write temporary modified file
     with open(temp_file, "w") as f:

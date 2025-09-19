@@ -11,6 +11,8 @@ from evaluation.utils import run_dlboost_compilation as run_compilation
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", help="the source file")
+    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
+    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
     args = parser.parse_args()
     base_name = os.path.basename(args.file)
     name = base_name.split("_")[0]
@@ -36,9 +38,6 @@ if __name__ == "__main__":
     so_name = args.file.replace(".cpp", ".so")
     with open(args.file, "r") as f:
         code = f.read()
-
-    with open("benchmark/macro/dlboost_macro.txt", "r") as f:
-        macro = f.read()
 
     code = macro + code
 
