@@ -6,7 +6,7 @@ import subprocess
 import torch
 
 
-from benchmark.utils import run_dlboost_compilation as run_compilation
+from evaluation.utils import run_dlboost_compilation as run_compilation
 
 
 def element_wise_gather(params, indices):

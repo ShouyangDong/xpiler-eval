@@ -5,7 +5,7 @@ import subprocess
 
 import torch
 import torch.nn.functional as F
-from benchmark.utils import run_dlboost_compilation as run_compilation
+from evaluation.utils import run_dlboost_compilation as run_compilation
 
 
 def batchnorm_inference(input, weight, bias,
