@@ -2,7 +2,7 @@
 // 实例 4: 小 embedding 表 (vocab=100, dim=32, batch=16)
 // 轻量级模型或测试用
 // ============================================================== //
-extern "C" void static_gather_100_32_16(const float* params,
+extern "C" void gather(const float* params,
                              const int* indices,
                              float* output) {
   constexpr int PARAMS_BATCH = 100;

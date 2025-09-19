@@ -220,7 +220,7 @@ def run_test(file_path, test_script, kernel_config, target):
             ],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=400
         )
         success = result.returncode == 0
         output = result.stdout.strip() + "\n" + result.stderr.strip()

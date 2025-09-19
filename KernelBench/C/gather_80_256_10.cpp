@@ -2,7 +2,7 @@
 // 实例 6: 多实例预测 - 取 top-10 预测 (classes=80, features=256, topk=10)
 // 如目标检测后处理
 // ============================================================== //
-extern "C" void static_gather_80_256_10(const float* params,
+extern "C" void gather(const float* params,
                              const int* indices,
                              float* output) {
   constexpr int PARAMS_BATCH = 80;

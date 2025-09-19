@@ -19,6 +19,8 @@ if __name__ == "__main__":
         required=True,
         help="Path to the C++ source file (e.g., transpose_64_64.cpp)",
     )
+    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
+    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)

@@ -2,7 +2,7 @@
 // 实例 2: 小 batch 分类头 (num_classes=1000, feature=2048, batch=8)
 // 如 ImageNet 推理
 // ============================================================== //
-extern "C" void static_gather_1000_2048_8(const float* params,
+extern "C" void gather(const float* params,
                                const int* indices,
                                float* output) {
   constexpr int PARAMS_BATCH = 1000;
