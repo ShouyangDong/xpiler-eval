@@ -1,15 +1,15 @@
 extern "C" void sum(float *input, float *output) {
-  int rows = 32;
-  int cols = 256;
-  // sum over rows (dim=0): [M,N] -> [1,N]
+  const int rows = 32;    // axis 0: to be reduced
+  const int cols = 256;   // axis 1: preserved
 
   // Initialize output to 0
-  for (int i = 0; i < 1 * 256; i++) {
-    output[i] = 0.0f;
+  for (int j = 0; j < cols; j++) {
+    output[j] = 0.0f;
   }
 
-  for (int j = 0; j < cols; j++) {
-    for (int i = 0; i < rows; i++) {
+  // Sum over axis 0 (rows)
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
       output[j] += input[i * cols + j];
     }
   }

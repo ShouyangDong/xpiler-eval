@@ -1,4 +1,4 @@
-extern "C" void permute_4d_0312(float* input, float* output) {
+extern "C" void transpose(float* input, float* output) {
     const int N = 1;
     const int C = 3;
     const int H = 224;

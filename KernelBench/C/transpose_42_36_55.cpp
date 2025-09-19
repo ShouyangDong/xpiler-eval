@@ -1,7 +1,7 @@
-extern "C" void permute_3d_102(float* input, float* output) {
+extern "C" void transpose(float* input, float* output) {
     const int d0 = 42;
     const int d1 = 36;
-    const int d2 = 56;
+    const int d2 = 55;
 
     // output[d1][d0][d2] = input[d0][d1][d2]
     for (int i1 = 0; i1 < d1; ++i1) {

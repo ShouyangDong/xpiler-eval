@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     # Prepare parameter pointers
     mean_ptr = running_mean.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    var_ptr = running_var.numpy().ctypes.data_as(ctypes.c_float)
+    var_ptr = running_var.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     weight_ptr = weight.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     bias_ptr = bias.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
