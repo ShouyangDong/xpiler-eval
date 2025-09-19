@@ -1,4 +1,4 @@
-extern "C" void permute_3d_021(float* input, float* output) {
+extern "C" void transpose(float* input, float* output) {
     const int d0 = 33;
     const int d1 = 40;
     const int d2 = 5;

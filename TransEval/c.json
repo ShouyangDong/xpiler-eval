@@ -682,7 +682,7 @@
             16,
             128
         ],
-        "axes": 0
+        "axes": 1
     },
     {
         "op_name": "gemm",
@@ -738,7 +738,7 @@
             128,
             128
         ],
-        "axes": 1
+        "axes": 0
     },
     {
         "op_name": "rmsnorm",
@@ -2095,7 +2095,7 @@
         "dtype": "float32",
         "args": [
             4,
-            1
+            128
         ],
         "axes": 1
     },
@@ -2130,7 +2130,8 @@
         "dtype": "float32",
         "args": [
             8,
-            32
+            32,
+            64
         ],
         "axes": 1
     },
@@ -2212,7 +2213,7 @@
             8,
             32
         ],
-        "axes": 1
+        "axes": 0
     },
     {
         "op_name": "depthwiseconv",
@@ -2244,7 +2245,7 @@
             8,
             64
         ],
-        "axes": 0
+        "axes": 1
     },
     {
         "op_name": "sub",
