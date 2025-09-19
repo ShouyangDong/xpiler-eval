@@ -1,7 +1,7 @@
 | Operator Category | Description                     | Operator Names                              |
 |-------------------|---------------------------------|---------------------------------------------|
 | Element-wise      | Per-element computation         | add, sign, sub, sin                         |
-| Reduction         | Reduces along a dimension       | sum, mean, max, mi                          |
+| Reduction         | Reduces along a dimension       | sum, mean, max, min                         |
 | Matrix Ops        | Matrix-matrix or matrix-vector  | gemm, gemv, bmm                             |
 | Convolution       | Spatial feature extraction      | conv1d, conv2dNHWC, con2dNCHW, DepthwiseConv|
 | Normalization     | Normalize inputs/features       | batchnorm, layernorm, RMSnorm               |

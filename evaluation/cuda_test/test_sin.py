@@ -4,7 +4,7 @@ import os
 import torch
 
 
-from benchmark.utils import run_dlboost_compilation as run_compilation
+from evaluation.utils import run_dlboost_compilation as run_compilation
 
 
 # Define the sin function using torch
