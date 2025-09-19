@@ -32,6 +32,14 @@ TEST_FILE_MAPPING = {
     "sigmoid": "test_sigmoid.py",
     "gelu": "test_gelu.py",
     "softmax": "test_softmax.py",
+    "gather": "test_gather.py",
+    "transpose": "test_transpose.py",
+    "max": "test_max.py",
+    "min": "test_min.py",
+    "sum": "test_sum.py",
+    "mean": "test_mean.py",
+    "batchnorm": "test_batchnorm.py",
+    "sub": "test_sub.py",
 }
 
 
