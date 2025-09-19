@@ -3,7 +3,7 @@
 // 常用于 NLP：indices [batch=32] -> output [32, 128]
 // ============================================================== //
  
-extern "C" void static_gather_10000_128_32(const float* params,
+extern "C" void gather(const float* params,
                                 const int* indices,
                                 float* output) {
   constexpr int PARAMS_BATCH = 32;

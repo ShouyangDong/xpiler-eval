@@ -1,7 +1,7 @@
 // ============================================================== //
 // 实例 5: 动作选择 - 强化学习中取 Q 值向量 (actions=50, dim=128, batch=4)
 // ============================================================== //
-extern "C" void static_gather_50_128_4(const float* params,
+extern "C" void gather(const float* params,
                             const int* indices,
                             float* output) {
   constexpr int PARAMS_BATCH = 50;

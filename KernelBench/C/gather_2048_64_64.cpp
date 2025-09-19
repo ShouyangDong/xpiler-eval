@@ -2,7 +2,7 @@
 // 实例 8: 批量索引 - 多样本特征提取 (samples=2048, feature_dim=64, batch=64)
 // 如数据采样系统
 // ============================================================== //
-extern "C" void static_gather_2048_64_64(const float* params,
+extern "C" void gather(const float* params,
                               const int* indices,
                               float* output) {
   constexpr int PARAMS_BATCH = 2048;

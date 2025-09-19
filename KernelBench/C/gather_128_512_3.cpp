@@ -1,7 +1,7 @@
 // ============================================================== //
 // 实例 7: 时间步采样 - RNN 隐状态选择 (seq_len=128, hidden=512, select=3)
 // ============================================================== //
-extern "C" void static_gather_128_512_3(const float* params,
+extern "C" void gather(const float* params,
                              const int* indices,
                              float* output) {
   constexpr int PARAMS_BATCH = 128;

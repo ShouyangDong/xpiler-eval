@@ -1,7 +1,7 @@
 // ============================================================== //
 // 实例 3: 序列采样 - Transformer 解码时取 top-k (seq=512, dim=64, k=5)
 // ============================================================== //
-extern "C" void static_gather_512_64_5(const float* params,
+extern "C" void gather(const float* params,
                             const int* indices,
                             float* output) {
   constexpr int PARAMS_BATCH = 512;
