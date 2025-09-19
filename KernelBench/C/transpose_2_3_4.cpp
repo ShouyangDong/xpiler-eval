@@ -1,0 +1,16 @@
+extern "C" void permute_3d_201(float* input, float* output) {
+    const int d0 = 2;
+    const int d1 = 3;
+    const int d2 = 4;
+
+    // output[d2][d0][d1] = input[d0][d1][d2]
+    for (int i2 = 0; i2 < d2; ++i2) {
+        for (int i0 = 0; i0 < d0; ++i0) {
+            for (int i1 = 0; i1 < d1; ++i1) {
+                int out_idx = i2 * (d0 * d1) + i0 * d1 + i1;
+                int in_idx  = i0 * (d1 * d2) + i1 * d2 + i2;
+                output[out_idx] = input[in_idx];
+            }
+        }
+    }
+}
