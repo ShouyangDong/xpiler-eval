@@ -1,5 +1,5 @@
 import subprocess
-
+import json
 import torch
 import torch.nn.functional as F
 
@@ -217,3 +217,31 @@ def run_test(file_name, test_file):
         return False, "timeout"
     except subprocess.CalledProcessError as e:
         return False, e.output
+
+
+def run_test_for_config(file_path, test_script, kernel_config, target):
+    """
+    Run a test script for a compiled kernel.
+    :param file_path: Path to the .cu/.cpp file (or .so if already compiled)
+    :param test_script: Path to the test script (e.g., test_add.py)
+    :param kernel_config: Dict containing op_name, args, axes, dtype, etc.
+    :param target: One of 'cuda', 'hip', 'bang', 'cpu'
+    :return: (success: bool, output: str)
+    """
+    try:
+        result = subprocess.run(
+            [
+                "python", test_script,
+                file_path,
+                json.dumps(kernel_config),
+                target
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        success = result.returncode == 0
+        output = result.stdout.strip() + "\n" + result.stderr.strip()
+        return success, output
+    except Exception as e:
+        return False, str(e)
