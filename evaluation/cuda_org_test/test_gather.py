@@ -1,4 +1,3 @@
-# test_gather_cpp.py
 import argparse
 import ctypes
 import os
@@ -21,7 +20,7 @@ def element_wise_gather(params, indices):
 
 
 def parse_filename(filename):
-    """Parse shapes from filename like gather_100_32_16.cpp"""
+    """Parse shapes from filename like gather_100_32_16.cu"""
     base_name = os.path.basename(filename)
     stem = os.path.splitext(base_name)[0]  # e.g., gather_100_32_16
 
@@ -43,7 +42,7 @@ def parse_filename(filename):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test C++ GATHER kernel against PyTorch")
-    parser.add_argument("--file", type=str, required=True, help="Path to the .cpp source file")
+    parser.add_argument("--file", type=str, required=True, help="Path to the .cu source file")
     parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
     parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
     args = parser.parse_args()
@@ -77,8 +76,9 @@ if __name__ == "__main__":
     output_ptr = to_ptr(result_ctypes, ctypes.c_float)
 
     # === 5. Shared library name and temp file ===
-    so_name = args.file.replace(".cpp", ".so")
-    temp_file = args.file.replace(".cpp", "_bak.cpp")
+
+    so_name = args.file.replace(".cu", ".so")
+    temp_file = args.file.replace(".cu", "_bak.cu")
 
     # === 6. Read original code and inject macro ===
     with open(args.file, "r") as f:

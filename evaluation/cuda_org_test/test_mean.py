@@ -30,7 +30,7 @@ if __name__ == "__main__":
         "--file",
         type=str,
         required=True,
-        help="Path to the C++ source file (e.g., mean_8_32_64.cu)",
+        help="Path to the CUDA source file (e.g., mean_8_32_64.cu)",
     )
     parser.add_argument(
         "--config",
