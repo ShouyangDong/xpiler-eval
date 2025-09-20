@@ -29,7 +29,7 @@ __global__ void gather(const float* params,
 }
 
 
-extern "C" void gather_kernl(const float* d_params,
+extern "C" void gather_kernel(const float* d_params,
                                      const int* d_indices,
                                      float* d_output,
                                      int size1,
@@ -37,7 +37,7 @@ extern "C" void gather_kernl(const float* d_params,
                                      int size3) {
 
   float *d_A;
-  float *d_B;
+  int *d_B;
   float *d_C;
 
   cudaMalloc(&d_A, size1 * sizeof(float));

@@ -1,4 +1,4 @@
-/ ============================================================ //
+// ============================================================ //
 // 实例 6: (80, 256), indices=10
 // ============================================================ //
 
@@ -28,7 +28,7 @@ __global__ void gather(const float* params,
 }
 
 
-extern "C" void gather_kernl(const float* d_params,
+extern "C" void gather_kernel(const float* d_params,
                                      const int* d_indices,
                                      float* d_output,
                                      int size1,
@@ -36,7 +36,7 @@ extern "C" void gather_kernl(const float* d_params,
                                      int size3) {
 
   float *d_A;
-  float *d_B;
+  int *d_B;
   float *d_C;
 
   cudaMalloc(&d_A, size1 * sizeof(float));
@@ -49,7 +49,7 @@ extern "C" void gather_kernl(const float* d_params,
   constexpr int block_size = 16;
   constexpr int grid_size  = 1;
 
-  gather<<<grid_size, block_size>>>(d_params, d_indices, d_output);
+  gather<<<grid_size, block_size>>>(d_A, d_B, d_C);
 
   cudaMemcpy(d_output, d_C, size3 * sizeof(float), cudaMemcpyDeviceToHost);
   cudaFree(d_A);

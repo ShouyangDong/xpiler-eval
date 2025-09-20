@@ -26,16 +26,7 @@ __global__ void gather(const float* params,
 // ============================================================ //
 // 实例 3: (512, 64), indices=5
 // ============================================================ //
-extern "C" void gather_kernl(const float* d_params,
-                                 const int* d_indices,
-                                 float* d_output) {
-
-
-
-  gather<PARAMS_BATCH, PARAMS_LEN, INDICES_LEN>
-    <<<grid_size, block_size>>>(d_params, d_indices, d_output);
-}
-extern "C" void gather_kernl(const float* d_params,
+extern "C" void gather_kernel(const float* d_params,
                                      const int* d_indices,
                                      float* d_output,
                                      int size1,
@@ -43,7 +34,7 @@ extern "C" void gather_kernl(const float* d_params,
                                      int size3) {
 
   float *d_A;
-  float *d_B;
+  int *d_B;
   float *d_C;
 
   cudaMalloc(&d_A, size1 * sizeof(float));
