@@ -9,7 +9,7 @@ sin_7x1x6x7(float *__restrict__ A, float *__restrict__ T_sin) {
     }
 }
 
-extern "C" void sin_kernel_7x1x6x7(float *h_A, float *h_C) {
+extern "C" void sin(float *h_A, float *h_C) {
     float *d_A, *d_C;
     const int total = 7 * 1 * 6 * 7;
 

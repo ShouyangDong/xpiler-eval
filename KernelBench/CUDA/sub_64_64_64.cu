@@ -1,15 +1,15 @@
 // =============================================================================
 // 6. Shape: [64, 64, 64] → Total: 262,144 elements (3D volume, e.g., medical imaging)
 // =============================================================================
-__global__ void __launch_bounds__(960)
-sub_64x64x64(float *__restrict__ A, float *__restrict__ B, float *__restrict__ C) {
+__global__ void __launch_bounds__(1024)
+sub(float *__restrict__ A, float *__restrict__ B, float *__restrict__ C) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < 262144) {
         C[idx] = A[idx] - B[idx];
     }
 }
 
-extern "C" void sub_kernel_64x64x64(float *h_A, float *h_B, float *h_C) {
+extern "C" void sub_kernel(float *h_A, float *h_B, float *h_C) {
     float *d_A, *d_B, *d_C;
     const int total = 64 * 64 * 64;
 
@@ -23,7 +23,7 @@ extern "C" void sub_kernel_64x64x64(float *h_A, float *h_B, float *h_C) {
     dim3 blockSize(960);
     dim3 numBlocks((total + 959) / 960);
 
-    sub_64x64x64<<<numBlocks, blockSize>>>(d_A, d_B, d_C);
+    sub<<<numBlocks, blockSize>>>(d_A, d_B, d_C);
 
     cudaMemcpy(h_C, d_C, total * sizeof(float), cudaMemcpyDeviceToHost);
 

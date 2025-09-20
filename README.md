@@ -16,6 +16,13 @@ It focuses on translating tensor operators between different hardware platforms,
   Runtime performance compared to vendor-provided library implementations.
 
 # How to Run
+## Prerequisites
+Before running the benchmark, you must set up the environment by sourcing the environment script:
+
+``
+source env.sh
+``
+
 ## Method 1: Using Command-Line Arguments (Recommended)
 ``./run_benchmark.sh -b /path/to/benchmarks [-o /output/path]``
 

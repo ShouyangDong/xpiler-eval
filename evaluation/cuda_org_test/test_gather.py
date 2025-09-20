@@ -1,4 +1,3 @@
-# test_gather_cu.py
 import argparse
 import ctypes
 import os
@@ -77,6 +76,7 @@ if __name__ == "__main__":
     output_ptr = to_ptr(result_ctypes, ctypes.c_float)
 
     # === 5. Shared library name and temp file ===
+
     so_name = args.file.replace(".cu", ".so")
     temp_file = args.file.replace(".cu", "_bak.cu")
 

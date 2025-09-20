@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 CUDA-specific unit test for element-wise max kernel.
 Supports --config and --target cuda, compiles .cu to .so using nvcc.
