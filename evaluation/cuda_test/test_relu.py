@@ -56,6 +56,8 @@ def verify_relu(base_name, file, shape):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", help="the source file")
+    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
+    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
     args = parser.parse_args()
     base_name = os.path.basename(args.file)
     shapes = base_name.split(".")[0]

@@ -50,7 +50,9 @@ def parse_filename(filename):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test batchnorm CUDA kernel against PyTorch")
-    parser.add_argument("--file", type=str, required=True, help="Path to the .cu source file")
+    parser.add_argument("--file", help="the source file")
+    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
+    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
     args = parser.parse_args()
 
     # === 1. Parse shape from filename ===
