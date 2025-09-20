@@ -30,10 +30,7 @@ if __name__ == "__main__":
     with open(args.file, "r") as f:
         code = f.read()
 
-    with open(
-        os.path.join(os.getcwd(), "benchmark/macro/cuda_macro.txt"), "r"
-    ) as f:
-        macro = f.read()
+
 
     code = macro + code
 
