@@ -1,25 +1,25 @@
 // =============================================================================
-// CUDA Kernel for shape [8, 16, 32, 32] → Total: 131,072 elements
+// CUDA Kernel for shape [32, 26] → Total: 832 elements
 // =============================================================================
 
 __global__ void __launch_bounds__(256)
 sin(const float *__restrict__ A, float *__restrict__ T_sin) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < 131072) {
+    if (idx < 832) {
         T_sin[idx] = sinf(A[idx]);
     }
 }
 
-extern "C" void sin_kernel(float *h_A, float *h_C, int n, int c, int h, int w) {
+extern "C" void sin_kernel(float *h_A, float *h_C, int n, int w) {
     float *d_A, *d_C;
-    const int total_elements = n * c * h * w;  // 8*16*32*32 = 131072
+    const int total_elements = n * w;  // 32 * 26 = 832
 
     cudaMalloc(&d_A, total_elements * sizeof(float));
     cudaMalloc(&d_C, total_elements * sizeof(float));
 
     cudaMemcpy(d_A, h_A, total_elements * sizeof(float), cudaMemcpyHostToDevice);
 
-    // Block size: 256 threads per block (common choice)
+    // Block size: 256 threads per block
     dim3 blockSize(256);
     // Grid size: ceil(total / block_size)
     dim3 numBlocks((total_elements + blockSize.x - 1) / blockSize.x);

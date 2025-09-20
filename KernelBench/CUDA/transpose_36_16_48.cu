@@ -1,55 +1,55 @@
-// Generated: Transpose from [3x3x3] to [3x3x3]
-// Axes: (2 1 0), Total elements: 27
-
 #include <cuda_runtime.h>
-#include <stdio.h>
 
-__global__ void __launch_bounds__(256)
-transpose(const float *__restrict__ input, float *__restrict__ output) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= 27) return;
+// CUDA Kernel: 3D transpose for permute(0,2,1)
+__global__ void transpose(
+    const float* __restrict__ input,
+          float* __restrict__ output
+) {
+    const int d0 = 36;
+    const int d1 = 16;
+    const int d2 = 48;
+    int i = blockIdx.x * blockDim.x + threadIdx.x; // dim0: 36
+    int j = blockIdx.y * blockDim.y + threadIdx.y; // dim1: 16 (original)
+    int k = blockIdx.z * blockDim.z + threadIdx.z; // dim2: 48
 
-    // Step 1: Flatten index -> multi-dimensional indices (input shape)
-    int in_indices[3];
-    int tmp = idx;
-    in_indices[2] = tmp % 3;
-    tmp /= 3;
-    in_indices[1] = tmp % 3;
-    tmp /= 3;
-    in_indices[0] = tmp % 3;
-    tmp /= 3;
+    if (i < d0 && j < d1 && k < d2) {
+        // input[i][j][k] -> output[i][k][j]
+        int in_idx  = i * (d1 * d2) + j * d2 + k;
+        int out_idx = i * (d2 * d1) + k * d1 + j;  // output shape: [d0, d2, d1]
 
-    // Step 2: Permute indices according to axes
-    int out_indices[3];
-    out_indices[0] = in_indices[2];
-    out_indices[1] = in_indices[1];
-    out_indices[2] = in_indices[0];
-
-    // Step 3: Multi-dimensional indices -> linear index (output shape)
-    int out_idx = 0;
-    out_idx += out_indices[2];
-    out_idx += out_indices[1] * 3;
-    out_idx += out_indices[0] * 9;
-
-    // Write to output
-    output[out_idx] = input[idx];
+        output[out_idx] = input[in_idx];
+    }
 }
 
-extern "C" void transpose_kernel(const float *h_input, float *h_output) {
-    float *d_input, *d_output;
-    const int total = 27;
+// Host wrapper function
+extern "C" void transpose_kernel(float* host_input, float* host_output,
+    int d0, int d1, int d2) {
 
-    cudaMalloc(&d_input, total * sizeof(float));
-    cudaMalloc(&d_output, total * sizeof(float));
 
-    cudaMemcpy(d_input, h_input, total * sizeof(float), cudaMemcpyHostToDevice);
+    const int out_size = d0 * d2 * d1; // [36,48,16]
+    const size_t in_bytes  = (size_t)d0 * d1 * d2 * sizeof(float);
+    const size_t out_bytes = (size_t)out_size * sizeof(float);
 
-    dim3 blockSize(256);
-    dim3 numBlocks((total + 255) / 256);
+    float *d_input = nullptr;
+    float *d_output = nullptr;
 
-    transpose<<<numBlocks, blockSize>>>(d_input, d_output);
+    cudaMalloc(&d_input, in_bytes);
+    cudaMalloc(&d_output, out_bytes);
 
-    cudaMemcpy(h_output, d_output, total * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(d_input, host_input, in_bytes, cudaMemcpyHostToDevice);
+
+    // 使用 3D 网格
+    dim3 block(8, 8, 8); // 可调，总线程 ≤ 1024
+    dim3 grid(
+        (d0 + block.x - 1) / block.x,
+        (d1 + block.y - 1) / block.y,
+        (d2 + block.z - 1) / block.z
+    );
+
+    transpose<<<grid, block>>>(d_input, d_output);
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(host_output, d_output, out_bytes, cudaMemcpyDeviceToHost);
 
     cudaFree(d_input);
     cudaFree(d_output);
