@@ -20,7 +20,7 @@ batchnorm(const float *__restrict__ input, float *__restrict__ output,
     output[idx] = gamma[channel_idx] * (input[idx] - mean[channel_idx]) / sqrt(variance[channel_idx] + 1e-5f) + beta[channel_idx];
 }
 
-extern "C" void batchnorm_kernel_6_4_2(const float *h_input, float *h_output,
+extern "C" void batchnorm_kernel(const float *h_input, float *h_output,
                                                        const float *h_mean, const float *h_variance,
                                                        const float *h_gamma, const float *h_beta) {
     float *d_input, *d_output, *d_mean, *d_variance, *d_gamma, *d_beta;

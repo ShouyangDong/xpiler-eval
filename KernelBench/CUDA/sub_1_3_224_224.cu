@@ -9,7 +9,7 @@ sub_1x3x224x224(float *__restrict__ A, float *__restrict__ B, float *__restrict_
     }
 }
 
-extern "C" void sub_kernel_1x3x224x224(float *h_A, float *h_B, float *h_C) {
+extern "C" void sub(float *h_A, float *h_B, float *h_C) {
     float *d_A, *d_B, *d_C;
     const int total = 1 * 3 * 224 * 224;
 

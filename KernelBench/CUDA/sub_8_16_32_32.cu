@@ -9,7 +9,7 @@ sub_8x16x32x32(float *__restrict__ A, float *__restrict__ B, float *__restrict__
     }
 }
 
-extern "C" void sub_kernel_8x16x32x32(float *h_A, float *h_B, float *h_C) {
+extern "C" void sub(float *h_A, float *h_B, float *h_C) {
     float *d_A, *d_B, *d_C;
     const int total = 8 * 16 * 32 * 32;
 

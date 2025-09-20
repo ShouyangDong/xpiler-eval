@@ -19,7 +19,7 @@ max_last_dim(const float *__restrict__ input, float *__restrict__ output) {
     output[out_idx] = max_val;
 }
 
-extern "C" void max_kernel_10_1_512(const float *h_input, float *h_output) {
+extern "C" void max(const float *h_input, float *h_output) {
     float *d_input, *d_output;
     const int input_size = 5120;
     const int output_size = 10;

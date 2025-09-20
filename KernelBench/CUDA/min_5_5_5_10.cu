@@ -19,7 +19,7 @@ min_last_dim(const float *__restrict__ input, float *__restrict__ output) {
     output[out_idx] = min_val;
 }
 
-extern "C" void min_kernel_5_5_5_10(const float *h_input, float *h_output) {
+extern "C" void min(const float *h_input, float *h_output) {
     float *d_input, *d_output;
     const int input_size = 1250;
     const int output_size = 125;

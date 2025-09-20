@@ -17,7 +17,7 @@ sum_last_dim(const float *__restrict__ input, float *__restrict__ output) {
     output[out_idx] = sum;
 }
 
-extern "C" void sum_kernel_8_16_32_32(const float *h_input, float *h_output) {
+extern "C" void  sum(const float *h_input, float *h_output) {
     float *d_input, *d_output;
     const int input_size = 131072;
     const int output_size = 4096;
