@@ -1,17 +1,17 @@
 // =============================================================================
 // 2. Shape: [1, 3, 224, 224] → Total: 150,528 elements (Image input)
 // =============================================================================
-__global__ void __launch_bounds__(294)
-sin_1x3x224x224(float *__restrict__ A, float *__restrict__ T_sin) {
+__global__ void __launch_bounds__(1024)
+sin(float *__restrict__ A, float *__restrict__ T_sin) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if(idx < 150528){
         T_sin[idx] = sinf(A[idx]);
     }
 }
 
-extern "C" void sin_kernel_1x3x224x224(float *h_A, float *h_C) {
+extern "C" void sin_kernel(float *h_A, float *h_C, int n, int h, int w, int c) {
     float *d_A, *d_C;
-    const int total = 1 * 3 * 224 * 224;
+    const int total = n * w * h * c;
 
     cudaMalloc(&d_A, total * sizeof(float));
     cudaMalloc(&d_C, total * sizeof(float));
@@ -21,7 +21,7 @@ extern "C" void sin_kernel_1x3x224x224(float *h_A, float *h_C) {
     dim3 blockSize(294);
     dim3 numBlocks((total + 293) / 294);
 
-    sin_1x3x224x224<<<numBlocks, blockSize>>>(d_A, d_C);
+    sin<<<numBlocks, blockSize>>>(d_A, d_C);
 
     cudaMemcpy(h_C, d_C, total * sizeof(float), cudaMemcpyDeviceToHost);
 
