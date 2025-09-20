@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 __global__ void __launch_bounds__(256)
-transpose_kernel(const float *__restrict__ input, float *__restrict__ output) {
+transpose(const float *__restrict__ input, float *__restrict__ output) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= 720) return;
 
@@ -47,7 +47,7 @@ transpose_kernel(const float *__restrict__ input, float *__restrict__ output) {
     output[out_idx] = input[idx];
 }
 
-extern "C" void transpose_kernel_1_2_3_4_5_6_to_4_5_6_3_1_2(const float *h_input, float *h_output) {
+extern "C" void transpose_kernel(const float *h_input, float *h_output) {
     float *d_input, *d_output;
     const int total = 720;
 
@@ -59,7 +59,7 @@ extern "C" void transpose_kernel_1_2_3_4_5_6_to_4_5_6_3_1_2(const float *h_input
     dim3 blockSize(256);
     dim3 numBlocks((total + 255) / 256);
 
-    transpose_kernel<<<numBlocks, blockSize>>>(d_input, d_output);
+    transpose<<<numBlocks, blockSize>>>(d_input, d_output);
 
     cudaMemcpy(h_output, d_output, total * sizeof(float), cudaMemcpyDeviceToHost);
 

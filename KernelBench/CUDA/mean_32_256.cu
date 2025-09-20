@@ -1,26 +1,26 @@
-// Generated: sum along last dimension for input [8x16x32x32] -> [8x16x32]
-// Total input: 131072, Reduce size: 32, Output count: 4096
+// Generated: mean along last dimension for input [4x3x5] -> [4x3]
+// Total input: 60, Reduce size: 5, Output count: 12
 
 #include <cuda_runtime.h>
 #include <stdio.h>
 
 __global__ void __launch_bounds__(256)
-sum_last_dim(const float *__restrict__ input, float *__restrict__ output) {
+mean(const float *__restrict__ input, float *__restrict__ output) {
     int out_idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (out_idx >= 4096) return;
+    if (out_idx >= 12) return;
 
     float sum = 0.0f;
-    for (int i = 0; i < 32; i++) {
-        int in_idx = out_idx * 32 + i;
+    for (int i = 0; i < 5; i++) {
+        int in_idx = out_idx * 5 + i;
         sum += input[in_idx];
     }
-    output[out_idx] = sum;
+    output[out_idx] = sum / 5;  // mean = sum / N
 }
 
-extern "C" void  sum(const float *h_input, float *h_output) {
+extern "C" void mean_kernel_4_3_5(const float *h_input, float *h_output) {
     float *d_input, *d_output;
-    const int input_size = 131072;
-    const int output_size = 4096;
+    const int input_size = 60;
+    const int output_size = 12;
 
     cudaMalloc(&d_input, input_size * sizeof(float));
     cudaMalloc(&d_output, output_size * sizeof(float));
@@ -30,7 +30,7 @@ extern "C" void  sum(const float *h_input, float *h_output) {
     dim3 blockSize(256);
     dim3 numBlocks((output_size + 255) / 256);
 
-    sum_last_dim<<<numBlocks, blockSize>>>(d_input, d_output);
+    mean<<<numBlocks, blockSize>>>(d_input, d_output);
 
     cudaMemcpy(h_output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost);
 
