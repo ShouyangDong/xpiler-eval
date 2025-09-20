@@ -1,55 +1,49 @@
-// Generated: Transpose from [2x3x4] to [4x2x3]
-// Axes: (2 0 1), Total elements: 24
+// CUDA kernel: permute(1,0,2) for shape [36,24,16] -> [24,36,16]
+__global__ void transpose(
+    const float* __restrict__ input,
+          float* __restrict__ output
+) {
+    const int d0 = 36;  // input dim0
+    const int d1 = 24;  // input dim1
+    const int d2 = 16;  // input dim2
+    int i0 = blockIdx.x * blockDim.x + threadIdx.x;  // maps to input dim0 (36)
+    int i1 = blockIdx.y * blockDim.y + threadIdx.y;  // maps to input dim1 (24)
+    int i2 = blockIdx.z * blockDim.z + threadIdx.z;  // maps to input dim2 (16)
 
-#include <cuda_runtime.h>
-#include <stdio.h>
+    if (i0 < d0 && i1 < d1 && i2 < d2) {
+        int in_idx  = i0 * (d1 * d2) + i1 * d2 + i2;
+        int out_idx = i1 * (d0 * d2) + i0 * d2 + i2;  // output[i1][i0][i2]
 
-__global__ void __launch_bounds__(256)
-transpose(const float *__restrict__ input, float *__restrict__ output) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= 24) return;
-
-    // Step 1: Flatten index -> multi-dimensional indices (input shape)
-    int in_indices[3];
-    int tmp = idx;
-    in_indices[2] = tmp % 4;
-    tmp /= 4;
-    in_indices[1] = tmp % 3;
-    tmp /= 3;
-    in_indices[0] = tmp % 2;
-    tmp /= 2;
-
-    // Step 2: Permute indices according to axes
-    int out_indices[3];
-    out_indices[0] = in_indices[2];
-    out_indices[1] = in_indices[0];
-    out_indices[2] = in_indices[1];
-
-    // Step 3: Multi-dimensional indices -> linear index (output shape)
-    int out_idx = 0;
-    out_idx += out_indices[2];
-    out_idx += out_indices[1] * 3;
-    out_idx += out_indices[0] * 6;
-
-    // Write to output
-    output[out_idx] = input[idx];
+        output[out_idx] = input[in_idx];
+    }
 }
 
-extern "C" void transpose_kernel(const float *h_input, float *h_output) {
-    float *d_input, *d_output;
-    const int total = 24;
+// Host wrapper function
+extern "C" void transpose_kernel(float* host_input, float* host_output,
+    int d0, int d1, int d2) {
+    const size_t in_bytes  = (size_t)d0 * d1 * d2 * sizeof(float);
+    const size_t out_bytes = (size_t)d1 * d0 * d2 * sizeof(float);
 
-    cudaMalloc(&d_input, total * sizeof(float));
-    cudaMalloc(&d_output, total * sizeof(float));
+    float *d_input = nullptr;
+    float *d_output = nullptr;
 
-    cudaMemcpy(d_input, h_input, total * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMalloc(&d_input, in_bytes);
+    cudaMalloc(&d_output, out_bytes);
 
-    dim3 blockSize(256);
-    dim3 numBlocks((total + 255) / 256);
+    cudaMemcpy(d_input, host_input, in_bytes, cudaMemcpyHostToDevice);
 
-    transpose<<<numBlocks, blockSize>>>(d_input, d_output);
+    // 3D grid and block
+    dim3 block(8, 8, 8);  // 512 threads per block (max 1024)
+    dim3 grid(
+        (d0 + block.x - 1) / block.x,
+        (d1 + block.y - 1) / block.y,
+        (d2 + block.z - 1) / block.z
+    );
 
-    cudaMemcpy(h_output, d_output, total * sizeof(float), cudaMemcpyDeviceToHost);
+    transpose<<<grid, block>>>(d_input, d_output);
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(host_output, d_output, out_bytes, cudaMemcpyDeviceToHost);
 
     cudaFree(d_input);
     cudaFree(d_output);

@@ -1,68 +1,39 @@
-// Generated: Transpose from [1x2x3x4x5x6] to [4x5x6x3x1x2]
-// Axes: (3 4 5 2 0 1), Total elements: 720
-
-#include <cuda_runtime.h>
-#include <stdio.h>
-
-__global__ void __launch_bounds__(256)
-transpose(const float *__restrict__ input, float *__restrict__ output) {
+__global__ void transpose(const float* __restrict__ input,
+                                 float* __restrict__ output,
+                                 ) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= 720) return;
+    const int N = 1;
+    const int C = 3;
+    const int H = 224;
+    const int W = 224;
+    int total = N * C * H * W;
 
-    // Step 1: Flatten index -> multi-dimensional indices (input shape)
-    int in_indices[6];
-    int tmp = idx;
-    in_indices[5] = tmp % 6;
-    tmp /= 6;
-    in_indices[4] = tmp % 5;
-    tmp /= 5;
-    in_indices[3] = tmp % 4;
-    tmp /= 4;
-    in_indices[2] = tmp % 3;
-    tmp /= 3;
-    in_indices[1] = tmp % 2;
-    tmp /= 2;
-    in_indices[0] = tmp % 1;
-    tmp /= 1;
+    if (idx < total) {
+        // inline 方式展开 n, c, h, w
+        int n = idx / (C * H * W);
+        int c = (idx / (H * W)) % C;
+        int h = (idx / W) % H;
+        int out_idx = n * (H * W * C)
+                    + ( (idx / W) % H ) * (W * C)
+                    + (idx % W) * C
+                    + ( (idx / (H * W)) % C );
 
-    // Step 2: Permute indices according to axes
-    int out_indices[6];
-    out_indices[0] = in_indices[3];
-    out_indices[1] = in_indices[4];
-    out_indices[2] = in_indices[5];
-    out_indices[3] = in_indices[2];
-    out_indices[4] = in_indices[0];
-    out_indices[5] = in_indices[1];
+        int in_idx = n * (C * H * W)
+                + ( (idx / (H * W)) % C ) * (H * W)
+                + ( (idx / W) % H ) * W
+                + (idx % W);
 
-    // Step 3: Multi-dimensional indices -> linear index (output shape)
-    int out_idx = 0;
-    out_idx += out_indices[5];
-    out_idx += out_indices[4] * 2;
-    out_idx += out_indices[3] * 2;
-    out_idx += out_indices[2] * 6;
-    out_idx += out_indices[1] * 36;
-    out_idx += out_indices[0] * 180;
-
-    // Write to output
-    output[out_idx] = input[idx];
+        output[out_idx] = input[in_idx];
+    }
 }
 
-extern "C" void transpose_kernel(const float *h_input, float *h_output) {
-    float *d_input, *d_output;
-    const int total = 720;
+extern "C" void transpose_kernel(float* input, float* output,int N, int C, int H, int W) {
+    int total = N * C * H * W;
 
-    cudaMalloc(&d_input, total * sizeof(float));
-    cudaMalloc(&d_output, total * sizeof(float));
+    int threads = 256;
+    int blocks = (total + threads - 1) / threads;
 
-    cudaMemcpy(d_input, h_input, total * sizeof(float), cudaMemcpyHostToDevice);
+    transpose<<<blocks, threads>>>(input, output);
 
-    dim3 blockSize(256);
-    dim3 numBlocks((total + 255) / 256);
-
-    transpose<<<numBlocks, blockSize>>>(d_input, d_output);
-
-    cudaMemcpy(h_output, d_output, total * sizeof(float), cudaMemcpyDeviceToHost);
-
-    cudaFree(d_input);
-    cudaFree(d_output);
+    cudaDeviceSynchronize();
 }
