@@ -20,7 +20,7 @@ def generate_kernel_json(kernel_dir, output_file="kernels.json", dtype="float32"
     # 支持的 reduce ops
     reduce_ops = {"min", "max", "sum", "mean"}
 
-    for cpp_file in kernel_dir.glob("*.cpp"):
+    for cpp_file in kernel_dir.glob("*.cu"):
         stem = cpp_file.stem  # 如 add_1_15_64 或 min_2_4_5_6_dim1
 
         # 检查是否以 _dim0 / _dim1 结尾
@@ -66,10 +66,10 @@ def generate_kernel_json(kernel_dir, output_file="kernels.json", dtype="float32"
 # ================ 使用示例 ===================
 if __name__ == "__main__":
     # 修改为你存放 kernel 的实际路径
-    kernel_folder = "KernelBench/C"
+    kernel_folder = "KernelBench/CUDA"
 
     generate_kernel_json(
         kernel_dir=kernel_folder,
-        output_file="TransEval/c.json",
+        output_file="TransEval/cuda.json",
         dtype="float32"
     )
