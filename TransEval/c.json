@@ -2446,7 +2446,7 @@
         "args": [
             128
         ],
-        "axes": 1
+        "axes": 0
     },
     {
         "op_name": "softmax",
