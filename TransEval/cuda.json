@@ -71,6 +71,15 @@
         ]
     },
     {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            10,
+            1,
+            512
+        ]
+    },
+    {
         "op_name": "avgpool",
         "dtype": "float32",
         "args": [
@@ -122,6 +131,17 @@
         ]
     },
     {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            1,
+            2,
+            3,
+            4,
+            5
+        ]
+    },
+    {
         "op_name": "sign",
         "dtype": "float32",
         "args": [
@@ -153,6 +173,14 @@
             256,
             256,
             256
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            128,
+            32
         ]
     },
     {
@@ -210,6 +238,32 @@
         "args": [
             25,
             27
+        ]
+    },
+    {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            9
+        ]
+    },
+    {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            8,
+            4,
+            4,
+            4,
+            4
         ]
     },
     {
@@ -274,6 +328,15 @@
         ]
     },
     {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            5,
+            7,
+            3
+        ]
+    },
+    {
         "op_name": "conv2dnchw",
         "dtype": "float32",
         "args": [
@@ -300,10 +363,28 @@
         ]
     },
     {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            2,
+            256,
+            512
+        ]
+    },
+    {
         "op_name": "add",
         "dtype": "float32",
         "args": [
             64
+        ]
+    },
+    {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            6,
+            4,
+            2
         ]
     },
     {
@@ -366,6 +447,16 @@
         ]
     },
     {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            5,
+            5,
+            5,
+            10
+        ]
+    },
+    {
         "op_name": "sumpool",
         "dtype": "float32",
         "args": [
@@ -377,6 +468,24 @@
             5,
             3,
             3
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            6,
+            4,
+            2
+        ]
+    },
+    {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            4,
+            3,
+            5
         ]
     },
     {
@@ -405,6 +514,16 @@
         ]
     },
     {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            1,
+            1,
+            1,
+            1
+        ]
+    },
+    {
         "op_name": "softmax",
         "dtype": "float32",
         "args": [
@@ -424,6 +543,19 @@
             200,
             4,
             4
+        ]
+    },
+    {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
         ]
     },
     {
@@ -503,6 +635,14 @@
         ]
     },
     {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            32,
+            64
+        ]
+    },
+    {
         "op_name": "minpool",
         "dtype": "float32",
         "args": [
@@ -543,6 +683,36 @@
         ]
     },
     {
+        "op_name": "gather",
+        "dtype": "float32",
+        "args": [
+            32,
+            128,
+            32
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            64,
+            64,
+            64
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            3,
+            3,
+            3,
+            3,
+            3
+        ]
+    },
+    {
         "op_name": "mha",
         "dtype": "float32",
         "args": [
@@ -580,6 +750,23 @@
             2,
             3,
             0
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            32,
+            64
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            20,
+            10,
+            128
         ]
     },
     {
@@ -675,6 +862,36 @@
         ]
     },
     {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+        ]
+    },
+    {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            1,
+            15,
+            64
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            2,
+            1,
+            1024
+        ]
+    },
+    {
         "op_name": "mha",
         "dtype": "float32",
         "args": [
@@ -682,6 +899,15 @@
             2048,
             12,
             512
+        ]
+    },
+    {
+        "op_name": "gather",
+        "dtype": "float32",
+        "args": [
+            128,
+            512,
+            3
         ]
     },
     {
@@ -702,6 +928,15 @@
         ]
     },
     {
+        "op_name": "gather",
+        "dtype": "float32",
+        "args": [
+            512,
+            64,
+            5
+        ]
+    },
+    {
         "op_name": "sumpool",
         "dtype": "float32",
         "args": [
@@ -713,6 +948,14 @@
             5,
             2,
             2
+        ]
+    },
+    {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            128,
+            32
         ]
     },
     {
@@ -760,6 +1003,23 @@
             2,
             3,
             0
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            7,
+            1,
+            256
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            1,
+            512
         ]
     },
     {
@@ -864,6 +1124,14 @@
         ]
     },
     {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            1,
+            512
+        ]
+    },
+    {
         "op_name": "relu",
         "dtype": "float32",
         "args": [
@@ -887,6 +1155,16 @@
         ]
     },
     {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            3,
+            3,
+            3,
+            100
+        ]
+    },
+    {
         "op_name": "minpool",
         "dtype": "float32",
         "args": [
@@ -898,6 +1176,16 @@
             5,
             3,
             3
+        ]
+    },
+    {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            7,
+            1,
+            6,
+            7
         ]
     },
     {
@@ -953,6 +1241,16 @@
         ]
     },
     {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            8,
+            16,
+            32,
+            32
+        ]
+    },
+    {
         "op_name": "rmsnorm",
         "dtype": "float32",
         "args": [
@@ -969,6 +1267,15 @@
         ]
     },
     {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            20,
+            10,
+            128
+        ]
+    },
+    {
         "op_name": "avgpool",
         "dtype": "float32",
         "args": [
@@ -980,6 +1287,22 @@
             5,
             1,
             1
+        ]
+    },
+    {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            64,
+            128
+        ]
+    },
+    {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            32,
+            64
         ]
     },
     {
@@ -1044,6 +1367,14 @@
             512,
             512,
             512
+        ]
+    },
+    {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            128,
+            64
         ]
     },
     {
@@ -1130,6 +1461,16 @@
         ]
     },
     {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            5,
+            5,
+            5,
+            10
+        ]
+    },
+    {
         "op_name": "gelu",
         "dtype": "float32",
         "args": [
@@ -1171,6 +1512,24 @@
         ]
     },
     {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            16,
+            8,
+            64
+        ]
+    },
+    {
+        "op_name": "gather",
+        "dtype": "float32",
+        "args": [
+            50,
+            128,
+            4
+        ]
+    },
+    {
         "op_name": "layernorm",
         "dtype": "float32",
         "args": [
@@ -1187,6 +1546,17 @@
             1,
             6,
             7
+        ]
+    },
+    {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            4,
+            4,
+            4,
+            4,
+            4
         ]
     },
     {
@@ -1212,6 +1582,14 @@
             128,
             2,
             0
+        ]
+    },
+    {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            1,
+            512
         ]
     },
     {
@@ -1247,6 +1625,15 @@
         ]
     },
     {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            2,
+            1,
+            1024
+        ]
+    },
+    {
         "op_name": "softmax",
         "dtype": "float32",
         "args": [
@@ -1254,6 +1641,27 @@
             12,
             23,
             128
+        ]
+    },
+    {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            1,
+            1,
+            1,
+            1,
+            1024
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            8,
+            16,
+            32,
+            32
         ]
     },
     {
@@ -1305,13 +1713,6 @@
         ]
     },
     {
-        "op_name": "add",
-        "dtype": "float32",
-        "args": [
-            1
-        ]
-    },
-    {
         "op_name": "avgpool",
         "dtype": "float32",
         "args": [
@@ -1326,11 +1727,38 @@
         ]
     },
     {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            64,
+            64,
+            64
+        ]
+    },
+    {
+        "op_name": "gather",
+        "dtype": "float32",
+        "args": [
+            2048,
+            64,
+            64
+        ]
+    },
+    {
         "op_name": "relu",
         "dtype": "float32",
         "args": [
             45,
             25
+        ]
+    },
+    {
+        "op_name": "gather",
+        "dtype": "float32",
+        "args": [
+            80,
+            256,
+            10
         ]
     },
     {
@@ -1378,6 +1806,16 @@
         ]
     },
     {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            1,
+            3,
+            224,
+            224
+        ]
+    },
+    {
         "op_name": "sign",
         "dtype": "float32",
         "args": [
@@ -1409,6 +1847,21 @@
             64,
             3,
             0
+        ]
+    },
+    {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            9
         ]
     },
     {
@@ -1455,12 +1908,31 @@
         ]
     },
     {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            16,
+            8,
+            128
+        ]
+    },
+    {
         "op_name": "depthwiseconv",
         "dtype": "float32",
         "args": [
             128,
             3,
             128
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            1,
+            3,
+            224,
+            224
         ]
     },
     {
@@ -1485,6 +1957,16 @@
             128,
             3,
             0
+        ]
+    },
+    {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            1,
+            3,
+            224,
+            224
         ]
     },
     {
@@ -1532,6 +2014,27 @@
         ]
     },
     {
+        "op_name": "batchnorm",
+        "dtype": "float32",
+        "args": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+        ]
+    },
+    {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            64,
+            64,
+            64
+        ]
+    },
+    {
         "op_name": "deformable",
         "dtype": "float32",
         "args": [
@@ -1541,6 +2044,25 @@
             100,
             4,
             4
+        ]
+    },
+    {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            8,
+            16,
+            32,
+            32
+        ]
+    },
+    {
+        "op_name": "gather",
+        "dtype": "float32",
+        "args": [
+            100,
+            32,
+            16
         ]
     },
     {
@@ -1569,6 +2091,15 @@
             3,
             2,
             2
+        ]
+    },
+    {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            7,
+            1,
+            256
         ]
     },
     {
@@ -1611,6 +2142,15 @@
             1,
             6,
             7
+        ]
+    },
+    {
+        "op_name": "gather",
+        "dtype": "float32",
+        "args": [
+            1000,
+            2048,
+            8
         ]
     },
     {
@@ -1687,6 +2227,17 @@
         ]
     },
     {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            1,
+            1,
+            1,
+            64,
+            64
+        ]
+    },
+    {
         "op_name": "bmm",
         "dtype": "float32",
         "args": [
@@ -1713,6 +2264,41 @@
             1,
             6,
             7
+        ]
+    },
+    {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            8
+        ]
+    },
+    {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            1,
+            3,
+            3,
+            3,
+            3,
+            3
+        ]
+    },
+    {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            2,
+            1,
+            1024
         ]
     },
     {
@@ -1748,6 +2334,16 @@
             64,
             2,
             0
+        ]
+    },
+    {
+        "op_name": "sin",
+        "dtype": "float32",
+        "args": [
+            7,
+            1,
+            6,
+            7
         ]
     },
     {
@@ -1788,6 +2384,18 @@
         ]
     },
     {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+        ]
+    },
+    {
         "op_name": "gemv",
         "dtype": "float32",
         "args": [
@@ -1805,6 +2413,16 @@
             100,
             4,
             4
+        ]
+    },
+    {
+        "op_name": "sub",
+        "dtype": "float32",
+        "args": [
+            1,
+            1,
+            1,
+            1
         ]
     }
 ]
