@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
     # 加载共享库
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name)
+    kernel_func = getattr(lib, name + "_kernel")
 
     # 动态构建 argtypes：支持任意 rank 的 shape 和 reduce_dim
     rank = len(input_shape)

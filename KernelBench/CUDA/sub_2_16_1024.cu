@@ -18,7 +18,7 @@ sub_2x16x1024(const float* __restrict__ A,
 // =============================================================================
 // Host wrapper function
 // =============================================================================
-extern "C" void sub_kernel_2x16x1024(float* h_A, float* h_B, float* h_C) {
+extern "C" void sub_kernel(float* h_A, float* h_B, float* h_C) {
     float *d_A, *d_B, *d_C;
     const int total = 2 * 16 * 1024;  // 32768
 

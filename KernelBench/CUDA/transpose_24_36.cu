@@ -31,8 +31,8 @@ extern "C" void transpose_kernel(float* input, float* output,
     cudaMemcpy(d_input, input, in_size, cudaMemcpyHostToDevice);
 
     dim3 block(16, 16);
-    dim3 grid((s1_out + block.x - 1) / block.x,
-              (s0_out + block.y - 1) / block.y);
+    dim3 grid((s0_in + block.x - 1) / block.x,
+              (s1_in + block.y - 1) / block.y);
 
     transpose<<<grid, block>>>(d_input, d_output);
 

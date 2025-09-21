@@ -1,11 +1,11 @@
 // =============================================================================
-// Modified CUDA Kernel for shape [2, 1, 1024]
+// Modified CUDA Kernel for shape [2, 16, 1024]
 // =============================================================================
 
 __global__ void __launch_bounds__(1024) // Adjusted launch bounds to match the maximum number of threads per block.
 sin(const float *__restrict__ A, float *__restrict__ T_sin) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if(idx < total_elements){
+    if(idx < 32768){
         T_sin[idx] = sinf(A[idx]);
     }
 }

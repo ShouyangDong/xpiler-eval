@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     # 加载共享库
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name)
+    kernel_func = getattr(lib, name + "_kernel")
 
     # ✅ 动态设置函数签名，支持 2D/3D/4D
     rank = len(input_shape)

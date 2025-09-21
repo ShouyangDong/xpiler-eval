@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
     # Kernel function name: assume it's 'gather'
     try:
-        kernel_func = getattr(lib, "gather")
+        kernel_func = getattr(lib, "gather_kernel")
     except AttributeError:
         print("❌ Function 'gather' not found in compiled library.")
         available = [attr for attr in dir(lib) if attr.isalpha()]
