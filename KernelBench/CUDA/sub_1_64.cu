@@ -6,9 +6,8 @@ sub(float *__restrict__ A, float *__restrict__ B, float *__restrict__ C) {
     }
 }
 
-extern "C" void sub_kernel(float *h_A, float *h_B, float *h_C) {
+extern "C" void sub_kernel(float *h_A, float *h_B, float *h_C, int total) {
     float *d_A, *d_B, *d_C;
-    const int total = 1 * 64;
 
     // 分配设备内存
     cudaMalloc(&d_A, total * sizeof(float));
@@ -25,12 +24,6 @@ extern "C" void sub_kernel(float *h_A, float *h_B, float *h_C) {
 
     // 启动 kernel
     sub<<<numBlocks, blockSize>>>(d_A, d_B, d_C);
-
-    // 等待 kernel 执行完成并检查错误
-    cudaError_t err = cudaDeviceSynchronize();
-    if (err != cudaSuccess) {
-        std::cerr << "CUDA kernel failed: " << cudaGetErrorString(err) << std::endl;
-    }
 
     // Device → Host 数据拷贝
     cudaMemcpy(h_C, d_C, total * sizeof(float), cudaMemcpyDeviceToHost);

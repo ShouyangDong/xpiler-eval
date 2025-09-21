@@ -310,15 +310,6 @@
         ]
     },
     {
-        "op_name": "mean",
-        "dtype": "float32",
-        "args": [
-            2,
-            256,
-            512
-        ]
-    },
-    {
         "op_name": "add",
         "dtype": "float32",
         "args": [
@@ -776,14 +767,6 @@
         ]
     },
     {
-        "op_name": "sum",
-        "dtype": "float32",
-        "args": [
-            4,
-            128
-        ]
-    },
-    {
         "op_name": "gather",
         "dtype": "float32",
         "args": [
@@ -826,15 +809,6 @@
             512,
             64,
             5
-        ]
-    },
-    {
-        "op_name": "sum",
-        "dtype": "float32",
-        "args": [
-            16,
-            128,
-            128
         ]
     },
     {
@@ -1023,22 +997,6 @@
         ]
     },
     {
-        "op_name": "sum",
-        "dtype": "float32",
-        "args": [
-            8,
-            64
-        ]
-    },
-    {
-        "op_name": "mean",
-        "dtype": "float32",
-        "args": [
-            32,
-            256
-        ]
-    },
-    {
         "op_name": "minpool",
         "dtype": "float32",
         "args": [
@@ -1067,14 +1025,6 @@
             32,
             32,
             128
-        ]
-    },
-    {
-        "op_name": "sum",
-        "dtype": "float32",
-        "args": [
-            32,
-            256
         ]
     },
     {
@@ -1215,22 +1165,6 @@
         ]
     },
     {
-        "op_name": "mean",
-        "dtype": "float32",
-        "args": [
-            128,
-            64
-        ]
-    },
-    {
-        "op_name": "mean",
-        "dtype": "float32",
-        "args": [
-            64,
-            512
-        ]
-    },
-    {
         "op_name": "rmsnorm",
         "dtype": "float32",
         "args": [
@@ -1284,14 +1218,6 @@
         ]
     },
     {
-        "op_name": "sum",
-        "dtype": "float32",
-        "args": [
-            64,
-            512
-        ]
-    },
-    {
         "op_name": "deformable",
         "dtype": "float32",
         "args": [
@@ -1329,22 +1255,6 @@
             7,
             3,
             32
-        ]
-    },
-    {
-        "op_name": "sum",
-        "dtype": "float32",
-        "args": [
-            8,
-            32
-        ]
-    },
-    {
-        "op_name": "mean",
-        "dtype": "float32",
-        "args": [
-            1,
-            64
         ]
     },
     {
@@ -1542,15 +1452,6 @@
         "args": [
             2048,
             8192
-        ]
-    },
-    {
-        "op_name": "mean",
-        "dtype": "float32",
-        "args": [
-            8,
-            32,
-            64
         ]
     },
     {
@@ -1791,15 +1692,6 @@
             4096,
             6,
             256
-        ]
-    },
-    {
-        "op_name": "mean",
-        "dtype": "float32",
-        "args": [
-            16,
-            8,
-            128
         ]
     },
     {
@@ -2092,14 +1984,6 @@
         ]
     },
     {
-        "op_name": "sum",
-        "dtype": "float32",
-        "args": [
-            16,
-            128
-        ]
-    },
-    {
         "op_name": "relu",
         "dtype": "float32",
         "args": [
@@ -2189,14 +2073,6 @@
             5,
             3,
             3
-        ]
-    },
-    {
-        "op_name": "sum",
-        "dtype": "float32",
-        "args": [
-            1,
-            64
         ]
     },
     {
@@ -2597,7 +2473,5 @@
             64
         ],
         "axes": 1
-    },
-
-
+    }
 ]
