@@ -10,9 +10,8 @@ sin(const float *__restrict__ A, float *__restrict__ T_sin) {
     }
 }
 
-extern "C" void sin_kernel(float *h_A, float *h_C, int n, int w) {
+extern "C" void sin_kernel(float *h_A, float *h_C, int total_elements) {
     float *d_A, *d_C;
-    const int total_elements = n * w;  // 32 * 26 = 832
 
     cudaMalloc(&d_A, total_elements * sizeof(float));
     cudaMalloc(&d_C, total_elements * sizeof(float));
@@ -26,7 +25,6 @@ extern "C" void sin_kernel(float *h_A, float *h_C, int n, int w) {
 
     // Launch kernel
     sin<<<numBlocks, blockSize>>>(d_A, d_C);
-    cudaDeviceSynchronize();
 
     cudaMemcpy(h_C, d_C, total_elements * sizeof(float), cudaMemcpyDeviceToHost);
 

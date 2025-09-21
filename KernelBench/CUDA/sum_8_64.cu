@@ -13,10 +13,10 @@ __global__ void sum_kernel_dev(const float* __restrict__ input, float* __restric
 }
 
 // Host wrapper - DO NOT CHANGE FUNCTION NAME
-extern "C" void mean_kernel(const float* h_input, float* h_output) {
+extern "C" void sum_kernel(const float* h_input, float* h_output, int a, int b) {
         float *d_input, *d_output;
-        const int input_size = 8 * 64;   // 512
-        const int output_size = 8;       // 8
+        const int input_size = a * b;   // 512
+        const int output_size = a;       // 8
 
         // Allocate device memory
         cudaMalloc(&d_input, input_size * sizeof(float));
