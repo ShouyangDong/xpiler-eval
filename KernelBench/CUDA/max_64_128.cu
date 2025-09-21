@@ -1,10 +1,6 @@
 // Generated: max along last dimension for input [64x128] -> [64]
 // Total input: 8192, Reduce size: 128, Output count: 64
 
-#include <cuda_runtime.h>
-#include <stdio.h>
-#include <float.h>
-
 __global__ void __launch_bounds__(256)
 max(const float *__restrict__ input, float *__restrict__ output) {
     int out_idx = blockIdx.x * blockDim.x + threadIdx.x;
