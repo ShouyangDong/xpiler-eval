@@ -1,6 +1,6 @@
 // Kernel: reduce along axis=0 for input [8, 32] -> output [32]
 // Each thread handles one column
-__global__ void sum_kernel_dev(const float* __restrict__ input, float* __restrict__ output) {
+__global__ void mean_kernel_dev(const float* __restrict__ input, float* __restrict__ output) {
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     if (col >= 32) return;  // Only 32 columns
 
@@ -9,7 +9,7 @@ __global__ void sum_kernel_dev(const float* __restrict__ input, float* __restric
         int idx = row * 32 + col;  // input[row][col]
         sum += input[idx];
     }
-    output[col] = sum;  // No division for sum
+    output[col] = sum / 8.0f;  // Divide by reduction size
 }
 
 // Host wrapper - DO NOT CHANGE FUNCTION NAME
@@ -29,10 +29,12 @@ extern "C" void mean_kernel(const float* h_input, float* h_output) {
         dim3 blockSize(32);
         dim3 numBlocks(1);  // 32 threads → one block is enough
 
-        sum_kernel_dev<<<numBlocks, blockSize>>>(d_input, d_output);
+        mean_kernel_dev<<<numBlocks, blockSize>>>(d_input, d_output);
 
         // Copy result back to host
         cudaMemcpy(h_output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost);
+
         cudaFree(d_input);
         cudaFree(d_output);
+
 }

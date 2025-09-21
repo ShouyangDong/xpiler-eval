@@ -1,39 +1,40 @@
-// Generated: sum along last dimension for input [1x3x224x224] -> [1x3x224]
-// Total input: 150528, Reduce size: 224, Output count: 672
-
-#include <cuda_runtime.h>
-#include <stdio.h>
-
-__global__ void __launch_bounds__(256)
-sum(const float *__restrict__ input, float *__restrict__ output) {
-    int out_idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (out_idx >= 672) return;
+// Kernel: reduce along axis=1 for input [1, 64] -> output [1]
+// Only one thread is needed since output is scalar-like
+__global__ void sum_kernel_dev(const float* __restrict__ input, float* __restrict__ output) {
+    int tid = threadIdx.x;
+    if (tid != 0) return;  // Only use thread 0
 
     float sum = 0.0f;
-    for (int i = 0; i < 224; i++) {
-        int in_idx = out_idx * 224 + i;
-        sum += input[in_idx];
+    for (int col = 0; col < 64; col++) {
+        int idx = 0 * 64 + col;  // input[0][col]
+        sum += input[idx];
     }
-    output[out_idx] = sum;
+    output[0] = sum;  // Sum of 64 elements
 }
 
-extern "C" void sum_kernel(const float *h_input, float *h_output) {
-    float *d_input, *d_output;
-    const int input_size = 150528;
-    const int output_size = 672;
+// Host wrapper - DO NOT CHANGE FUNCTION NAME
+extern "C"void mean_kernel(const float* h_input, float* h_output) {
+        float *d_input, *d_output;
+        const int input_size = 1 * 64;   // 64
+        const int output_size = 1;       // 1
 
-    cudaMalloc(&d_input, input_size * sizeof(float));
-    cudaMalloc(&d_output, output_size * sizeof(float));
+        // Allocate device memory
+        cudaMalloc(&d_input, input_size * sizeof(float));
+        cudaMalloc(&d_output, output_size * sizeof(float));
 
-    cudaMemcpy(d_input, h_input, input_size * sizeof(float), cudaMemcpyHostToDevice);
+        // Copy input from host to device
+        cudaMemcpy(d_input, h_input, input_size * sizeof(float), cudaMemcpyHostToDevice);
 
-    dim3 blockSize(256);
-    dim3 numBlocks((output_size + 255) / 256);
+        // Launch kernel
+        dim3 blockSize(1);    // Only 1 thread needed
+        dim3 numBlocks(1);    // One block
 
-    sum<<<numBlocks, blockSize>>>(d_input, d_output);
+        sum_kernel_dev<<<numBlocks, blockSize>>>(d_input, d_output);
 
-    cudaMemcpy(h_output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost);
+        // Copy result back to host
+        cudaMemcpy(h_output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost);
 
-    cudaFree(d_input);
-    cudaFree(d_output);
+        cudaFree(d_input);
+        cudaFree(d_output);
+
 }

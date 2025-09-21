@@ -1,29 +1,47 @@
+// Kernel: reduce along axis=1 for input [3, 32, 3, 32] -> output [3, 3, 32]
+// Each thread handles one (n, h, w) position
+__global__ void min_kernel_dev(const float* __restrict__ input, float* __restrict__ output) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;  // linear index in [0, 287]
+    const int output_size = 3 * 3 * 32;  // 288
+    if (idx >= output_size) return;
 
-extern "C" void min(float *input, float *output) {
-  int s0 = 3;
-  int s1 = 3;
-  int s2 = 3;
-  int s3 = 3;
+    // Decode (n, h, w) from linear index
+    int n = idx / (3 * 32);                    // batch index: 0~2
+    int rem = idx % (3 * 32);
+    int h = rem / 32;                          // inner height index: 0~2
+    int w = rem % 32;                          // width index: 0~31
 
-  // Initialize output to INFINITY
-  for (int i0 = 0; i0 < s0; i0++) {
-  for (int i1 = 0; i1 < s1; i1++) {
-  for (int i2 = 0; i2 < s2; i2++) {
-    output[i0 * s1 + i1 * s2 + i2 * s3] = INFINITY;
-  }
-  }
-  }
+    float min_val = FLT_MAX;  // initialize to +inf
+    for (int c = 0; c < 32; c++) {  // axis=1 has size 32
+        // input[n][c][h][w]
+        int in_idx = n * (32 * 3 * 32) + c * (3 * 32) + h * 32 + w;
+        min_val = fminf(min_val, input[in_idx]);
+    }
+    output[idx] = min_val;
+}
 
-  // Compare along last dimension (dim=-1)
-  for (int i0 = 0; i0 < s0; i0++) {
-  for (int i1 = 0; i1 < s1; i1++) {
-  for (int i2 = 0; i2 < s2; i2++) {
-  for (int i3 = 0; i3 < s3; i3++) {
-      if (input[i0 * s1 + i1 * s2 + i2 * s3 + i3] < output[i0 * s1 + i1 * s2 + i2 * s3]) {
-        output[i0 * s1 + i1 * s2 + i2 * s3] = input[i0 * s1 + i1 * s2 + i2 * s3 + i3];
-      }
-  }
-  }
-  }
-  }
+// Host wrapper - DO NOT CHANGE FUNCTION NAME
+extern "C" void min_kernel(const float* h_input, float* h_output) {
+        float *d_input, *d_output;
+        const int input_size = 3 * 32 * 3 * 32;   // 9216
+        const int output_size = 3 * 3 * 32;       // 288
+
+        // Allocate device memory
+        cudaMalloc(&d_input, input_size * sizeof(float));
+        cudaMalloc(&d_output, output_size * sizeof(float));
+
+        // Copy input from host to device
+        cudaMemcpy(d_input, h_input, input_size * sizeof(float), cudaMemcpyHostToDevice);
+
+        // Launch kernel
+        dim3 blockSize(288);
+        dim3 numBlocks(1);  // 288 threads → one block is enough
+
+        min_kernel_dev<<<numBlocks, blockSize>>>(d_input, d_output);
+
+        // Copy result back to host
+        cudaMemcpy(h_output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost);
+        cudaFree(d_input);
+        cudaFree(d_output);
+
 }

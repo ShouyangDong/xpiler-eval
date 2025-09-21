@@ -71,15 +71,6 @@
         ]
     },
     {
-        "op_name": "max",
-        "dtype": "float32",
-        "args": [
-            10,
-            1,
-            512
-        ]
-    },
-    {
         "op_name": "avgpool",
         "dtype": "float32",
         "args": [
@@ -128,17 +119,6 @@
             1,
             15,
             64
-        ]
-    },
-    {
-        "op_name": "max",
-        "dtype": "float32",
-        "args": [
-            1,
-            2,
-            3,
-            4,
-            5
         ]
     },
     {
@@ -243,21 +223,6 @@
         ]
     },
     {
-        "op_name": "min",
-        "dtype": "float32",
-        "args": [
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            9
-        ]
-    },
-    {
         "op_name": "avgpool",
         "dtype": "float32",
         "args": [
@@ -319,15 +284,6 @@
         ]
     },
     {
-        "op_name": "max",
-        "dtype": "float32",
-        "args": [
-            5,
-            7,
-            3
-        ]
-    },
-    {
         "op_name": "conv2dnchw",
         "dtype": "float32",
         "args": [
@@ -354,15 +310,6 @@
         ]
     },
     {
-        "op_name": "transpose",
-        "dtype": "float32",
-        "args": [
-            33,
-            40,
-            5
-        ]
-    },
-    {
         "op_name": "mean",
         "dtype": "float32",
         "args": [
@@ -376,15 +323,6 @@
         "dtype": "float32",
         "args": [
             64
-        ]
-    },
-    {
-        "op_name": "min",
-        "dtype": "float32",
-        "args": [
-            6,
-            4,
-            2
         ]
     },
     {
@@ -533,19 +471,6 @@
             200,
             4,
             4
-        ]
-    },
-    {
-        "op_name": "max",
-        "dtype": "float32",
-        "args": [
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2
         ]
     },
     {
@@ -781,15 +706,6 @@
         ]
     },
     {
-        "op_name": "transpose",
-        "dtype": "float32",
-        "args": [
-            36,
-            24,
-            16
-        ]
-    },
-    {
         "op_name": "mha",
         "dtype": "float32",
         "args": [
@@ -847,18 +763,6 @@
         "args": [
             5,
             7
-        ]
-    },
-    {
-        "op_name": "min",
-        "dtype": "float32",
-        "args": [
-            4,
-            4,
-            4,
-            4,
-            4,
-            4
         ]
     },
     {
@@ -948,14 +852,6 @@
         ]
     },
     {
-        "op_name": "min",
-        "dtype": "float32",
-        "args": [
-            128,
-            32
-        ]
-    },
-    {
         "op_name": "relu",
         "dtype": "float32",
         "args": [
@@ -1000,15 +896,6 @@
             2,
             3,
             0
-        ]
-    },
-    {
-        "op_name": "transpose",
-        "dtype": "float32",
-        "args": [
-            24,
-            32,
-            48
         ]
     },
     {
@@ -1113,16 +1000,6 @@
         ]
     },
     {
-        "op_name": "transpose",
-        "dtype": "float32",
-        "args": [
-            1,
-            3,
-            224,
-            224
-        ]
-    },
-    {
         "op_name": "relu",
         "dtype": "float32",
         "args": [
@@ -1143,16 +1020,6 @@
             5,
             1,
             1
-        ]
-    },
-    {
-        "op_name": "max",
-        "dtype": "float32",
-        "args": [
-            3,
-            3,
-            3,
-            100
         ]
     },
     {
@@ -1262,15 +1129,6 @@
         ]
     },
     {
-        "op_name": "min",
-        "dtype": "float32",
-        "args": [
-            20,
-            10,
-            128
-        ]
-    },
-    {
         "op_name": "avgpool",
         "dtype": "float32",
         "args": [
@@ -1282,14 +1140,6 @@
             5,
             1,
             1
-        ]
-    },
-    {
-        "op_name": "max",
-        "dtype": "float32",
-        "args": [
-            64,
-            128
         ]
     },
     {
@@ -1472,25 +1322,6 @@
         ]
     },
     {
-        "op_name": "min",
-        "dtype": "float32",
-        "args": [
-            5,
-            5,
-            5,
-            10
-        ]
-    },
-    {
-        "op_name": "transpose",
-        "dtype": "float32",
-        "args": [
-            36,
-            16,
-            48
-        ]
-    },
-    {
         "op_name": "gelu",
         "dtype": "float32",
         "args": [
@@ -1548,15 +1379,6 @@
         ]
     },
     {
-        "op_name": "max",
-        "dtype": "float32",
-        "args": [
-            16,
-            8,
-            64
-        ]
-    },
-    {
         "op_name": "gather",
         "dtype": "float32",
         "args": [
@@ -1601,15 +1423,6 @@
             3,
             3,
             256
-        ]
-    },
-    {
-        "op_name": "transpose",
-        "dtype": "float32",
-        "args": [
-            42,
-            36,
-            55
         ]
     },
     {
@@ -1918,24 +1731,6 @@
         ]
     },
     {
-        "op_name": "transpose",
-        "dtype": "float32",
-        "args": [
-            2,
-            32,
-            4,
-            64
-        ]
-    },
-    {
-        "op_name": "transpose",
-        "dtype": "float32",
-        "args": [
-            24,
-            36
-        ]
-    },
-    {
         "op_name": "gemm",
         "dtype": "float32",
         "args": [
@@ -2154,15 +1949,6 @@
         ]
     },
     {
-        "op_name": "min",
-        "dtype": "float32",
-        "args": [
-            7,
-            1,
-            256
-        ]
-    },
-    {
         "op_name": "sigmoid",
         "dtype": "float32",
         "args": [
@@ -2321,32 +2107,6 @@
             1,
             6,
             7
-        ]
-    },
-    {
-        "op_name": "max",
-        "dtype": "float32",
-        "args": [
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            8
-        ]
-    },
-    {
-        "op_name": "min",
-        "dtype": "float32",
-        "args": [
-            1,
-            3,
-            3,
-            3,
-            3,
-            3
         ]
     },
     {
@@ -2539,5 +2299,305 @@
             48
         ],
         "perm": [0, 2, 1]
-    }
+    },
+    {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            16,
+            32
+        ],
+        "axes": 0
+    },
+    {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            16,
+            32,
+            32
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            128,
+            256
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            4,
+            8
+        ],
+        "axes": 0
+    },
+    {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            4,
+            8,
+            32
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            64,
+            128
+        ],
+        "axes": 0
+    },
+    {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            512,
+            1024
+        ],
+        "axes": 0
+    },
+    {
+        "op_name": "max",
+        "dtype": "float32",
+        "args": [
+            128
+        ],
+        "axes": 0
+    },
+    {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            64
+        ],
+        "axes": 0
+    },
+    {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            16,
+            128
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            8,
+            16,
+            8
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            5,
+            10,
+            20
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            4,
+            32
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            2,
+            4,
+            5,
+            64
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            3,
+            32,
+            3,
+            32
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "min",
+        "dtype": "float32",
+        "args": [
+            4,
+            64,
+            64
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            64,
+            512
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            1,
+            64
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            16,
+            128
+        ],
+        "axes": 0
+    },
+    {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            16,
+            128,
+            32
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            8,
+            32
+        ],
+        "axes": 0
+    },
+    {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            4,
+            1
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            8,
+            32,
+            64
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "mean",
+        "dtype": "float32",
+        "args": [
+            32,
+            256
+        ],
+        "axes": 0
+    },
+    {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            32,
+            256
+        ],
+        "axes": 0
+    },
+    {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            16,
+            128
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            16,
+            128,
+            128
+        ],
+        "axes": 0
+    },
+    {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            1,
+            64
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            64,
+            512
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            4,
+            128
+        ],
+        "axes": 1
+    },
+    {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            8,
+            32
+        ],
+        "axes": 0
+    },
+    {
+        "op_name": "sum",
+        "dtype": "float32",
+        "args": [
+            8,
+            64
+        ],
+        "axes": 1
+    },
+
+
 ]

@@ -1,33 +1,40 @@
-__global__ void __launch_bounds__(256)
-sum(const float *__restrict__ input, float *__restrict__ output) {
-    int out_idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (out_idx >= 4096) return;
+// Kernel: reduce along axis=1 for input [64, 512] -> output [64]
+// Each thread handles one row
+__global__ void sum_kernel_dev(const float* __restrict__ input, float* __restrict__ output) {
+    int row = blockIdx.x * blockDim.x + threadIdx.x;
+    if (row >= 64) return;  // Only 64 rows
 
     float sum = 0.0f;
-    for (int i = 0; i < 64; i++) {
-        int in_idx = out_idx * 64 + i;
-        sum += input[in_idx];
+    for (int col = 0; col < 512; col++) {
+        int idx = row * 512 + col;  // input[row][col]
+        sum += input[idx];
     }
-    output[out_idx] = sum;
+    output[row] = sum;  // No division for sum
 }
 
-extern "C" void sum_kernel(const float *h_input, float *h_output) {
-    float *d_input, *d_output;
-    const int input_size = 262144;
-    const int output_size = 4096;
+// Host wrapper - DO NOT CHANGE FUNCTION NAME
+extern "C" void mean_kernel(const float* h_input, float* h_output) {
+        float *d_input, *d_output;
+        const int input_size = 64 * 512;   // 32768
+        const int output_size = 64;        // 64
 
-    cudaMalloc(&d_input, input_size * sizeof(float));
-    cudaMalloc(&d_output, output_size * sizeof(float));
+        // Allocate device memory
+        cudaMalloc(&d_input, input_size * sizeof(float));
+        cudaMalloc(&d_output, output_size * sizeof(float));
 
-    cudaMemcpy(d_input, h_input, input_size * sizeof(float), cudaMemcpyHostToDevice);
+        // Copy input from host to device
+        cudaMemcpy(d_input, h_input, input_size * sizeof(float), cudaMemcpyHostToDevice);
 
-    dim3 blockSize(256);
-    dim3 numBlocks((output_size + 255) / 256);
+        // Launch kernel
+        dim3 blockSize(64);
+        dim3 numBlocks(1);  // 64 threads → one block is enough
 
-    sum<<<numBlocks, blockSize>>>(d_input, d_output);
+        sum_kernel_dev<<<numBlocks, blockSize>>>(d_input, d_output);
 
-    cudaMemcpy(h_output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost);
 
-    cudaFree(d_input);
-    cudaFree(d_output);
+        // Copy result back to host
+        cudaMemcpy(h_output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost);
+
+        cudaFree(d_input);
+        cudaFree(d_output);
 }
