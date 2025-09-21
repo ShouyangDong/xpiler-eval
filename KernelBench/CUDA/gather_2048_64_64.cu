@@ -30,7 +30,7 @@ __global__ void gather(const float* params,
 }
 
 
-extern "C" void gather_kernl(const float* d_params,
+extern "C" void gather_kernel(const float* d_params,
                                      const int* d_indices,
                                      float* d_output,
                                      int size1,

@@ -10,7 +10,7 @@ sin(const float *__restrict__ A, float *__restrict__ T_sin) {
     }
 }
 
-extern "C" void sin_kernel(float *h_A, float *h_C, int n, int total_elements) {
+extern "C" void sin_kernel(float *h_A, float *h_C, int total_elements) {
     float *d_A, *d_C;
 
     cudaMalloc(&d_A, total_elements * sizeof(float));
@@ -24,7 +24,6 @@ extern "C" void sin_kernel(float *h_A, float *h_C, int n, int total_elements) {
 
     // Launch the kernel
     sin<<<numBlocks, blockSize>>>(d_A, d_C);
-    cudaDeviceSynchronize(); // Ensure all operations are completed before copying data back to host.
 
     cudaMemcpy(h_C, d_C, total_elements * sizeof(float), cudaMemcpyDeviceToHost);
 

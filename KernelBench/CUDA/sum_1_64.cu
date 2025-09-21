@@ -13,7 +13,7 @@ __global__ void sum_kernel_dev(const float* __restrict__ input, float* __restric
 }
 
 // Host wrapper - DO NOT CHANGE FUNCTION NAME
-extern "C"void mean_kernel(const float* h_input, float* h_output) {
+extern "C" void sum_kernel(const float* h_input, float* h_output) {
         float *d_input, *d_output;
         const int input_size = 1 * 64;   // 64
         const int output_size = 1;       // 1

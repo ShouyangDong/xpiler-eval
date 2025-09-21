@@ -6,6 +6,7 @@ import argparse
 import ctypes
 import json
 import os
+import subprocess
 import sys
 
 import torch
@@ -14,10 +15,9 @@ from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_cuda_compilation as run_compilation
 
 
-# --- Golden Reference ---
-def element_wise_max(A, B):
-    return torch.maximum(A, B)
-
+# --- Golden Reference: reduce max along axis ---
+def reduce_max(input_tensor, axis):
+    return torch.max(input_tensor, dim=axis)[0]  # 返回 values，忽略 indices
 
 def main():
     parser = argparse.ArgumentParser(description="CUDA max kernel tester")
@@ -38,8 +38,9 @@ def main():
         print(f"[ERROR] Failed to parse config: {e}", file=sys.stderr)
         sys.exit(1)
 
-    op_name = config["op_name"]        # e.g., "max_kernel"
-    shape = config["args"]             # e.g., [64, 64]
+    op_name = config["op_name"]
+    shape = config["args"]
+    axis = config["axes"]
     dtype_str = config.get("dtype", "float32")
 
     print(f"🔍 Testing {op_name.upper()} on CUDA with shape {shape}, dtype={dtype_str}")
@@ -58,24 +59,20 @@ def main():
 
     # --- Generate input tensors on CPU (for ctypes) ---
     A = torch.randn(*shape, dtype=dtype, device="cpu") * 10
-    B = torch.randn(*shape, dtype=dtype, device="cpu") * 10
-    expected = element_wise_max(A, B).to("cpu")
+    expected = reduce_max(A, axis).to("cpu")
 
     # --- Flatten and get ctypes pointers ---
     A_flat = A.flatten().numpy()
-    B_flat = B.flatten().numpy()
     result_flat = torch.zeros_like(expected).flatten().numpy()
 
     ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
     A_ptr = A_flat.ctypes.data_as(ctypes.POINTER(ctype))
-    B_ptr = B_flat.ctypes.data_as(ctypes.POINTER(ctype))
     out_ptr = result_flat.ctypes.data_as(ctypes.POINTER(ctype))
 
     # ========================================================
-    # ✅ Step 1: Input is .cu → Output is .so
+    # ✅ Step 1: Input is .cu file → Output is .so file
     # ========================================================
     cu_file = args.file
-
     if not os.path.exists(cu_file):
         print(f"[ERROR] Source file not found: {cu_file}", file=sys.stderr)
         sys.exit(1)
@@ -84,15 +81,15 @@ def main():
         print(f"[ERROR] Expected a .cu file, got: {cu_file}", file=sys.stderr)
         sys.exit(1)
 
-    so_file = cu_file.replace(".cu", ".so")
+    so_file = cu_file.replace(".cu", ".so")  # e.g., max_64_64.cu → max_64_64.so
 
-    # --- Compile only if .so missing or older than .cu ---
+    # --- Compile .cu to .so if .so doesn't exist or is older ---
     compile_needed = True
     if os.path.exists(so_file):
         cu_mtime = os.path.getmtime(cu_file)
         so_mtime = os.path.getmtime(so_file)
         if so_mtime > cu_mtime:
-            compile_needed = False
+            compile_needed = False  # .so is up-to-date
 
     if compile_needed:
         print(f"⚙️ Compiling {cu_file} → {so_file} using nvcc")
@@ -105,8 +102,9 @@ def main():
         with open(temp_file, "w") as f:
             f.write(patched_code)
 
+        # Run compilation: nvcc -> .so
         success, output = run_compilation(so_file, temp_file)
-        os.remove(temp_file)
+        os.remove(temp_file)  # Clean up
 
         if not success:
             print(f"[ERROR] Compilation failed:\n{output}", file=sys.stderr)
@@ -117,13 +115,9 @@ def main():
     # ========================================================
     try:
         lib = ctypes.CDLL(so_file)
-        kernel_func = lib[op_name + "_kernel"]  # Use op_name from config
-    except KeyError:
-        print(f"[ERROR] Function '{op_name}' not found in {so_file}.", file=sys.stderr)
-        print(f"Available symbols may not include '{op_name}'. Check kernel export.", file=sys.stderr)
-        sys.exit(1)
+        kernel_func = lib[op_name + "_kernel"]  # Get function by name
     except Exception as e:
-        print(f"[ERROR] Failed to load {so_file}: {e}", file=sys.stderr)
+        print(f"[ERROR] Failed to load or find function '{op_name}' in {so_file}: {e}", file=sys.stderr)
         sys.exit(1)
 
     # ========================================================
@@ -131,7 +125,6 @@ def main():
     # ========================================================
     kernel_func.argtypes = [
         ctypes.POINTER(ctype),  # A
-        ctypes.POINTER(ctype),  # B
         ctypes.POINTER(ctype)   # out
     ]
     kernel_func.restype = None
@@ -141,7 +134,7 @@ def main():
     # ========================================================
     try:
         print(f"🚀 Running {op_name} kernel on CUDA (via .so)...")
-        kernel_func(A_ptr, B_ptr, out_ptr)
+        kernel_func(A_ptr, out_ptr)
     except Exception as e:
         print(f"[ERROR] Kernel call failed: {e}", file=sys.stderr)
         sys.exit(1)
@@ -151,6 +144,7 @@ def main():
     # ========================================================
     result_tensor = torch.from_numpy(result_flat).reshape(expected.shape).to("cpu")
 
+    # Verification
     rtol, atol = (1e-3, 1e-3) if dtype_str == "float32" else (1e-2, 5e-2)
     if torch.allclose(result_tensor, expected, rtol=rtol, atol=atol):
         print("✅ Verification successful! CUDA max kernel matches PyTorch.")
