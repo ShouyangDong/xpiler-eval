@@ -15,10 +15,9 @@ from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_cuda_compilation as run_compilation
 
 
-# --- Golden Reference ---
-def element_wise_min(A, B):
-    return torch.minimum(A, B)
-
+# --- Golden Reference: reduce min along axis ---
+def reduce_min(input_tensor, axis):
+    return torch.min(input_tensor, dim=axis)[0]  # 返回 values，忽略 indices
 
 def main():
     parser = argparse.ArgumentParser(description="CUDA min kernel tester")
@@ -41,6 +40,7 @@ def main():
 
     op_name = config["op_name"]
     shape = config["args"]
+    axis = config["axes"]
     dtype_str = config.get("dtype", "float32")
 
     print(f"🔍 Testing {op_name.upper()} on CUDA with shape {shape}, dtype={dtype_str}")
@@ -59,17 +59,14 @@ def main():
 
     # --- Generate input tensors on CPU (for ctypes) ---
     A = torch.randn(*shape, dtype=dtype, device="cpu") * 10
-    B = torch.randn(*shape, dtype=dtype, device="cpu") * 10
-    expected = element_wise_min(A, B).to("cpu")
+    expected = reduce_min(A, axis).to("cpu")
 
     # --- Flatten and get ctypes pointers ---
     A_flat = A.flatten().numpy()
-    B_flat = B.flatten().numpy()
     result_flat = torch.zeros_like(expected).flatten().numpy()
 
     ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
     A_ptr = A_flat.ctypes.data_as(ctypes.POINTER(ctype))
-    B_ptr = B_flat.ctypes.data_as(ctypes.POINTER(ctype))
     out_ptr = result_flat.ctypes.data_as(ctypes.POINTER(ctype))
 
     # ========================================================
@@ -128,7 +125,6 @@ def main():
     # ========================================================
     kernel_func.argtypes = [
         ctypes.POINTER(ctype),  # A
-        ctypes.POINTER(ctype),  # B
         ctypes.POINTER(ctype)   # out
     ]
     kernel_func.restype = None
@@ -138,7 +134,7 @@ def main():
     # ========================================================
     try:
         print(f"🚀 Running {op_name} kernel on CUDA (via .so)...")
-        kernel_func(A_ptr, B_ptr, out_ptr)
+        kernel_func(A_ptr, out_ptr)
     except Exception as e:
         print(f"[ERROR] Kernel call failed: {e}", file=sys.stderr)
         sys.exit(1)
