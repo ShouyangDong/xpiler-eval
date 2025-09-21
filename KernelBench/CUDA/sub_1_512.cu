@@ -20,7 +20,7 @@ extern "C" void sub_kernel(float *h_A, float *h_B, float *h_C) {
     cudaMemcpy(d_A, h_A, total * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_B, h_B, total * sizeof(float), cudaMemcpyHostToDevice);
 
-    dim3 blockSize(960);
+    dim3 blockSize(512);
     dim3 numBlocks(1);
 
     sub<<<numBlocks, blockSize>>>(d_A, d_B, d_C);

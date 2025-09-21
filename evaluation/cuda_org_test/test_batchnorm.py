@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
     # Load library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name)  # batchnorm
+    kernel_func = getattr(lib, name + "_kernel")  # batchnorm
 
     # Function signature
     kernel_func.argtypes = [

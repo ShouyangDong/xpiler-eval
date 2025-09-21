@@ -1744,8 +1744,8 @@
         "op_name": "sin",
         "dtype": "float32",
         "args": [
-            16,
-            32
+            32,
+            26
         ]
     },
     {
@@ -2458,5 +2458,86 @@
             4,
             4
         ]
+    },
+        {
+        "op_name": "transpose",
+        "dtype": "float32",
+        "args": [
+            33,
+            40,
+            5
+        ],
+        "perm": [0, 2, 1]
+    },
+    {
+        "op_name": "transpose",
+        "dtype": "float32",
+        "args": [
+            36,
+            24,
+            16
+        ],
+        "perm": [1, 0, 2]
+    },
+    {
+        "op_name": "transpose",
+        "dtype": "float32",
+        "args": [
+            2,
+            32,
+            4,
+            64
+        ],
+        "perm": [0, 2, 3, 1]
+    },
+    {
+        "op_name": "transpose",
+        "dtype": "float32",
+        "args": [
+            42,
+            36,
+            55
+        ],
+        "perm": [1, 0, 2]
+    },
+    {
+        "op_name": "transpose",
+        "dtype": "float32",
+        "args": [
+            24,
+            36
+        ],
+        "perm": [1, 0]
+    },
+    {
+        "op_name": "transpose",
+        "dtype": "float32",
+        "args": [
+            24,
+            32,
+            48
+        ],
+        "perm": [2, 0 ,1]
+    },
+    {
+        "op_name": "transpose",
+        "dtype": "float32",
+        "args": [
+            1,
+            3,
+            224,
+            224
+        ],
+        "perm": [0, 3, 1, 2]
+    },
+    {
+        "op_name": "transpose",
+        "dtype": "float32",
+        "args": [
+            36,
+            16,
+            48
+        ],
+        "perm": [0, 2, 1]
     }
 ]

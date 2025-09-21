@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
     # Load the compiled shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name)  # e.g., `sin`
+    kernel_func = getattr(lib, name + "_kernel")  # e.g., `sin`
 
     # Define function signature: void sin(float* input, float* output)
     kernel_func.argtypes = [
