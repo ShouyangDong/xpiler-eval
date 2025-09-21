@@ -2,7 +2,7 @@
 // Total input: 8192, Reduce size: 128, Output count: 64
 
 __global__ void __launch_bounds__(256)
-max(const float *__restrict__ input, float *__restrict__ output) {
+max_dev(const float *__restrict__ input, float *__restrict__ output) {
     int out_idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (out_idx >= 64) return;
 
@@ -28,7 +28,7 @@ extern "C" void max_kernel(const float *h_input, float *h_output) {
     dim3 blockSize(256);
     dim3 numBlocks((output_size + 255) / 256);
 
-    max<<<numBlocks, blockSize>>>(d_input, d_output);
+    max_dev<<<numBlocks, blockSize>>>(d_input, d_output);
 
     cudaMemcpy(h_output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost);
 

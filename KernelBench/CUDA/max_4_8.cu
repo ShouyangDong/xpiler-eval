@@ -1,20 +1,37 @@
+__global__ void max_dev(const float* __restrict__ input, float* __restrict__ output) {
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    if (col >= 8) return;
 
-extern "C" void max(float *input, float *output) {
-  int rows = 4;
-  int cols = 8;
-  // max over rows (dim=0): [M,N] -> [1,N]
-
-  // Initialize output to -infinity
-  for (int j = 0; j < cols; j++) {
-    output[j] = -INFINITY;
-  }
-
-  // Compare along rows (dim=0)
-  for (int j = 0; j < cols; j++) {
-    for (int i = 0; i < rows; i++) {
-      if (input[i * cols + j] > output[j]) {
-        output[j] = input[i * cols + j];
-      }
+    float max_val = -FLT_MAX;
+    for (int n = 0; n < 4; n++) {
+        int idx = n * 8 + col;  // input[n][col]
+        max_val = fmaxf(max_val, input[idx]);
     }
-  }
+    output[col] = max_val;
+}
+
+// Host wrapper - DO NOT CHANGE FUNCTION NAME
+extern "C" void max_kernel(const float* h_input, float* h_output) {
+        float *d_input, *d_output;
+        const int input_size = 4 * 8;    // 32
+        const int output_size = 8;       // 8
+
+        // Allocate device memory
+        cudaMalloc(&d_input, input_size * sizeof(float));
+        cudaMalloc(&d_output, output_size * sizeof(float));
+
+        // Copy input from host to device
+        cudaMemcpy(d_input, h_input, input_size * sizeof(float), cudaMemcpyHostToDevice);
+
+        // Launch kernel
+        dim3 blockSize(8);  // We only need 8 threads
+        dim3 numBlocks(1);  // One block is enough
+
+        max_dev<<<numBlocks, blockSize>>>(d_input, d_output);
+
+        // Copy result back to host
+        cudaMemcpy(h_output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost);
+
+        cudaFree(d_input);
+        cudaFree(d_output);
 }

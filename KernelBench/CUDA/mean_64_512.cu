@@ -1,39 +1,39 @@
-// Generated: mean along last dimension for input [3x3x3x3x3x3] -> [3x3x3x3x3]
-// Total input: 729, Reduce size: 3, Output count: 243
-
-#include <cuda_runtime.h>
-#include <stdio.h>
-
-__global__ void __launch_bounds__(256)
-mean(const float *__restrict__ input, float *__restrict__ output) {
-    int out_idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (out_idx >= 243) return;
+// Kernel: reduce along axis=1 for input [64, 512] -> output [64]
+// Each thread handles one row
+__global__ void mean_kernel_dev(const float* __restrict__ input, float* __restrict__ output) {
+    int row = blockIdx.x * blockDim.x + threadIdx.x;
+    if (row >= 64) return;  // Only 64 rows
 
     float sum = 0.0f;
-    for (int i = 0; i < 3; i++) {
-        int in_idx = out_idx * 3 + i;
-        sum += input[in_idx];
+    for (int col = 0; col < 512; col++) {
+        int idx = row * 512 + col;  // input[row][col]
+        sum += input[idx];
     }
-    output[out_idx] = sum / 3;  // mean = sum / N
+    output[row] = sum / 512.0f;  // Divide by reduction size
 }
 
-extern "C" void mean_kernel_3_3_3_3_3_3(const float *h_input, float *h_output) {
-    float *d_input, *d_output;
-    const int input_size = 729;
-    const int output_size = 243;
+// Host wrapper - DO NOT CHANGE FUNCTION NAME
+extern "C" void mean_kernel(const float* h_input, float* h_output) {
+        float *d_input, *d_output;
+        const int input_size = 64 * 512;   // 32768
+        const int output_size = 64;        // 64
 
-    cudaMalloc(&d_input, input_size * sizeof(float));
-    cudaMalloc(&d_output, output_size * sizeof(float));
+        // Allocate device memory
+        cudaMalloc(&d_input, input_size * sizeof(float));
+        cudaMalloc(&d_output, output_size * sizeof(float));
 
-    cudaMemcpy(d_input, h_input, input_size * sizeof(float), cudaMemcpyHostToDevice);
+        // Copy input from host to device
+        cudaMemcpy(d_input, h_input, input_size * sizeof(float), cudaMemcpyHostToDevice);
 
-    dim3 blockSize(256);
-    dim3 numBlocks((output_size + 255) / 256);
+        // Launch kernel
+        dim3 blockSize(64);
+        dim3 numBlocks(1);  // 64 threads → one block is enough
 
-    mean<<<numBlocks, blockSize>>>(d_input, d_output);
+        mean_kernel_dev<<<numBlocks, blockSize>>>(d_input, d_output);
 
-    cudaMemcpy(h_output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost);
+        // Copy result back to host
+        cudaMemcpy(h_output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost);
 
-    cudaFree(d_input);
-    cudaFree(d_output);
+        cudaFree(d_input);
+        cudaFree(d_output);
 }
