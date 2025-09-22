@@ -9,9 +9,9 @@ __global__ void max_dev(const float* __restrict__ input, float* __restrict__ out
 }
 
 // Host wrapper - DO NOT CHANGE FUNCTION NAME
-extern "C" void max_kernel(const float* h_input, float* h_output, int a) {
+extern "C" void max_kernel(const float* h_input, float* h_output) {
         float *d_input, *d_output;
-        const int input_size = a;
+        const int input_size = 128;
         const int output_size = 1;
 
         // Allocate device memory

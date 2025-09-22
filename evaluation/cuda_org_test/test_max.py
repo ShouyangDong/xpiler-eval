@@ -43,7 +43,7 @@ def main():
     axis = config["axes"]
     dtype_str = config.get("dtype", "float32")
 
-    print(f"🔍 Testing {op_name.upper()} on CUDA with shape {shape}, dtype={dtype_str}")
+    print(f"🔍 Testing {op_name.upper()} on CUDA with shape {shape}, dtype={dtype_str}, axes={axis}")
 
     # --- Device and dtype setup ---
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -59,7 +59,7 @@ def main():
 
     # --- Generate input tensors on CPU (for ctypes) ---
     A = torch.randn(*shape, dtype=dtype, device="cpu") * 10
-    expected = reduce_max(A, axis).to("cpu")
+    expected = reduce_max(A, axis)
 
     # --- Flatten and get ctypes pointers ---
     A_flat = A.flatten().numpy()
@@ -148,14 +148,13 @@ def main():
     rtol, atol = (1e-3, 1e-3) if dtype_str == "float32" else (1e-2, 5e-2)
     if torch.allclose(result_tensor, expected, rtol=rtol, atol=atol):
         print("✅ Verification successful! CUDA max kernel matches PyTorch.")
+        subprocess.run(["rm", so_file], check=False)
         sys.exit(0)
     else:
         print("❌ Verification failed!")
         diff = (result_tensor - expected).abs()
         print(f"Max error: {diff.max().item()}")
-        print(f"Sample (expected vs got):\n{expected[0, :5]}\n{result_tensor[0, :5]}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
