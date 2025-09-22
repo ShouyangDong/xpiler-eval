@@ -3,6 +3,7 @@ import ctypes
 import os
 import subprocess
 
+import numpy as np
 import torch
 from evaluation.utils import run_cuda_compilation as run_compilation
 from evaluation.macros import CUDA_MACROS as macro
@@ -85,12 +86,13 @@ if __name__ == "__main__":
     kernel_func.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # input
         ctypes.POINTER(ctypes.c_float),  # output
+        ctype.c_int,
     ]
     kernel_func.restype = None
 
     # Call the C++ kernel
     print(f"🚀 Running {name.upper()} kernel...")
-    kernel_func(A_ptr, output_ptr)
+    kernel_func(A_ptr, output_ptr, np.prod(shape))
 
     # Verify result
     is_correct = torch.allclose(
