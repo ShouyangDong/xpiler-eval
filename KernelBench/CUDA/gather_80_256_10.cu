@@ -1,56 +1,83 @@
+#include <cuda_runtime.h>
+#include <stdio.h>
+
+// 固定参数（根据你的说明修正）
+constexpr int DIM0        = 80;   // batch_size
+constexpr int DIM1        = 256;  // seq_len
+constexpr int PARAMS_DIM2 = 10;   // 特征维度 K = 10（你明确说“输入的shape是10”）
+constexpr int INDICES_LEN = 10;   // indices 长度
+
+// ============================================================ //
+// 核函数：gather 沿 axis=2
+// output[i][j][k] = params[i][j][ indices[k] ]
+// 每个线程处理一个 (i, j, k) 输出元素
+// ============================================================ //
 __global__ void gather(const float* params,
-                                     const int* indices,
-                                     float* output) {
-  constexpr int PARAMS_BATCH = 80;
-  constexpr int PARAMS_LEN   = 256;
-  constexpr int INDICES_LEN  = 10;
-  int i = blockIdx.x * blockDim.x + threadIdx.x;
-  if (i >= INDICES_LEN) return;
+                       const int* indices,
+                       float* output) {
+  int k = threadIdx.x;                    // indices 维度 [0, 9]
+  int j = blockIdx.x * blockDim.x + k;    // seq_len 维度 [0, 255]
+  int i = blockIdx.y;                     // batch 维度 [0, 79]
 
-  int idx = indices[i];
-  float* out_row = &output[i * PARAMS_LEN];
+  if (i >= DIM0 || j >= DIM1 || k >= INDICES_LEN) return;
 
-  if (idx < 0 || idx >= PARAMS_BATCH) {
-    // 越界：置零
-    for (int j = 0; j < PARAMS_LEN; ++j) {
-      out_row[j] = 0.0f;
-    }
-  } else {
-    const float* src_row = &params[idx * PARAMS_LEN];
-    for (int j = 0; j < PARAMS_LEN; ++j) {
-      out_row[j] = src_row[j];
-    }
+  int feat_idx = indices[k];  // 要取的特征索引
+
+  float val = 0.0f;
+  if (feat_idx >= 0 && feat_idx < PARAMS_DIM2) {
+    val = params[i * DIM1 * PARAMS_DIM2 + j * PARAMS_DIM2 + feat_idx];
   }
+
+  output[i * DIM1 * INDICES_LEN + j * INDICES_LEN + k] = val;
 }
 
 // ============================================================ //
-// 实例 3: (512, 64), indices=5
+// Host 函数：包含 H2D、D2H、内存管理
 // ============================================================ //
-extern "C" void gather_kernel(const float* d_params,
-                                     const int* d_indices,
-                                     float* d_output,
-                                     int size1,
-                                     int size2,
-                                     int size3) {
+extern "C" void gather_kernel(const float* h_params,
+                              const int* h_indices,
+                              float* h_output) {
+  float *d_params;
+  int *d_indices;
+  float *d_output;
 
-  float *d_A;
-  int *d_B;
-  float *d_C;
+  size_t params_bytes  = DIM0 * DIM1 * PARAMS_DIM2 * sizeof(float);
+  size_t indices_bytes = INDICES_LEN * sizeof(int);
+  size_t output_bytes  = DIM0 * DIM1 * INDICES_LEN * sizeof(float);
 
-  cudaMalloc(&d_A, size1 * sizeof(float));
-  cudaMalloc(&d_B, size2 * sizeof(int));
-  cudaMalloc(&d_C, size3 * sizeof(float));
+  // 1. 分配设备内存
+  cudaMalloc(&d_params, params_bytes);
+  cudaMalloc(&d_indices, indices_bytes);
+  cudaMalloc(&d_output, output_bytes);
 
-  cudaMemcpy(d_A, d_params, size1 * sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_B, d_indices, size2 * sizeof(int), cudaMemcpyHostToDevice);
+  // 2. Host to Device 拷贝
+  cudaMemcpy(d_params, h_params, params_bytes, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_indices, h_indices, indices_bytes, cudaMemcpyHostToDevice);
 
-  constexpr int block_size = 8;
-  constexpr int grid_size  = 1;
+  // 3. 配置 kernel 启动参数
+  dim3 block_size(INDICES_LEN, 32);  // x: 10 threads (indices), y: 32 并行处理 j
+  dim3 grid_size(
+    (DIM1 + 31) / 32,  // 向上取整，覆盖所有 j
+    DIM0               // 每个 batch 一个 block_y
+  );
 
+  // 4. 启动 kernel
   gather<<<grid_size, block_size>>>(d_params, d_indices, d_output);
 
-  cudaMemcpy(d_output, d_C, size3 * sizeof(float), cudaMemcpyDeviceToHost);
-  cudaFree(d_A);
-  cudaFree(d_B);
-  cudaFree(d_C);
+  // 5. 错误检查
+  cudaError_t err = cudaGetLastError();
+  if (err != cudaSuccess) {
+    printf("CUDA kernel launch error: %s\n", cudaGetErrorString(err));
+    goto cleanup;
+  }
+  cudaDeviceSynchronize();
+
+  // 6. Device to Host 拷贝结果
+  cudaMemcpy(h_output, d_output, output_bytes, cudaMemcpyDeviceToHost);
+
+cleanup:
+  // 7. 释放设备内存
+  cudaFree(d_params);
+  cudaFree(d_indices);
+  cudaFree(d_output);
 }

@@ -1,58 +1,70 @@
-// ============================================================ //
-// 实例 6: (80, 256), indices=10
-// ============================================================ //
 
+// 固定参数
+constexpr int DIM0        = 512;  // batch
+constexpr int DIM1        = 64;   // seq_len
+constexpr int PARAMS_DIM2 = 64;   // 原始特征维度（K），未在 args 中给出，假设为 64
+constexpr int INDICES_LEN = 5;    // indices 长度
+
+// ============================================================ //
+// 核函数：gather 沿 axis=2
+// output[i][j][k] = params[i][j][ indices[k] ]
+// ============================================================ //
 __global__ void gather(const float* params,
-                                     const int* indices,
-                                     float* output) {
-  constexpr int PARAMS_BATCH = 512;
-  constexpr int PARAMS_LEN   = 64;
-  constexpr int INDICES_LEN  = 5;
-  int i = blockIdx.x * blockDim.x + threadIdx.x;
-  if (i >= INDICES_LEN) return;
+                       const int* indices,
+                       float* output) {
+  int k = threadIdx.x;                    // indices 维度 [0, 4]
+  int j = blockIdx.x * blockDim.x + k;    // DIM1 索引（seq）
+  int i = blockIdx.y;                     // DIM0 索引（batch）
 
-  int idx = indices[i];
-  float* out_row = &output[i * PARAMS_LEN];
+  if (i >= DIM0 || j >= DIM1 || k >= INDICES_LEN) return;
 
-  if (idx < 0 || idx >= PARAMS_BATCH) {
-    // 越界：置零
-    for (int j = 0; j < PARAMS_LEN; ++j) {
-      out_row[j] = 0.0f;
-    }
-  } else {
-    const float* src_row = &params[idx * PARAMS_LEN];
-    for (int j = 0; j < PARAMS_LEN; ++j) {
-      out_row[j] = src_row[j];
-    }
+  int idx = indices[k];  // 要取的特征索引
+
+  float val = 0.0f;
+  if (idx >= 0 && idx < PARAMS_DIM2) {
+    val = params[i * DIM1 * PARAMS_DIM2 + j * PARAMS_DIM2 + idx];
   }
+
+  output[i * DIM1 * INDICES_LEN + j * INDICES_LEN + k] = val;
 }
 
+// ============================================================ //
+// Host 函数：包含 H2D、D2H、内存管理
+// ============================================================ //
+extern "C" void gather_kernel(const float* h_params,
+                              const int* h_indices,
+                              float* h_output) {
+  float *d_params;
+  int *d_indices;
+  float *d_output;
 
-extern "C" void gather_kernel(const float* d_params,
-                                     const int* d_indices,
-                                     float* d_output,
-                                     int size1,
-                                     int size2,
-                                     int size3) {
+  size_t params_bytes = DIM0 * DIM1 * PARAMS_DIM2 * sizeof(float);
+  size_t indices_bytes = INDICES_LEN * sizeof(int);
+  size_t output_bytes = DIM0 * DIM1 * INDICES_LEN * sizeof(float);
 
-  float *d_A;
-  int *d_B;
-  float *d_C;
+  // 1. 分配设备内存
+  cudaMalloc(&d_params, params_bytes);
+  cudaMalloc(&d_indices, indices_bytes);
+  cudaMalloc(&d_output, output_bytes);
 
-  cudaMalloc(&d_A, size1 * sizeof(float));
-  cudaMalloc(&d_B, size2 * sizeof(int));
-  cudaMalloc(&d_C, size3 * sizeof(float));
+  // 2. H2D 拷贝
+  cudaMemcpy(d_params, h_params, params_bytes, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_indices, h_indices, indices_bytes, cudaMemcpyHostToDevice);
 
-  cudaMemcpy(d_A, d_params, size1 * sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_B, d_indices, size2 * sizeof(int), cudaMemcpyHostToDevice);
+  // 3. 启动 kernel
+  dim3 block_size(INDICES_LEN, 32);  // x: indices_len, y: 并行处理 DIM1
+  dim3 grid_size(
+    (DIM1 + block_size.y - 1) / block_size.y,
+    DIM0
+  );
 
-  constexpr int block_size = 16;
-  constexpr int grid_size  = 1;
+  gather<<<grid_size, block_size>>>(d_params, d_indices, d_output);
 
-  gather<<<grid_size, block_size>>>(d_A, d_B, d_C);
+  // 5. D2H 拷贝结果
+  cudaMemcpy(h_output, d_output, output_bytes, cudaMemcpyDeviceToHost);
 
-  cudaMemcpy(d_output, d_C, size3 * sizeof(float), cudaMemcpyDeviceToHost);
-  cudaFree(d_A);
-  cudaFree(d_B);
-  cudaFree(d_C);
+  // 6. 释放内存
+  cudaFree(d_params);
+  cudaFree(d_indices);
+  cudaFree(d_output);
 }
