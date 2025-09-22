@@ -31,8 +31,7 @@ if __name__ == "__main__":
     shape = [
         int(x) for x in shapes_str.split("_")[1:]
     ]  # 提取尺寸，如 [64, 64]
-
-    print(f"🔍 Testing {name.upper()} with shape {shape}")
+    print(f"🧪 params shape: {shape}")
 
     # Generate random input matrix
     A = (

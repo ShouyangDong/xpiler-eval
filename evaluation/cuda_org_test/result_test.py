@@ -70,6 +70,7 @@ def run_test_for_config(config, source_dir, test_dir, target):
     if not os.path.isfile(test_script):
         return False, f"[ERROR] Test script not found: {test_script}"
 
+    from evaluation.utils import run_test
     # 调用 evaluation.utils.run_test
     try:
         from evaluation.utils import run_test
@@ -115,6 +116,12 @@ def main():
         default=os.cpu_count(),
         help="Number of parallel jobs"
     )
+    parser.add_argument(
+        "--debug", "-d",
+        type=str,                    # 明确指定类型
+        default="",                   # 默认为空字符串
+        help="debug op name"
+    )
 
     args = parser.parse_args()
 
@@ -136,7 +143,12 @@ def main():
 
     total = len(kernel_configs)
     success_count = 0
-
+    if args.debug:
+        kernel_configs = [
+            config for config in kernel_configs
+            if config.get("op_name") == args.debug
+        ]
+    
     # 并行测试
     with ThreadPoolExecutor(max_workers=args.jobs) as executor:
         futures = [

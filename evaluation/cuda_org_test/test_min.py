@@ -24,7 +24,7 @@ def main():
     parser.add_argument("--file", required=True, help="Path to the .cu source file (e.g., min_64_64.cu)")
     parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
     parser.add_argument("--target", required=True, choices=["cuda"], help="Must be 'cuda' for this script")
-
+    print("======")
     args = parser.parse_args()
 
     # --- Parse config ---
@@ -59,7 +59,7 @@ def main():
 
     # --- Generate input tensors on CPU (for ctypes) ---
     A = torch.randn(*shape, dtype=dtype, device="cpu") * 10
-    expected = reduce_min(A, axis).to("cpu")
+    expected = reduce_min(A, axis)
 
     # --- Flatten and get ctypes pointers ---
     A_flat = A.flatten().numpy()
@@ -148,14 +148,13 @@ def main():
     rtol, atol = (1e-3, 1e-3) if dtype_str == "float32" else (1e-2, 5e-2)
     if torch.allclose(result_tensor, expected, rtol=rtol, atol=atol):
         print("✅ Verification successful! CUDA min kernel matches PyTorch.")
+        subprocess.run(["rm", so_file], check=False)
         sys.exit(0)
     else:
         print("❌ Verification failed!")
         diff = (result_tensor - expected).abs()
         print(f"Max error: {diff.max().item()}")
-        print(f"Sample (expected vs got):\n{expected[0, :5]}\n{result_tensor[0, :5]}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

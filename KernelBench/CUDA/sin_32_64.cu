@@ -2,8 +2,7 @@
 // CUDA Kernel for shape [32, 64] → Total: 2,048 elements
 // =============================================================================
 
-__global__ void __launch_bounds__(1024)
-sin_dev(const float *__restrict__ A, float *__restrict__ T_sin) {
+__global__ void __launch_bounds__(1024)sin_dev(const float *__restrict__ A, float *__restrict__ T_sin) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < 2048) {
         T_sin[idx] = sinf(A[idx]);
