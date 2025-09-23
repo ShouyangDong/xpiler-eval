@@ -86,7 +86,7 @@ if __name__ == "__main__":
     kernel_func.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # input
         ctypes.POINTER(ctypes.c_float),  # output
-        ctype.c_int,
+        ctypes.c_int,
     ]
     kernel_func.restype = None
 

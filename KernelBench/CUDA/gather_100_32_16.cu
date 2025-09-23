@@ -1,7 +1,3 @@
-// gather_axis0_100_32_16.cu
-#include <cuda_runtime.h>
-#include <stdio.h>
-
 // ==================== 静态维度定义 ====================
 constexpr int D0 = 100;    // params.shape[0] (axis=0)
 constexpr int D1 = 32;     // params.shape[1]
@@ -12,7 +8,7 @@ constexpr int TOTAL_PARAMS = D0 * D1 * D2;
 // Device Kernel: 沿 axis=0 gather
 // 每个线程处理 output 的一个元素: output[n][i][j]
 // ============================================================ //
-__global__ void gather_kernel(const float* params,
+__global__ void gather(const float* params,
                               const int64_t* indices,
                               float* output,
                               int N) {
@@ -62,7 +58,7 @@ extern "C" void gather_kernel(const float* h_params,      // host: [100, 32, 16]
     const int block_size = 256;
     int grid_size = (N * D1 * D2 + block_size - 1) / block_size;
 
-    gather_kernel<<<grid_size, block_size>>>(d_params, d_indices, d_output, N);
+    gather<<<grid_size, block_size>>>(d_params, d_indices, d_output, N);
 
     cudaMemcpy(h_output, d_output, output_bytes, cudaMemcpyDeviceToHost);
 

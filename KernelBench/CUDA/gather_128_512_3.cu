@@ -7,7 +7,7 @@ constexpr int SLICE_SIZE = DIM1 * DIM2;
 // ============================================================ //
 // Device Kernel: 每个线程处理一个输出元素
 // ============================================================ //
-__global__ void gather_kernel(const float* params,
+__global__ void gather(const float* params,
                               const int64_t* indices,
                               float* output,
                               int N) {
@@ -58,7 +58,7 @@ extern "C" void gather_kernel(const float* h_params,      // host: [128, 512, 3]
     int total_elements = N * DIM1 * DIM2;
     int grid_size = (total_elements + block_size - 1) / block_size;
 
-    gather_kernel<<<grid_size, block_size>>>(d_params, d_indices, d_output, N);
+    gather<<<grid_size, block_size>>>(d_params, d_indices, d_output, N);
 
     // 7. D2H 拷贝结果
     cudaMemcpy(h_output, d_output, output_bytes, cudaMemcpyDeviceToHost);
