@@ -1,71 +1,72 @@
+// gather_axis0_100_32_16.cu
 #include <cuda_runtime.h>
 #include <stdio.h>
 
-// 固定参数（来自 JSON 配置）
-constexpr int PARAMS_ROWS  = 100;  // 原始行数
-constexpr int PARAMS_COLS  = 32;   // 每行列数
-constexpr int INDICES_LEN  = 16;   // indices 长度，也是输出行数
+// ==================== 静态维度定义 ====================
+constexpr int D0 = 100;    // params.shape[0] (axis=0)
+constexpr int D1 = 32;     // params.shape[1]
+constexpr int D2 = 16;     // params.shape[2]
+constexpr int TOTAL_PARAMS = D0 * D1 * D2;
 
 // ============================================================ //
-// 核函数：gather 沿 axis=0
-// output[k][j] = params[ indices[k] ][j]
-// 每个线程处理 output[k][j]
+// Device Kernel: 沿 axis=0 gather
+// 每个线程处理 output 的一个元素: output[n][i][j]
 // ============================================================ //
-__global__ void gather(const float* params,
-                       const int* indices,
-                       float* output) {
-  int j = threadIdx.x;                    // 列索引 [0, 31]
-  int k = blockIdx.x * blockDim.x + j;    // 输出行索引 [0, 15]
+__global__ void gather_kernel(const float* params,
+                              const int64_t* indices,
+                              float* output,
+                              int N) {
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    int total_elements = N * D1 * D2;
+    if (tid >= total_elements) return;
 
-  if (k >= INDICES_LEN || j >= PARAMS_COLS) return;
+    // 计算输出位置
+    int n = tid / (D1 * D2);
+    int rem = tid % (D1 * D2);
+    int i = rem / D2;
+    int j = rem % D2;
 
-  int src_row = indices[k];  // 要取的源行号
+    int64_t src_idx = indices[n];
 
-  float val = 0.0f;
-  if (src_row >= 0 && src_row < PARAMS_ROWS) {
-    val = params[src_row * PARAMS_COLS + j];
-  }
+    float val = 0.0f;
+    if (src_idx >= 0 && src_idx < D0) {
+        val = params[src_idx * D1 * D2 + i * D2 + j];
+    }
 
-  output[k * PARAMS_COLS + j] = val;
+    output[tid] = val;
 }
 
 // ============================================================ //
-// Host 函数：包含 H2D、D2H、内存管理
-// 输入：host 指针
-// 输出：结果写回 h_output
+// extern "C" wrapper: 包含 H2D 和 D2H 拷贝
 // ============================================================ //
-extern "C" void gather_kernel(const float* h_params,
-                              const int* h_indices,
-                              float* h_output) {
-  float *d_params;
-  int *d_indices;
-  float *d_output;
+extern "C" void gather_kernel(const float* h_params,      // host: [100, 32, 16]
+                   const int64_t* h_indices,    // host: [N]
+                   float* h_output,             // host: [N, 32, 16]
+                   int N) {
 
-  size_t params_bytes  = PARAMS_ROWS * PARAMS_COLS * sizeof(float);
-  size_t indices_bytes = INDICES_LEN * sizeof(int);
-  size_t output_bytes  = INDICES_LEN * PARAMS_COLS * sizeof(float);
+    size_t params_bytes = D0 * D1 * D2 * sizeof(float);
+    size_t indices_bytes = N * sizeof(int64_t);
+    size_t output_bytes = N * D1 * D2 * sizeof(float);
 
-  // 1. 分配设备内存
-  cudaMalloc(&d_params, params_bytes);
-  cudaMalloc(&d_indices, indices_bytes);
-  cudaMalloc(&d_output, output_bytes);
+    float *d_params;
+    int64_t *d_indices;
+    float *d_output;
 
-  // 2. Host to Device 拷贝
-  cudaMemcpy(d_params, h_params, params_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_indices, h_indices, indices_bytes, cudaMemcpyHostToDevice);
+    cudaMalloc(&d_params, params_bytes);
+    cudaMalloc(&d_indices, indices_bytes);
+    cudaMalloc(&d_output, output_bytes);
 
-  // 3. 配置 kernel 启动参数
-  dim3 block_size(PARAMS_COLS);  // 每个 block 有 32 个线程，处理一整行输出
-  dim3 grid_size(INDICES_LEN);   // 16 个 block，每个处理一个输出行
+    cudaMemcpy(d_params, h_params, params_bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_indices, h_indices, indices_bytes, cudaMemcpyHostToDevice);
 
-  // 4. 启动 kernel
-  gather<<<grid_size, block_size>>>(d_params, d_indices, d_output);
+    const int block_size = 256;
+    int grid_size = (N * D1 * D2 + block_size - 1) / block_size;
 
-  // 6. Device to Host 拷贝结果
-  cudaMemcpy(h_output, d_output, output_bytes, cudaMemcpyDeviceToHost);
+    gather_kernel<<<grid_size, block_size>>>(d_params, d_indices, d_output, N);
 
-  // 7. 释放设备内存
-  cudaFree(d_params);
-  cudaFree(d_indices);
-  cudaFree(d_output);
+    cudaMemcpy(h_output, d_output, output_bytes, cudaMemcpyDeviceToHost);
+
+    cudaFree(d_params);
+    cudaFree(d_indices);
+    cudaFree(d_output);
 }
