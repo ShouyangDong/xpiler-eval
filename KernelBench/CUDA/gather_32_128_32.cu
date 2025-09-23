@@ -12,7 +12,7 @@ constexpr int TOTAL_PARAMS = D0 * D1 * D2;
 // Device Kernel: 沿 axis=1 gather
 // 每个线程处理 output 的一个元素: output[i][n][k]
 // ============================================================ //
-__global__ void gather_kernel(const float* params,
+__global__ void gather(const float* params,
                               const int64_t* indices,
                               float* output,
                               int N) {
@@ -63,7 +63,7 @@ extern "C" void gather_kernel(const float* h_params,      // host: [32, 128, 32]
     int total_threads = D0 * N * D2;
     int grid_size = (total_threads + block_size - 1) / block_size;
 
-    gather_kernel<<<grid_size, block_size>>>(d_params, d_indices, d_output, N);
+    gather<<<grid_size, block_size>>>(d_params, d_indices, d_output, N);
 
     cudaMemcpy(h_output, d_output, output_bytes, cudaMemcpyDeviceToHost);
 
