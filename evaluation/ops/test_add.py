@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
 """Unified test script for 'add' operator across 4 platforms: cuda, hip, bang,
 cpu Uses --config to get shape/dtype, compiles .so, runs and verifies with
 PyTorch."""
+
 import argparse
 import ctypes
 import json

@@ -1,0 +1,45 @@
+extern "C" __mlu_global__ void sub_kernel(float *input0,
+                                          float *input1,
+                                          float *output) {
+  
+  __nram__ float local_nram0[25];
+  __nram__ float local_nram1[25];
+
+  
+  const int total_elems = 64 * 64 * 64;
+
+  
+  int global_core_id = clusterId * 4 + coreId;
+
+  
+  const int elems_per_step = 25 * 32;  
+  
+  const int num_steps = (total_elems + elems_per_step - 1) / elems_per_step;
+
+  
+  for (int step = 0; step < num_steps; ++step) {
+    
+    int base_index = step * elems_per_step + global_core_id * 25;
+    if (base_index >= total_elems) {
+      continue;  
+    }
+
+    
+    int valid_count = (base_index + 25 > total_elems)
+                      ? (total_elems - base_index)
+                      : 25;
+
+    
+    __memcpy(local_nram0, input0 + base_index,
+             valid_count * sizeof(float), GDRAM2NRAM);
+    __memcpy(local_nram1, input1 + base_index,
+             valid_count * sizeof(float), GDRAM2NRAM);
+
+    
+    __bang_sub(local_nram0, local_nram0, local_nram1, valid_count);
+
+    
+    __memcpy(output + base_index, local_nram0,
+             valid_count * sizeof(float), NRAM2GDRAM);
+  }
+}
