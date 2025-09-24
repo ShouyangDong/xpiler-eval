@@ -56,7 +56,7 @@ def compile_file(file_path, target):
     name_no_ext = os.path.splitext(os.path.basename(file_path))[0]
     dir_name = os.path.dirname(file_path)
 
-    # 1️⃣ 读取源码 + 插入平台宏
+    # 1️⃣ Load源码 + 插入平台宏
     with open(file_path, "r") as f:
         code = f.read()
     full_code = config["macros"] + code
@@ -75,7 +75,7 @@ def compile_file(file_path, target):
     # 5️⃣ 清理中间文件（可选保留 .so）
     try:
         os.remove(bak_file)
-        # 可选：失败时保留 .so 用于调试，或加 --keep-so 参数
+        # 可选：失败时保留 .so 用于调试，或加 --keep-so parameters
         if success and os.path.exists(so_path):
             os.remove(so_path)
     except Exception as e:
