@@ -56,35 +56,35 @@ if __name__ == "__main__":
     name = base_name.split("_")[0]  # e.g., "transpose"
     shapes_str = base_name.replace(".cpp", "")
     
-    # 尝试从文件名解析 shape（用于验证）
+    # Attempt to parse shape from filename (for validation)
     try:
         shape_from_filename = [int(x) for x in shapes_str.split("_")[1:]]
     except ValueError:
         raise ValueError(f"Invalid filename format: {args.file}")
 
-    # ✅ 从 config 获取真实 shape 和 perm
+    # ✅ Get the actual shape and perm from config
     input_shape, perm = parse_config(args.config)
     output_shape = [input_shape[i] for i in perm]  # permuted shape
 
     print(f"🔍 Testing {name.upper()} with input shape {input_shape} -> output shape {output_shape}, perm={perm}")
 
-    # ✅ 生成输入张量
+    # ✅ Generate input tensor
     input_tensor = torch.rand(input_shape, dtype=torch.float32, requires_grad=False)
     input_flat = input_tensor.numpy()  # C-order
     input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
-    # ✅ 黄金标准：PyTorch permute
+    # ✅ Reference：PyTorch permute
     expected = input_tensor.permute(*perm).contiguous()
     expected_flat = expected.numpy()
 
-    # ✅ 输出 buffer
+    # ✅ output buffer
     output_numel = expected_flat.size
     result_array = (ctypes.c_float * output_numel)()  # 分配空间
 
-    # 共享库名称
+    # shared library
     so_name = args.file.replace(".cpp", ".so")
 
-    # 读取并注入宏
+    # Add macro
     with open(args.file, "r") as f:
         code = f.read()
     code = macro + code
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     with open(temp_file_name, "w") as f:
         f.write(code)
 
-    # 编译
+    # compile
     print(f"⚙️ Compiling {temp_file_name} -> {so_name}")
     success, compile_output = run_compilation(so_name, temp_file_name)
     if not success:
@@ -103,40 +103,40 @@ if __name__ == "__main__":
 
     os.remove(temp_file_name)
 
-    # 加载共享库
+    # load shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
     kernel_func = getattr(lib, name)
 
-    # ✅ 动态设置函数签名，支持 2D/3D/4D
+    
     rank = len(input_shape)
 
     if rank not in [2, 3, 4]:
         raise NotImplementedError(f"Rank {rank} not supported. Only 2D, 3D, and 4D are supported.")
 
-    # 构建 argtypes: [float*, float*, d0, d1, ..., p0, p1, ...]
+    # Construct argtypes: [float*, float*, d0, d1, ..., p0, p1, ...]
     argtypes = [
         ctypes.POINTER(ctypes.c_float),  # input
         ctypes.POINTER(ctypes.c_float),  # output
     ]
-    # 添加 shape 维度 (d0, d1, ...)
+    # Add shape dim (d0, d1, ...)
     argtypes += [ctypes.c_int] * rank
-    # 添加 perm 维度 (p0, p1, ...)
+    # Add perm dim (p0, p1, ...)
     argtypes += [ctypes.c_int] * rank
 
     kernel_func.argtypes = argtypes
 
-    # ✅ 构建参数列表
+    # ✅ Construct input arguments
     args_list = [input_ptr, result_array] + input_shape + perm
 
-    # ✅ 调用 kernel
+    # ✅ invoke kernel
     print(f"🚀 Running {name.upper()} kernel with rank-{rank} permute...")
     kernel_func(*args_list)
 
-    # ✅ 获取结果并 reshape
+    # ✅ Get output并 reshape
     computed_flat = torch.tensor([result_array[i] for i in range(output_numel)])
     computed_tensor = computed_flat.view(output_shape)
 
-    # ✅ 验证
+    # ✅ verification
     is_correct = torch.allclose(
         computed_tensor, expected, rtol=1e-5, atol=1e-6, equal_nan=True
     )
@@ -153,5 +153,5 @@ if __name__ == "__main__":
         diff = (computed_tensor - expected).abs()
         print(f"Max error: {diff.max().item():.2e}")
 
-    # 清理
+    # clean
     subprocess.run(["rm", so_name], check=False)

@@ -13,7 +13,7 @@ from evaluation.utils import run_cuda_compilation as run_compilation
 
 def element_wise_gather(params, indices, axis=0):
 
-    # 调用 gather
+    # invoke gather
     result = torch.gather(params, dim=axis, index=indices)
     return result
 
@@ -57,12 +57,12 @@ if __name__ == "__main__":
     print(f"🧪 indices: {indices.tolist()}")
     print(f"⚙️  axis = {AXIS}")
 
-    # 获取目标形状：除了 axis 维度是 len(indices)，其余和 params 一样
+    # 获取目标形状：除了 axis dim是 len(indices)，其余和 params 一样
     output_shape = list(params.shape)
     output_shape[AXIS] = indices.size(0)  # M
 
     # 将 indices 扩展到目标形状
-    # 方法：在 axis 维度上 unsqueeze，然后 expand
+    # 方法：在 axis dim上 unsqueeze，然后 expand
     indices_expanded = indices.view(*[1 if i != AXIS else -1 for i in range(params.ndim)])
     # 例如 axis=0, ndim=3 → [-1, 1, 1]
     #      axis=1, ndim=3 → [1, -1, 1]

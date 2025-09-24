@@ -4,7 +4,7 @@ from tvm import te, topi
 import os
 from pathlib import Path
 
-# 输出目录
+# output目录
 OUTPUT_DIR = Path("generated_kernels")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
@@ -33,7 +33,7 @@ def create_shapes(op_name, args):
 
 
 def get_tvm_op(op_name, placeholders):
-    """构建 TVM 计算图"""
+    """Construct TVM 计算图"""
     A = placeholders[0]
     if len(placeholders) > 1:
         B = placeholders[1]
@@ -91,7 +91,7 @@ def generate_kernel(op_name, args, dtype="float32"):
     shapes = create_shapes(op_name, args)
     placeholders = [te.placeholder(s, name=f"input{i}", dtype=dtype) for i, s in enumerate(shapes)]
 
-    # 构建计算
+    # Construct计算
     C = get_tvm_op(op_name, placeholders)
     s = te.create_schedule(C.op)
 

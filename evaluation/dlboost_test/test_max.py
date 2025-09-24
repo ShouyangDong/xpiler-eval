@@ -10,7 +10,7 @@ from evaluation.macros import DLBOOST_MACROS as macro
 
 # Define the max (element-wise) function using torch
 def element_wise_max(A, B):
-    return torch.maximum(A, B)  # 黄金标准
+    return torch.maximum(A, B) 
 
 
 if __name__ == "__main__":
@@ -26,9 +26,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]  # 应该是 "max"
+    name = base_name.split("_")[0]  # "max"
     shapes_str = base_name.split(".")[0]  # e.g., "max_64_64"
-    shape = [int(x) for x in shapes_str.split("_")[1:]]  # 提取尺寸
+    shape = [int(x) for x in shapes_str.split("_")[1:]]  
 
     print(f"🔍 Testing {name.upper()} with shape {shape}")
 

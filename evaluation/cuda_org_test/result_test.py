@@ -71,7 +71,7 @@ def run_test_for_config(config, source_dir, test_dir, target):
         return False, f"[ERROR] Test script not found: {test_script}"
 
     from evaluation.utils import run_test
-    # 调用 evaluation.utils.run_test
+    # invoke evaluation.utils.run_test
     try:
         from evaluation.utils import run_test
         success, output = run_test(

@@ -6,7 +6,7 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 
-# 导入你已经写好的四个平台的宏和编译函数
+# 导入你已经写好的四个平台的宏和compile函数
 from evaluation.macros import (
     CUDA_MACROS,
     HIP_MACROS,
@@ -66,10 +66,10 @@ def compile_file(file_path, target):
     with open(bak_file, "w") as f:
         f.write(full_code)
 
-    # 3️⃣ .so 输出路径
+    # 3️⃣ .so output路径
     so_path = os.path.join(dir_name, f"{name_no_ext}.so")
 
-    # 4️⃣ 调用你已实现的编译函数
+    # 4️⃣ invoke你已实现的compile函数
     success, output = config["compiler"](so_path, bak_file)
 
     # 5️⃣ 清理中间文件（可选保留 .so）
