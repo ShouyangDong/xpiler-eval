@@ -1,7 +1,7 @@
 
 extern "C" void deformable(float *value_, int *value_spatial_shapes_,
-                                  float *sampling_locations_,
-                                  float *attention_weights_, float *output_) {
+                           float *sampling_locations_,
+                           float *attention_weights_, float *output_) {
   float attention_sum[2048];
   float value_offset[1];
   float height_width[2];

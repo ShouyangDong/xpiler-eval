@@ -1,17 +1,17 @@
 
 extern "C" void layernorm(float *input, float *gamma, float *beta,
-                                 float *output) {
+                          float *output) {
   for (int i_bs = 0; i_bs < 2; i_bs++) {
     for (int i_seq = 0; i_seq < 4; i_seq++) {
       float mean = 0.0;
       float variance = 0.0;
       float diff[128];
-      // Calculate mean
+
       for (int i_mean = 0; i_mean < 128; i_mean++) {
         mean += input[i_bs * 4 * 128 + i_seq * 128 + i_mean];
       }
       mean /= 128;
-      // Calculate variance
+
       for (int i_diff = 0; i_diff < 128; i_diff++) {
         diff[i_diff] = input[i_bs * 4 * 128 + i_seq * 128 + i_diff] - mean;
       }
@@ -24,7 +24,6 @@ extern "C" void layernorm(float *input, float *gamma, float *beta,
       }
       variance = sqrt(variance / 128);
 
-      // Normalize input
       for (int i_norm = 0; i_norm < 128; i_norm++) {
         diff[i_norm] = (input[i_bs * 4 * 128 + i_seq * 128 + i_norm] - mean);
       }

@@ -1,13 +1,9 @@
-// ============================================================== //
-// 实例 4: 小 embedding 表 (vocab=100, dim=32, batch=16)
-// 轻量级模型或测试用
-// ============================================================== //
-extern "C" void gather(const float* params,
-                             const int* indices,
-                             float* output) {
+
+
+extern "C" void gather(const float *params, const int *indices, float *output) {
   constexpr int PARAMS_BATCH = 100;
-  constexpr int PARAMS_LEN   = 32;
-  constexpr int INDICES_LEN  = 16;
+  constexpr int PARAMS_LEN = 32;
+  constexpr int INDICES_LEN = 16;
 
   for (int i = 0; i < INDICES_LEN; ++i) {
     int idx = indices[i];

@@ -1,8 +1,8 @@
 __global__ void conv2d(float *input, float *kernel, float *output) {
-  int bs = blockIdx.z;  // 批次索引
-  int oc = threadIdx.x; // 输出通道索引
-  int oh = blockIdx.y;  // 输出高度索引
-  int ow = blockIdx.x;  // 输出宽度索引
+  int bs = blockIdx.z;
+  int oc = threadIdx.x;
+  int oh = blockIdx.y;
+  int ow = blockIdx.x;
 
   if (oc < 64 && oh < 4 && ow < 4 && bs < 32) {
     float sum = 0.0;
@@ -35,36 +35,29 @@ extern "C" void conv2d_kernel(float *input, float *filter, float *output,
   int output_height = (input_height - kernel_height) / stride + 1;
   int output_width = (input_height - kernel_height) / stride + 1;
 
-  // 定义输入尺寸和卷积核尺寸
   int input_size = batch_size * input_height * input_height * input_channels;
   int kernel_size =
       output_channels * kernel_height * kernel_height * input_channels;
   int output_size = batch_size * output_height * output_width * output_channels;
 
-  // 分配设备内存
   float *d_input, *d_filter, *d_output;
   cudaMalloc(&d_input, input_size * sizeof(float));
   cudaMalloc(&d_filter, kernel_size * sizeof(float));
   cudaMalloc(&d_output, output_size * sizeof(float));
 
-  // 复制数据到设备
   cudaMemcpy(d_input, input, input_size * sizeof(float),
              cudaMemcpyHostToDevice);
   cudaMemcpy(d_filter, filter, kernel_size * sizeof(float),
              cudaMemcpyHostToDevice);
 
-  // 定义块和网格尺寸
-  dim3 blockSize(output_channels); // 每个块中有 output_channels 个线程
-  dim3 numBlocks(output_width, output_height,
-                 batch_size); // 输出的宽、高以及批次
+  dim3 blockSize(output_channels);
+  dim3 numBlocks(output_width, output_height, batch_size);
 
   conv2d<<<numBlocks, blockSize>>>(d_input, d_filter, d_output);
 
-  // 将输出数据复制回主机
   cudaMemcpy(output, d_output, output_size * sizeof(float),
              cudaMemcpyDeviceToHost);
 
-  // 释放设备和主机内存
   cudaFree(d_input);
   cudaFree(d_filter);
   cudaFree(d_output);

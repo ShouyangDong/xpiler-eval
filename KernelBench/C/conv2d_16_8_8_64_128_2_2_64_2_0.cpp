@@ -11,26 +11,21 @@ extern "C" void conv2d(float *input, float *kernel, float *output) {
   int output_height = (input_height - kernel_height) / stride + 1;
   int output_width = (input_width - kernel_width) / stride + 1;
 
-  // 循环遍历批次、输出特征图的高度和宽度
   for (int bs = 0; bs < batch_size; bs++) {
     for (int oh = 0; oh < output_height; oh++) {
       for (int ow = 0; ow < output_width; ow++) {
         for (int oc = 0; oc < output_channels; oc++) {
           int32_t sum = 0;
 
-          // 定义临时数组来存储数据，64个元素（用于AVX-512的64个int8数据处理）
           int8_t input_block[64];
           int8_t kernel_block[64];
 
-          // 遍历卷积核的高度和宽度
           for (int kh = 0; kh < kernel_height; kh++) {
             for (int kw = 0; kw < kernel_width; kw++) {
-              for (int ic = 0; ic < input_channels;
-                   ic += 64) { // 每次处理64个通道
+              for (int ic = 0; ic < input_channels; ic += 64) {
                 int ih = oh * stride + kh;
                 int iw = ow * stride + kw;
 
-                // 直接强制转换输入和内核数据块
                 for (int i = 0; i < 64; i++) {
                   if (ic + i < input_channels) {
                     input_block[i] = static_cast<int8_t>(
@@ -48,16 +43,14 @@ extern "C" void conv2d(float *input, float *kernel, float *output) {
                   }
                 }
 
-                // 使用VNNI指令（AVX-512）执行乘加操作
                 __m512i _input = _mm512_loadu_si512(
                     reinterpret_cast<const __m512i *>(input_block));
                 __m512i _kernel = _mm512_loadu_si512(
                     reinterpret_cast<const __m512i *>(kernel_block));
                 __m512i acc = _mm512_setzero_si512();
-                acc = _mm512_dpbusd_epi32(acc, _input, _kernel); // 执行乘加操作
+                acc = _mm512_dpbusd_epi32(acc, _input, _kernel);
 
-                // 将累加结果存储到sum中
-                int32_t acc_result[16]; // 每个acc包含16个32位的int数据
+                int32_t acc_result[16];
                 _mm512_storeu_si512(reinterpret_cast<__m512i *>(acc_result),
                                     acc);
                 for (int i = 0; i < 16; i++) {
@@ -67,7 +60,6 @@ extern "C" void conv2d(float *input, float *kernel, float *output) {
             }
           }
 
-          // 将计算的结果存储到输出中
           output[bs * output_height * output_width * output_channels +
                  oh * output_width * output_channels + ow * output_channels +
                  oc] = static_cast<float>(sum);

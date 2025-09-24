@@ -61,7 +61,7 @@ if __name__ == "__main__":
     input_tensor = torch.rand(input_shape, dtype=torch.float32, requires_grad=False)
     input_ptr = input_tensor.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
-   ：PyTorch mean
+    # PyTorch mean
     expected = torch.mean(input_tensor, dim=reduce_dim).contiguous()
     expected_flat = expected.numpy()
     output_shape = expected.shape

@@ -1,7 +1,7 @@
 
 extern "C" void mha(float *Q, float *K, float *V, float *output) {
   float score[12 * 12];
-  // The dimension 64, 4096, 12, 256
+
   for (int i = 0; i < 64; i++) {
     for (int j = 0; j < 4096; j++) {
       for (int m = 0; m < 12; m++) {
@@ -15,14 +15,12 @@ extern "C" void mha(float *Q, float *K, float *V, float *output) {
         }
       }
 
-      // score
       for (int m_sc = 0; m_sc < 12; m_sc++) {
         for (int n_sc = 0; n_sc < 12; n_sc++) {
           score[m_sc * 12 + n_sc] = score[m_sc * 12 + n_sc] / sqrt(256);
         }
       }
 
-      // The Softmax code:
       for (int j_sf = 0; j_sf < 12; ++j_sf) {
         float sum = 0;
 
@@ -37,7 +35,6 @@ extern "C" void mha(float *Q, float *K, float *V, float *output) {
         }
       }
 
-      // The final Matmul
       for (int m_fl = 0; m_fl < 12; ++m_fl) {
         for (int n_fl = 0; n_fl < 256; ++n_fl) {
           output[i * 4096 * 12 * 256 + j * 12 * 256 + m_fl * 256 + n_fl] = 0.0;

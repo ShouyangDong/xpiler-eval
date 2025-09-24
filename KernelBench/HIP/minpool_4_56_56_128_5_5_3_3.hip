@@ -34,8 +34,7 @@ extern "C" void minpool_kernel(float *input, float *output, int batch_size,
   hipMalloc(&d_input, input_size * sizeof(float));
   hipMalloc(&d_output, output_size * sizeof(float));
 
-  hipMemcpy(d_input, input, input_size * sizeof(float),
-             hipMemcpyHostToDevice);
+  hipMemcpy(d_input, input, input_size * sizeof(float), hipMemcpyHostToDevice);
 
   dim3 blockSize(1024);
   dim3 numBlocks((output_size + blockSize.x - 1) / blockSize.x);
@@ -43,7 +42,7 @@ extern "C" void minpool_kernel(float *input, float *output, int batch_size,
   minpool<<<numBlocks, blockSize>>>(d_input, d_output);
 
   hipMemcpy(output, d_output, output_size * sizeof(float),
-             hipMemcpyDeviceToHost);
+            hipMemcpyDeviceToHost);
 
   hipFree(d_input);
   hipFree(d_output);
