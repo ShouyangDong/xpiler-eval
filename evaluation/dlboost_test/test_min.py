@@ -10,7 +10,7 @@ from evaluation.macros import DLBOOST_MACROS as macro
 
 # Define the min (element-wise) function using torch
 def element_wise_min(A, B):
-    return torch.minimum(A, B)  # 黄金标准
+    return torch.minimum(A, B) 
 
 
 if __name__ == "__main__":
@@ -26,9 +26,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]  # 应该是 "min"
+    name = base_name.split("_")[0]  # "min"
     shapes_str = base_name.split(".")[0]  # e.g., "min_64_64"
-    shape = [int(x) for x in shapes_str.split("_")[1:]]  # 提取尺寸
+    shape = [int(x) for x in shapes_str.split("_")[1:]]  
 
     print(f"🔍 Testing {name.upper()} with shape {shape}")
 

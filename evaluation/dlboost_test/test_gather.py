@@ -10,10 +10,10 @@ from evaluation.utils import run_dlboost_compilation as run_compilation
 
 
 def element_wise_gather(params, indices):
-    # 黄金标准：PyTorch gather
+    # PyTorch gather
     clamped_indices = torch.clamp(indices, 0, params.size(0) - 1)
     result = params[clamped_indices]
-    # 处理越界：置零
+    # Handle out-of-bounds: set to zero
     out_of_bound = (indices < 0) | (indices >= params.size(0))
     if out_of_bound.any():
         result[out_of_bound] = 0.0

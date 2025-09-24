@@ -32,7 +32,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]  # 应该是 "batchnorm"
+    name = base_name.split("_")[0]  # "batchnorm"
     shapes_str = base_name.split(".")[0]
     shape_parts = [int(x) for x in shapes_str.split("_")[1:]]
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     # Fixed parameters (from training)
     running_mean = torch.rand(C, dtype=torch.float32)
-    running_var = torch.rand(C, dtype=torch.float32) + 0.5  # 避免太小
+    running_var = torch.rand(C, dtype=torch.float32) + 0.5  
     weight = torch.rand(C, dtype=torch.float32)            # gamma
     bias = torch.rand(C, dtype=torch.float32)              # beta
     eps = 1e-5

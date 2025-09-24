@@ -27,18 +27,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]  # 应该是 "sin"
+    name = base_name.split("_")[0]  
     shapes_str = base_name.split(".")[0]  # e.g., "sin_64_64"
     shape = [
         int(x) for x in shapes_str.split("_")[1:]
-    ]  # 提取尺寸，如 [64, 64]
+    ]  # Extract dim, e.g.,  [64, 64]
     print(f"🧪 params shape: {shape}")
 
     # Generate random input matrix
     A = (
         torch.rand(*shape, device="cpu", dtype=torch.float32) * 4 * torch.pi
-    )  # 覆盖多个周期
-    # 或者用均匀分布: A = torch.randn(*shape) * 2  # 控制输入范围
+    )  
+    
 
     # Perform sin using PyTorch (golden reference)
     expected = sin(A)

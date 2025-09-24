@@ -26,11 +26,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]  # 应该是 "sub"
+    name = base_name.split("_")[0]  # "sub"
     shapes_str = base_name.split(".")[0]  # e.g., "sub_64_64"
     shape = [
         int(x) for x in shapes_str.split("_")[1:]
-    ]  # 提取尺寸，如 [64, 64]
+    ]  # Extract dim, e.g.,  [64, 64]
 
     print(f"🔍 Testing {name.upper()} with shape {shape}")
 

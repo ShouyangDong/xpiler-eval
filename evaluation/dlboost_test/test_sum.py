@@ -48,13 +48,13 @@ if __name__ == "__main__":
     base_name = os.path.basename(args.file)
     name = base_name.split("_")[0]  # e.g., "sum"
     shapes_str = base_name.replace(".cpp", "")
-    # 动态提取 shape：从文件名中解析所有数字
+    # Dynamically extract shape: parse all numbers from filename
     try:
         shape_from_filename = [int(x) for x in shapes_str.split("_")[1:]]
     except ValueError:
         raise ValueError(f"Invalid filename format: {args.file}. Expected: op_M_N_K.cpp")
 
-    # 从 config 获取真实 shape 和 axes
+    # Get the true shape and axes from config
     config_shape, axes = parse_config(args.config)
 
     print(f"🔍 Testing {name.upper()} with input shape {config_shape}, axes={axes}")
@@ -62,23 +62,23 @@ if __name__ == "__main__":
     # ✅ 使用 config 中的 shape，而非文件名（更可靠）
     shape = config_shape
 
-    # ✅ 生成输入张量
+    # ✅ Generate input tensor
     A = torch.rand(shape, device="cpu", dtype=torch.float32)
 
-    # ✅ 黄金标准：沿指定 axes 求和，不保留维度（与大多数 kernel 一致）
+    # ✅ 黄金标准：沿指定 axes 求和，不保留dim（与大多数 kernel 一致）
     expected_tensor = torch.sum(A, dim=axes)  # shape: reduced
     expected_numpy = expected_tensor.numpy()
-    expected_flat = expected_numpy.flatten()  # 展平用于比较
+    expected_flat = expected_numpy.flatten() 
 
     # ✅ 输入指针（展平输入）
     A_flat = A.numpy()  # 自动展平为 C 顺序
     A_ptr = A_flat.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
-    # ✅ 输出大小
+    # ✅ output大小
     output_size = expected_flat.size  # int
     result_array = (ctypes.c_float * output_size)()  # 分配空间
 
-    # 共享库名称
+    # shared library
     so_name = args.file.replace(".cpp", ".so")
 
     # 读取原始代码
@@ -87,12 +87,12 @@ if __name__ == "__main__":
 
     code = macro + code
 
-    # 创建临时文件
+    # Create tmp file
     temp_file_name = args.file.replace(".cpp", "_bak.cpp")
     with open(temp_file_name, "w") as f:
         f.write(code)
 
-    # 编译
+    # compile
     print(f"⚙️ Compiling {temp_file_name} -> {so_name}")
     success, compile_output = run_compilation(so_name, temp_file_name)
     if not success:
@@ -102,26 +102,26 @@ if __name__ == "__main__":
 
     os.remove(temp_file_name)
 
-    # 加载共享库
+    # load shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
     kernel_func = getattr(lib, name)
 
-    # ✅ 函数签名
+    # ✅ Function  signature
     kernel_func.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # input
         ctypes.POINTER(ctypes.c_float),  # output
     ]
     kernel_func.restype = None
 
-    # ✅ 调用 kernel
+    # ✅ invoke kernel
     print(f"🚀 Running {name.upper()} kernel...")
     kernel_func(A_ptr, result_array)
 
-    # ✅ 获取结果
+    # ✅ Get output
     computed_array = [result_array[i] for i in range(output_size)]
     computed_tensor = torch.tensor(computed_array).view_as(torch.from_numpy(expected_numpy))
 
-    # ✅ 验证
+    # ✅ verification
     abs_diff = torch.abs(computed_tensor - expected_tensor)
     max_error = abs_diff.max().item()
 
@@ -138,5 +138,5 @@ if __name__ == "__main__":
         print(f"   Computed shape: {computed_tensor.shape}")
         exit(1)
 
-    # 清理
+    # clean
     subprocess.run(["rm", so_name], check=False)
