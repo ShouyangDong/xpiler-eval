@@ -1,6 +1,6 @@
 extern "C" __mlu_global__ void conv2dnchw(float *input, float *kernel,
                                           float *output) {
-  // Flatten clusterId/coreId into a 0…15 thread index
+
   int tid = clusterId * 4 + coreId;
   const int BS = 16;
   const int IC = 64;
@@ -10,14 +10,13 @@ extern "C" __mlu_global__ void conv2dnchw(float *input, float *kernel,
   const int KH = 2;
   const int KW = 2;
   const int STR = 2;
-  const int OH = (IH - KH) / STR + 1; // 4
-  const int OW = (IW - KW) / STR + 1; // 4
-  const int N = BS * OC * OH * OW;    // 16*128*4*4 = 32768
-  const int STEP = 4 * 4;             // 16 threads
+  const int OH = (IH - KH) / STR + 1;
+  const int OW = (IW - KW) / STR + 1;
+  const int N = BS * OC * OH * OW;
+  const int STEP = 4 * 4;
 
-  // Each hardware thread handles indices tid, tid+16, tid+32, … < N
   for (int idx = tid; idx < N; idx += STEP) {
-    // Decode multi‐dim index
+
     int tmp = idx;
     int ow = tmp % OW;
     tmp /= OW;
@@ -27,11 +26,9 @@ extern "C" __mlu_global__ void conv2dnchw(float *input, float *kernel,
     tmp /= OC;
     int bs = tmp;
 
-    // Allocate NRAM buffers for the patch and filter slice
     __nram__ float in_patch[IC * KH * KW];
     __nram__ float filt[IC * KH * KW];
 
-    // Load input patch (IC × KH × KW) from GDRAM → NRAM
     for (int ic = 0, p = 0; ic < IC; ++ic) {
       for (int kh = 0; kh < KH; ++kh) {
         for (int kw = 0; kw < KW; ++kw, ++p) {
@@ -44,20 +41,16 @@ extern "C" __mlu_global__ void conv2dnchw(float *input, float *kernel,
       }
     }
 
-    // Load corresponding filter slice (OC × IC × KH × KW) → NRAM
-    // but we only need one OC slice, so we stride by OC in the flat kernel
     int base = oc * IC * KH * KW;
     for (int p = 0; p < IC * KH * KW; ++p) {
       __memcpy(&filt[p], &kernel[base + p], sizeof(float), GDRAM2NRAM);
     }
 
-    // Compute the convolution sum for this output element
     float sum = 0.0f;
     for (int p = 0; p < IC * KH * KW; ++p) {
       sum += in_patch[p] * filt[p];
     }
 
-    // Write result back to global memory
     output[bs * OC * OH * OW + oc * OH * OW + oh * OW + ow] = sum;
   }
 }

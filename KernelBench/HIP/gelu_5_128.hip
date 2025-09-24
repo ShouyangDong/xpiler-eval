@@ -1,5 +1,5 @@
 
-// Forward declaration of the device function
+
 __device__ float geluf(float x);
 
 __device__ float geluf(float x) {
@@ -24,7 +24,6 @@ extern "C" void gelu_kernel(float *A, float *C, int size) {
   dim3 numBlocks((size + 640 - 1) / 640);
 
   gelu<<<numBlocks, blockSize>>>(d_A, d_C);
-
 
   hipMemcpy(C, d_C, size * sizeof(float), hipMemcpyDeviceToHost);
 

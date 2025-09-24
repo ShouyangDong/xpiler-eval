@@ -1,12 +1,10 @@
-__global__ void mha(float *Q, float *K, float *V,
-                                             float *output) {
+__global__ void mha(float *Q, float *K, float *V, float *output) {
 
-  __shared__ float score[144]; // 使用共享内存存储 score, 大小为 heads * heads
+  __shared__ float score[144];
   float scaling_factor = 1.0f / sqrtf((float)256);
-  int i = blockIdx.x;  // batch index
-  int j = blockIdx.y;  // query index within sequence length
-  int m = threadIdx.x; // head index
-                       // The dimension 1, 2048, 12, 256
+  int i = blockIdx.x;
+  int j = blockIdx.y;
+  int m = threadIdx.x;
 
   for (int n = 0; n < 12; n++) {
     score[m * 12 + n] = 0.0;
@@ -16,12 +14,9 @@ __global__ void mha(float *Q, float *K, float *V,
     }
   }
 
-  // score
   for (int n_sc = 0; n_sc < 12; n_sc++) {
     score[m * 12 + n_sc] = score[m * 12 + n_sc] * scaling_factor;
   }
-
-  // The Softmax code:
 
   float sum = 0;
 
@@ -35,7 +30,6 @@ __global__ void mha(float *Q, float *K, float *V,
     score[m * 12 + k_sf] = score[m * 12 + k_sf] / sum;
   }
 
-  // The final Matmul
   for (int n_fl = 0; n_fl < 256; ++n_fl) {
     output[i * 2048 * 12 * 256 + j * 12 * 256 + m * 256 + n_fl] = 0.0;
     for (int k_fl = 0; k_fl < 12; ++k_fl) {

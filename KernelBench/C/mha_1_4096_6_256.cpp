@@ -1,7 +1,7 @@
 extern "C" void mha(float *Q, float *K, float *V, float *output) {
   int8_t arr_a[64];
   int8_t arr_b[64];
-  int32_t arr_d[16]; // AVX-512 寄存器能同时处理 16 个 int32 元素
+  int32_t arr_d[16];
   float score[6 * 6];
 
   const int batch = 1;
@@ -16,8 +16,7 @@ extern "C" void mha(float *Q, float *K, float *V, float *output) {
         for (int n = 0; n < heads; n++) {
           int32_t sum = 0;
 
-          for (int local_s = 0; local_s < dim / 64;
-               local_s++) { // 每次处理 64 个元素
+          for (int local_s = 0; local_s < dim / 64; local_s++) {
             for (int local_i = 0; local_i < 64; local_i++) {
               arr_a[local_i] = static_cast<int8_t>(
                   Q[i * seq_len * heads * dim + j * heads * dim + m * dim +
@@ -38,7 +37,7 @@ extern "C" void mha(float *Q, float *K, float *V, float *output) {
 
             _mm512_storeu_si512(reinterpret_cast<__m512i *>(arr_d), acc);
 
-            for (int k = 0; k < 16; ++k) { // 处理 16 个累积结果
+            for (int k = 0; k < 16; ++k) {
               sum += arr_d[k];
             }
           }
@@ -47,7 +46,6 @@ extern "C" void mha(float *Q, float *K, float *V, float *output) {
         }
       }
 
-      // Softmax
       for (int m = 0; m < heads; ++m) {
         float max_val = -INFINITY;
         for (int n = 0; n < heads; ++n) {
@@ -63,7 +61,6 @@ extern "C" void mha(float *Q, float *K, float *V, float *output) {
         }
       }
 
-      // Final Matmul
       for (int m = 0; m < heads; ++m) {
         for (int n = 0; n < dim; ++n) {
           output[i * seq_len * heads * dim + j * heads * dim + m * dim + n] =

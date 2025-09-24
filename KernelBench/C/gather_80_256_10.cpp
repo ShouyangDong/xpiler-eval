@@ -1,13 +1,9 @@
-// ============================================================== //
-// 实例 6: 多实例预测 - 取 top-10 预测 (classes=80, features=256, topk=10)
-// 如目标检测后处理
-// ============================================================== //
-extern "C" void gather(const float* params,
-                             const int* indices,
-                             float* output) {
+
+
+extern "C" void gather(const float *params, const int *indices, float *output) {
   constexpr int PARAMS_BATCH = 80;
-  constexpr int PARAMS_LEN   = 256;
-  constexpr int INDICES_LEN  = 10;
+  constexpr int PARAMS_LEN = 256;
+  constexpr int INDICES_LEN = 10;
 
   for (int i = 0; i < INDICES_LEN; ++i) {
     int idx = indices[i];

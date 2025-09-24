@@ -5,7 +5,7 @@ extern "C" __mlu_global__ void mha(float *Q, float *K, float *V,
   __nram__ float score[12 * 12];
   __nram__ float dinominator[12];
   __nram__ float dinominator_temp[12];
-  // The dimension 1, 4096, 12, 512
+
   if (clusterId < 4) {
     if (coreId < 4) {
       for (int i = 0; i < 4; i++) {
@@ -23,15 +23,12 @@ extern "C" __mlu_global__ void mha(float *Q, float *K, float *V,
                        j * 12 * 512,
                    12 * 512 * 4, GDRAM2NRAM);
 
-          // Transpose local_K
           __bang_transpose(local_K_trans, local_K, 12, 512);
           __memcpy(local_K_wram, local_K_trans, 512 * 12 * 4, NRAM2WRAM);
           __bang_mlp(score, local_Q, local_K_wram, 12, 12);
 
-          // score
           __bang_div(score, score, sqrt(512), 12 * 12);
 
-          // The Softmax code:
           for (int j_sf = 0; j_sf < 12; ++j_sf) {
             __bang_active_exp(score + j_sf * 12, score + j_sf * 12, 12);
             __bang_write_zero(dinominator, 12);
@@ -42,7 +39,7 @@ extern "C" __mlu_global__ void mha(float *Q, float *K, float *V,
             __bang_mul(score + j_sf * 12, score + j_sf * 12, dinominator_temp,
                        12);
           }
-          // The final Matmul
+
           __wram__ float local_V[12 * 512];
           __nram__ float local_output[12 * 512];
           __memcpy(local_V,

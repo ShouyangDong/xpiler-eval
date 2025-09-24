@@ -16,14 +16,12 @@ extern "C" __mlu_global__ void layernorm(float *input, float *gamma,
       __bang_sumpool(mean, local_input, 1, 1, 128, 1, 128, 1, 1);
       __bang_mul_const(mean, mean, 1.0 / 128, 128);
 
-      // Calculate variance
       __bang_sub(diff, local_input, mean, 128);
       __bang_mul(diff, diff, diff, 128);
 
       __bang_sumpool(variance, diff, 1, 1, 128, 1, 128, 1, 1);
       variance[0] = sqrt(variance[0] / 128);
 
-      // Normalize input
       __bang_sub(diff, local_input, mean, 128);
       __bang_mul(diff, diff, gamma, 128);
       __bang_mul_const(diff, diff, 1.0 / (variance[0] + 1e-5f), 128);

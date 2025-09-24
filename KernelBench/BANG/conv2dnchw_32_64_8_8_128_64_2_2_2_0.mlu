@@ -9,11 +9,11 @@ extern "C" __mlu_global__ void conv2dnchw(float *input, float *kernel,
   const int OC = 128;
   const int STRIDE = 2;
 
-  const int OH = (IH - KH) / STRIDE + 1; // = 4
-  const int OW = (IW - KW) / STRIDE + 1; // = 4
+  const int OH = (IH - KH) / STRIDE + 1;
+  const int OW = (IW - KW) / STRIDE + 1;
 
   const int total = BS * OC * OH * OW;
-  const int num_threads = 16; // 4 clusters * 4 cores
+  const int num_threads = 16;
   int tid = clusterId * 4 + coreId;
 
   for (int idx = tid; idx < total; idx += num_threads) {

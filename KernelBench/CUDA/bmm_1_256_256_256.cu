@@ -23,7 +23,7 @@ __global__ void bmm(half *A, half *B, float *C) {
   }
 }
 
-extern "C" void bmm_kernel(half *A, half *B, float *C,  int b, int m, int k,
+extern "C" void bmm_kernel(half *A, half *B, float *C, int b, int m, int k,
                            int n) {
   half *d_A;
   half *d_B;

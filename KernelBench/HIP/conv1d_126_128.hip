@@ -16,10 +16,9 @@ extern "C" void conv1d_kernel(float *input, float *output, float *kernel,
   hipMalloc(&d_kernel, kernel_size * sizeof(float));
   hipMalloc(&d_output, output_size * sizeof(float));
 
-  hipMemcpy(d_input, input, input_size * sizeof(float),
-             hipMemcpyHostToDevice);
+  hipMemcpy(d_input, input, input_size * sizeof(float), hipMemcpyHostToDevice);
   hipMemcpy(d_kernel, kernel, kernel_size * sizeof(float),
-             hipMemcpyHostToDevice);
+            hipMemcpyHostToDevice);
 
   dim3 blockSize(256);
   dim3 numBlocks((input_size + blockSize.x - 1) / blockSize.x);
@@ -27,7 +26,7 @@ extern "C" void conv1d_kernel(float *input, float *output, float *kernel,
   conv1d<<<numBlocks, blockSize>>>(d_input, d_kernel, d_output);
 
   hipMemcpy(output, d_output, output_size * sizeof(float),
-             hipMemcpyDeviceToHost);
+            hipMemcpyDeviceToHost);
 
   hipFree(d_input);
   hipFree(d_kernel);

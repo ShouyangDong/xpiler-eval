@@ -1,29 +1,24 @@
 extern "C" __mlu_global__ void conv1d(float *input, float *kernel,
                                       float *output) {
-  // Flatten clusterId/coreId into a 0…15 thread index
-  int tid = clusterId * 4 + coreId;
-  const int N = 190;      // total outputs
-  const int STEP = 4 * 4; // 16 threads
 
-  // Each hardware thread handles indices tid, tid+16, tid+32, … < N
+  int tid = clusterId * 4 + coreId;
+  const int N = 190;
+  const int STEP = 4 * 4;
+
   for (int i = tid; i < N; i += STEP) {
-    // NRAM buffers for a 3‑wide input window and the kernel
+
     __nram__ float input_local[3];
     __nram__ float kernel_local[3];
 
-    // Load 3 input values starting at position i
     __memcpy(input_local, input + i, 3 * sizeof(float), GDRAM2NRAM);
 
-    // Load the 3‑element kernel
     __memcpy(kernel_local, kernel, 3 * sizeof(float), GDRAM2NRAM);
 
-    // Compute the dot‑product
     float sum = 0.0f;
     for (int j = 0; j < 3; ++j) {
       sum += input_local[j] * kernel_local[j];
     }
 
-    // Write back to global memory
     output[i] = sum;
   }
 }
