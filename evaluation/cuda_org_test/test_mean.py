@@ -5,18 +5,19 @@ import os
 import subprocess
 
 import torch
-from evaluation.utils import run_cuda_compilation as run_compilation
+
 from evaluation.macros import CUDA_MACROS as macro
+from evaluation.utils import run_cuda_compilation as run_compilation
 
 
 def parse_config(config_input):
     """Parse config: either a JSON string or a file path."""
     if os.path.isfile(config_input):
-        with open(config_input, 'r') as f:
+        with open(config_input, "r") as f:
             config = json.load(f)
     else:
         config = json.loads(config_input)
-    
+
     shape = config["args"]
     reduce_dim = config.get("axes", None)
     if reduce_dim is None:
@@ -53,13 +54,21 @@ if __name__ == "__main__":
     input_shape, reduce_dim = parse_config(args.config)
 
     if not (0 <= reduce_dim < len(input_shape)):
-        raise ValueError(f"reduce_dim {reduce_dim} out of range for shape {input_shape}")
+        raise ValueError(
+            f"reduce_dim {reduce_dim} out of range for shape {input_shape}"
+        )
 
-    print(f"🔍 Testing {name.upper()} with input shape {input_shape}, reduce_dim={reduce_dim}")
+    print(
+        f"🔍 Testing {name.upper()} with input shape {input_shape}, reduce_dim={reduce_dim}"
+    )
 
     # 生成随机输入
-    input_tensor = torch.rand(input_shape, dtype=torch.float32, requires_grad=False)
-    input_ptr = input_tensor.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    input_tensor = torch.rand(
+        input_shape, dtype=torch.float32, requires_grad=False
+    )
+    input_ptr = input_tensor.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
 
     # PyTorch mean
     expected = torch.mean(input_tensor, dim=reduce_dim).contiguous()
@@ -97,9 +106,12 @@ if __name__ == "__main__":
     rank = len(input_shape)
 
     if rank not in [2, 3, 4]:
-        raise NotImplementedError(f"Rank {rank} not supported. Only 2D/3D/4D supported.")
+        raise NotImplementedError(
+            f"Rank {rank} not supported. Only 2D/3D/4D supported."
+        )
 
-    # Function  signature：void mean(float* input, float* output, int d0, ..., int reduce_dim)
+    # Function  signature：void mean(float* input, float* output, int d0, ...,
+    # int reduce_dim)
     argtypes = [
         ctypes.POINTER(ctypes.c_float),  # input
         ctypes.POINTER(ctypes.c_float),  # output
@@ -120,7 +132,9 @@ if __name__ == "__main__":
     kernel_func(*args_list)
 
     # Get output
-    computed_flat = torch.tensor([result_array[i] for i in range(output_numel)])
+    computed_flat = torch.tensor(
+        [result_array[i] for i in range(output_numel)]
+    )
     computed_tensor = computed_flat.view(output_shape)
 
     # verification

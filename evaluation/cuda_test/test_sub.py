@@ -1,19 +1,21 @@
 import argparse
 import ctypes
 import os
+
 import torch
 
-
+from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_dlboost_compilation as run_compilation
 
-
 # Define the sub function using torch
+
+
 def sub_op(a, b):
     return a - b  # element-wise subtraction
 
 
 def parse_filename(filename):
-    """Parse shape from filename like sub_3_4.cu"""
+    """Parse shape from filename like sub_3_4.cu."""
     base_name = os.path.basename(filename)
     stem = os.path.splitext(base_name)[0]  # e.g., sub_3_4
 
@@ -21,7 +23,7 @@ def parse_filename(filename):
         raise ValueError(f"Invalid filename: {filename}")
 
     try:
-        shape = list(map(int, stem.split('_')[1:]))  # skip 'sub'
+        shape = list(map(int, stem.split("_")[1:]))  # skip 'sub'
     except ValueError as e:
         raise ValueError(f"Cannot parse shape from {stem}: {e}")
 
@@ -33,10 +35,19 @@ def parse_filename(filename):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test sub CUDA kernel against PyTorch")
+    parser = argparse.ArgumentParser(
+        description="Test sub CUDA kernel against PyTorch"
+    )
     parser.add_argument("--file", help="the source file")
-    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda", "hip", "bang", "cpu"],
+        help="Target platform",
+    )
     args = parser.parse_args()
 
     # === 1. Parse shape from filename ===
@@ -71,7 +82,9 @@ if __name__ == "__main__":
 
     # Inject macro (e.g., for CUDA headers)
     try:
-        with open(os.path.join(os.getcwd(), "benchmark/macro/cpp_macro.txt"), "r") as f:
+        with open(
+            os.path.join(os.getcwd(), "benchmark/macro/cpp_macro.txt"), "r"
+        ) as f:
             macro = f.read()
         code = macro + code
     except FileNotFoundError:
@@ -111,8 +124,8 @@ if __name__ == "__main__":
         ctypes.POINTER(ctypes.c_float),  # a
         ctypes.POINTER(ctypes.c_float),  # b
         ctypes.POINTER(ctypes.c_float),  # output
-        ctypes.POINTER(ctypes.c_int),    # shape
-        ctypes.c_int,                    # rank
+        ctypes.POINTER(ctypes.c_int),  # shape
+        ctypes.c_int,  # rank
     ]
     kernel_func.restype = None
 
@@ -123,8 +136,7 @@ if __name__ == "__main__":
 
     # === 9. Compare results ===
     if torch.allclose(
-        result_cuda, result_torch,
-        rtol=1e-3, atol=1e-3, equal_nan=True
+        result_cuda, result_torch, rtol=1e-3, atol=1e-3, equal_nan=True
     ):
         print("✅ Verification successful! CUDA result matches PyTorch.")
     else:

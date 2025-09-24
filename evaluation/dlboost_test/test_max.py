@@ -4,13 +4,15 @@ import os
 import subprocess
 
 import torch
-from evaluation.utils import run_dlboost_compilation as run_compilation
 
 from evaluation.macros import DLBOOST_MACROS as macro
+from evaluation.utils import run_dlboost_compilation as run_compilation
 
 # Define the max (element-wise) function using torch
+
+
 def element_wise_max(A, B):
-    return torch.maximum(A, B) 
+    return torch.maximum(A, B)
 
 
 if __name__ == "__main__":
@@ -21,14 +23,21 @@ if __name__ == "__main__":
         required=True,
         help="Path to the C++ source file (e.g., max_64_64.cpp)",
     )
-    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda", "hip", "bang", "cpu"],
+        help="Target platform",
+    )
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
     name = base_name.split("_")[0]  # "max"
     shapes_str = base_name.split(".")[0]  # e.g., "max_64_64"
-    shape = [int(x) for x in shapes_str.split("_")[1:]]  
+    shape = [int(x) for x in shapes_str.split("_")[1:]]
 
     print(f"🔍 Testing {name.upper()} with shape {shape}")
 
@@ -59,7 +68,6 @@ if __name__ == "__main__":
     # Read original C++ code
     with open(args.file, "r") as f:
         code = f.read()
-
 
     code = macro + code
 

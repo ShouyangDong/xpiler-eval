@@ -1,14 +1,19 @@
 import argparse
 import ctypes
 import os
+
 import torch
 import torch.nn.functional as F
 
+from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_dlboost_compilation as run_compilation
 
-
 # Define the batchnorm function using torch
-def batchnorm(x, weight, bias, running_mean, running_var, eps=1e-5, training=False):
+
+
+def batchnorm(
+    x, weight, bias, running_mean, running_var, eps=1e-5, training=False
+):
     return F.batch_norm(
         x,
         running_mean,
@@ -16,12 +21,12 @@ def batchnorm(x, weight, bias, running_mean, running_var, eps=1e-5, training=Fal
         weight=weight,
         bias=bias,
         training=training,
-        eps=eps
+        eps=eps,
     )
 
 
 def parse_filename(filename):
-    """Parse N, C, H, W or N, C from filename like batchnorm_1_3_224_224.cu"""
+    """Parse N, C, H, W or N, C from filename like batchnorm_1_3_224_224.cu."""
     base_name = os.path.basename(filename)
     stem = os.path.splitext(base_name)[0]  # e.g., batchnorm_1_3_224_224
 
@@ -45,14 +50,25 @@ def parse_filename(filename):
         print(f"🔍 Parsed 1D BatchNorm: [N={N}, C={C}]")
         return shape, spatial_dims
     else:
-        raise ValueError(f"Unsupported shape length: {len(shape)} (expected 2 or 4)")
+        raise ValueError(
+            f"Unsupported shape length: {len(shape)} (expected 2 or 4)"
+        )
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test batchnorm CUDA kernel against PyTorch")
+    parser = argparse.ArgumentParser(
+        description="Test batchnorm CUDA kernel against PyTorch"
+    )
     parser.add_argument("--file", help="the source file")
-    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda", "hip", "bang", "cpu"],
+        help="Target platform",
+    )
     args = parser.parse_args()
 
     # === 1. Parse shape from filename ===
@@ -65,21 +81,27 @@ if __name__ == "__main__":
 
     # === 2. Generate random input tensors ===
     if spatial_dims == 2:
-        x = torch.randn(N, C, shape[2], shape[3], dtype=torch.float32, device="cpu")
+        x = torch.randn(
+            N, C, shape[2], shape[3], dtype=torch.float32, device="cpu"
+        )
     else:
         x = torch.randn(N, C, dtype=torch.float32, device="cpu")
 
     weight = torch.rand(C, dtype=torch.float32, device="cpu")
     bias = torch.rand(C, dtype=torch.float32, device="cpu")
     running_mean = torch.rand(C, dtype=torch.float32, device="cpu")
-    running_var = torch.rand(C, dtype=torch.float32, device="cpu") + 0.5  # avoid zero
+    running_var = (
+        torch.rand(C, dtype=torch.float32, device="cpu") + 0.5
+    )  # avoid zero
     eps = 1e-5
 
     print(f"🧪 Input tensor shape: {x.shape}")
     print(f"🧪 Parameters: C={C}, eps={eps}")
 
     # === 3. Perform batchnorm using PyTorch ===
-    result_torch = batchnorm(x, weight, bias, running_mean, running_var, eps=eps, training=False)
+    result_torch = batchnorm(
+        x, weight, bias, running_mean, running_var, eps=eps, training=False
+    )
     print(f"✅ PyTorch output shape: {result_torch.shape}")
 
     # === 4. Prepare ctypes pointers ===
@@ -102,7 +124,6 @@ if __name__ == "__main__":
         code = f.read()
 
     code = macro + code
-        pass
 
     # Write temporary file
     temp_file = args.file.replace(".cu", "_temp.cu")
@@ -156,15 +177,22 @@ if __name__ == "__main__":
 
     print(f"🚀 Running CUDA kernel: {kernel_name}")
     kernel_func(
-        x_ptr, weight_ptr, bias_ptr, running_mean_ptr, running_var_ptr,
+        x_ptr,
+        weight_ptr,
+        bias_ptr,
+        running_mean_ptr,
+        running_var_ptr,
         output_ptr,
-        N, C, H, W, eps
+        N,
+        C,
+        H,
+        W,
+        eps,
     )
 
     # === 10. Compare results ===
     if torch.allclose(
-        result_cuda, result_torch,
-        rtol=1e-3, atol=1e-3, equal_nan=True
+        result_cuda, result_torch, rtol=1e-3, atol=1e-3, equal_nan=True
     ):
         print("✅ Verification successful! CUDA result matches PyTorch.")
     else:

@@ -1,5 +1,6 @@
-import subprocess
 import json
+import subprocess
+
 import torch
 import torch.nn.functional as F
 
@@ -91,10 +92,12 @@ def conv2d_nhwc(
     # Convert the input from NHWC to NCHW.
     input_nchw = input_nhwc.permute(0, 3, 1, 2)
 
-    # Convert the kernel from HWIO (H, W, in_channels, out_channels) format to PyTorch's OIHW format.
+    # Convert the kernel from HWIO (H, W, in_channels, out_channels) format to
+    # PyTorch's OIHW format.
     weight_oihw = weight_hwio.permute(0, 3, 1, 2)
 
-    # Perform convolution operations using the transformed convolution kernel and input.
+    # Perform convolution operations using the transformed convolution kernel
+    # and input.
     output_nchw = F.conv2d(
         input_nchw, weight_oihw, stride=stride, padding=padding
     )
@@ -126,6 +129,7 @@ def run_dlboost_compilation(so_name, file_name):
         return True, output
     except subprocess.CalledProcessError as e:
         return False, e.output
+
 
 def run_mlu_compilation(so_name, file_name):
     try:
@@ -202,8 +206,8 @@ def run_hip_compilation(so_name, file_name):
 
 
 def run_test(file_path, test_script, kernel_config, target):
-    """
-    Run a test script for a compiled kernel.
+    """Run a test script for a compiled kernel.
+
     :param file_path: Path to the .cu/.cpp file (or .so if already compiled)
     :param test_script: Path to the test script (e.g., test_add.py)
     :param kernel_config: Dict containing op_name, args, axes, dtype, etc.
@@ -213,14 +217,18 @@ def run_test(file_path, test_script, kernel_config, target):
     try:
         result = subprocess.run(
             [
-                "python", test_script,
-                "--file", file_path,
-                "--config", json.dumps(kernel_config),
-                "--target", target
+                "python",
+                test_script,
+                "--file",
+                file_path,
+                "--config",
+                json.dumps(kernel_config),
+                "--target",
+                target,
             ],
             capture_output=True,
             text=True,
-            timeout=400
+            timeout=400,
         )
         success = result.returncode == 0
         output = result.stdout.strip() + "\n" + result.stderr.strip()

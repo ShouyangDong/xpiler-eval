@@ -18,8 +18,15 @@ def ref_program(input_array, kernel):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", help="the source file")
-    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda", "hip", "bang", "cpu"],
+        help="Target platform",
+    )
     args = parser.parse_args()
     base_name = os.path.basename(args.file)
     shapes = base_name.split(".")[0]
@@ -40,7 +47,7 @@ if __name__ == "__main__":
     output_np = ref_program(input_array, kernel)
     # Load the shared library with the batch matrix multiplication function
     so_name = args.file.replace(".hip", ".so")
-    file_name = create_hip_func(file, op_type="matmul")
+    file_name = create_hip_func(args.file, op_type="matmul")
     success, output = run_compilation(so_name, file_name)
     os.remove(file_name)
 

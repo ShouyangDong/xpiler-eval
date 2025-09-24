@@ -1,12 +1,15 @@
 import argparse
 import ctypes
 import os
-import torch
-import re
 
+import torch
+
+from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_dlboost_compilation as run_compilation
 
 # Define the transpose function using torch
+
+
 def transpose(A, axes):
     return A.permute(*axes).contiguous()
 
@@ -20,14 +23,14 @@ def parse_filename(filename):
     stem = os.path.splitext(base_name)[0]  # e.g., transpose_3_4_to_4_3
 
     # Split by '_to_'
-    if '_to_' not in stem:
+    if "_to_" not in stem:
         raise ValueError(f"Invalid filename format: {filename}")
 
-    in_part, out_part = stem.split('_to_')
-    in_part = in_part.replace('transpose_', '')
+    in_part, out_part = stem.split("_to_")
+    in_part = in_part.replace("transpose_", "")
     try:
-        in_shape = list(map(int, in_part.split('_')))
-        out_shape = list(map(int, out_part.split('_')))
+        in_shape = list(map(int, in_part.split("_")))
+        out_shape = list(map(int, out_part.split("_")))
     except ValueError as e:
         raise ValueError(f"Cannot parse shape from {stem}: {e}")
 
@@ -41,19 +44,32 @@ def parse_filename(filename):
                 found = True
                 break
         if not found:
-            raise ValueError(f"Cannot infer axes for {in_shape} -> {out_shape}")
+            raise ValueError(
+                f"Cannot infer axes for {in_shape} -> {out_shape}"
+            )
     permuted = [in_shape[i] for i in axes]
     if permuted != out_shape:
-        raise ValueError(f"Axis inference failed: {in_shape} with {axes} -> {permuted}")
+        raise ValueError(
+            f"Axis inference failed: {in_shape} with {axes} -> {permuted}"
+        )
 
     return in_shape, axes
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test transpose CUDA kernel against PyTorch")
+    parser = argparse.ArgumentParser(
+        description="Test transpose CUDA kernel against PyTorch"
+    )
     parser.add_argument("--file", help="the source file")
-    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda", "hip", "bang", "cpu"],
+        help="Target platform",
+    )
     args = parser.parse_args()
 
     # === 1. Parse shape and axes from filename ===
@@ -73,12 +89,16 @@ if __name__ == "__main__":
 
     # === 4. Prepare ctypes pointers ===
     A_ptr = A.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    result_ptr = result_torch.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    result_ptr = result_torch.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
 
     # === 5. Prepare output buffer for CUDA kernel ===
     total_elements = int(torch.numel(result_torch))
     result_cuda = torch.zeros_like(result_torch)
-    output_ptr = result_cuda.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    output_ptr = result_cuda.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
 
     # === 6. Inject macro and compile ===
     so_name = args.file.replace(".cu", ".so")
@@ -124,8 +144,7 @@ if __name__ == "__main__":
 
     # === 10. Compare results ===
     if torch.allclose(
-        result_cuda, result_torch,
-        rtol=1e-3, atol=1e-3, equal_nan=True
+        result_cuda, result_torch, rtol=1e-3, atol=1e-3, equal_nan=True
     ):
         print("✅ Verification successful! CUDA result matches PyTorch.")
     else:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""
-Multi-platform correctness tester for compiled kernels (.so).
+"""Multi-platform correctness tester for compiled kernels (.so).
+
 Reads kernel configs from kernels.json, maps to test scripts, and runs tests.
 """
 import argparse
@@ -8,8 +8,8 @@ import json
 import os
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from tqdm import tqdm
 
+from tqdm import tqdm
 
 # --- Mapping from operators to test scripts ---
 TEST_SCRIPT_MAP = {
@@ -47,8 +47,8 @@ TEST_SCRIPT_MAP = {
 
 
 def run_test_for_config(config, source_dir, test_dir, target):
-    """
-    Run test for a single kernel config.
+    """Run test for a single kernel config.
+
     Returns: (success: bool, message: str)
     """
     op_name = config["op_name"]
@@ -73,11 +73,12 @@ def run_test_for_config(config, source_dir, test_dir, target):
     # invoke evaluation.utils.run_test
     try:
         from evaluation.utils import run_test
+
         success, output = run_test(
             file_path=file_path,
             test_script=test_script,
             kernel_config=config,
-            target=target
+            target=target,
         )
         if success:
             return True, "OK"
@@ -91,40 +92,40 @@ def main():
     parser = argparse.ArgumentParser(
         description="Run correctness tests on compiled kernels using kernels.json"
     )
+    parser.add_argument("json_path", help="Path to kernels.json config file")
     parser.add_argument(
-        "json_path",
-        help="Path to kernels.json config file"
-    )
-    parser.add_argument(
-        "source_dir",
-        help="Directory containing compiled .cu/.cpp files"
+        "source_dir", help="Directory containing compiled .cu/.cpp files"
     )
     parser.add_argument(
         "test_dir",
-        help="Directory containing test scripts (e.g., test_add.py)"
+        help="Directory containing test scripts (e.g., test_add.py)",
     )
     parser.add_argument(
         "--target",
         choices=["cuda", "hip", "bang", "cpu"],
         required=True,
-        help="Target platform"
+        help="Target platform",
     )
     parser.add_argument(
-        "--jobs", "-j",
+        "--jobs",
+        "-j",
         type=int,
         default=os.cpu_count(),
-        help="Number of parallel jobs"
+        help="Number of parallel jobs",
     )
 
     args = parser.parse_args()
 
     # Load kernels.json
     if not os.path.exists(args.json_path):
-        print(f"[ERROR] kernels.json not found: {args.json_path}", file=sys.stderr)
+        print(
+            f"[ERROR] kernels.json not found: {args.json_path}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     try:
-        with open(args.json_path, 'r') as f:
+        with open(args.json_path, "r") as f:
             kernel_configs = json.load(f)
     except Exception as e:
         print(f"[ERROR] Failed to parse JSON: {e}", file=sys.stderr)
@@ -145,13 +146,15 @@ def main():
                 config=cfg,
                 source_dir=args.source_dir,
                 test_dir=args.test_dir,
-                target=args.target
+                target=args.target,
             )
             for cfg in kernel_configs
         ]
 
         # Get the result
-        with tqdm(total=total, desc=f"[{args.target.upper()}] Testing") as pbar:
+        with tqdm(
+            total=total, desc=f"[{args.target.upper()}] Testing"
+        ) as pbar:
             for future in as_completed(futures):
                 pbar.update(1)
                 success, msg = future.result()
@@ -162,7 +165,9 @@ def main():
 
     # Summary of Results
     rate = success_count / total
-    print(f"\n✅ {args.target.upper()} Test Result: {success_count}/{total} = {rate:.2%}")
+    print(
+        f"\n✅ {args.target.upper()} Test Result: {success_count}/{total} = {rate:.2%}"
+    )
     sys.exit(0 if rate == 1.0 else 1)
 
 

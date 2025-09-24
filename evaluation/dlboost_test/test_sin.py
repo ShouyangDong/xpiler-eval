@@ -4,8 +4,9 @@ import os
 import subprocess
 
 import torch
-from evaluation.utils import run_dlboost_compilation as run_compilation
+
 from evaluation.macros import DLBOOST_MACROS as macro
+from evaluation.utils import run_dlboost_compilation as run_compilation
 
 
 # Define the sin function using torch
@@ -21,12 +22,19 @@ if __name__ == "__main__":
         required=True,
         help="Path to the C++ source file (e.g., sin_64_64.cpp)",
     )
-    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda", "hip", "bang", "cpu"],
+        help="Target platform",
+    )
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]  
+    name = base_name.split("_")[0]
     shapes_str = base_name.split(".")[0]  # e.g., "sin_64_64"
     shape = [
         int(x) for x in shapes_str.split("_")[1:]
@@ -35,10 +43,7 @@ if __name__ == "__main__":
     print(f"🔍 Testing {name.upper()} with shape {shape}")
 
     # Generate random input matrix
-    A = (
-        torch.rand(*shape, device="cpu", dtype=torch.float32) * 4 * torch.pi
-    )  
-    
+    A = torch.rand(*shape, device="cpu", dtype=torch.float32) * 4 * torch.pi
 
     # Perform sin using PyTorch (golden reference)
     expected = sin(A)

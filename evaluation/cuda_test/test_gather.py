@@ -2,19 +2,20 @@
 import argparse
 import ctypes
 import os
+
 import torch
-import numpy as np
 
 from evaluation.utils import run_dlboost_compilation as run_compilation
 
-
 # Define the gather function using PyTorch
+
+
 def gather_op(params, indices):
     return params[indices]  # shape: [len(indices), params.shape[1]]
 
 
 def parse_filename(filename):
-    """Parse shapes from filename like gather_100_32_16.cu"""
+    """Parse shapes from filename like gather_100_32_16.cu."""
     base_name = os.path.basename(filename)
     stem = os.path.splitext(base_name)[0]  # e.g., gather_100_32_16
 
@@ -22,24 +23,37 @@ def parse_filename(filename):
         raise ValueError(f"Invalid filename: {filename}")
 
     try:
-        parts = list(map(int, stem.split('_')[1:]))  # skip 'gather'
+        parts = list(map(int, stem.split("_")[1:]))  # skip 'gather'
     except ValueError as e:
         raise ValueError(f"Cannot parse shape from {stem}: {e}")
 
     if len(parts) != 3:
-        raise ValueError(f"Expected 3 integers in filename, got {len(parts)}: {stem}")
+        raise ValueError(
+            f"Expected 3 integers in filename, got {len(parts)}: {stem}"
+        )
 
     PARAMS_BATCH, PARAMS_LEN, INDICES_LEN = parts
 
-    print(f"🔍 Parsed shapes: params[{PARAMS_BATCH}, {PARAMS_LEN}], indices[{INDICES_LEN}] → output[{INDICES_LEN}, {PARAMS_LEN}]")
+    print(
+        f"🔍 Parsed shapes: params[{PARAMS_BATCH}, {PARAMS_LEN}], indices[{INDICES_LEN}] → output[{INDICES_LEN}, {PARAMS_LEN}]"
+    )
     return PARAMS_BATCH, PARAMS_LEN, INDICES_LEN
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test gather CUDA kernel against PyTorch")
+    parser = argparse.ArgumentParser(
+        description="Test gather CUDA kernel against PyTorch"
+    )
     parser.add_argument("--file", help="the source file")
-    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda", "hip", "bang", "cpu"],
+        help="Target platform",
+    )
     args = parser.parse_args()
 
     # === 1. Parse shapes from filename ===
@@ -49,9 +63,18 @@ if __name__ == "__main__":
         raise RuntimeError(f"❌ Filename parsing failed: {e}")
 
     # === 2. Generate input tensors ===
-    params = torch.randn(PARAMS_BATCH, PARAMS_LEN, dtype=torch.float32, device="cpu")
-    # Random indices in [0, PARAMS_BATCH), including possible out-of-bound for robustness
-    indices = torch.randint(low=-1, high=PARAMS_BATCH+1, size=(INDICES_LEN,), dtype=torch.int32, device="cpu")
+    params = torch.randn(
+        PARAMS_BATCH, PARAMS_LEN, dtype=torch.float32, device="cpu"
+    )
+    # Random indices in [0, PARAMS_BATCH), including possible out-of-bound for
+    # robustness
+    indices = torch.randint(
+        low=-1,
+        high=PARAMS_BATCH + 1,
+        size=(INDICES_LEN,),
+        dtype=torch.int32,
+        device="cpu",
+    )
     print(f"🧪 params shape: {params.shape}")
     print(f"🧪 indices: {indices.tolist()} (dtype={indices.dtype})")
 
@@ -72,7 +95,9 @@ if __name__ == "__main__":
         return tensor.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
     params_ptr = to_ptr(params)
-    indices_ptr = indices.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_int32))
+    indices_ptr = indices.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_int32)
+    )
     result_cuda = torch.zeros_like(result_torch)
     output_ptr = to_ptr(result_cuda)
 
@@ -102,7 +127,9 @@ if __name__ == "__main__":
     lib = ctypes.CDLL(so_name)
 
     # Kernel name: e.g., static_gather_100_32_16_cuda
-    kernel_name = f"static_gather_{PARAMS_BATCH}_{PARAMS_LEN}_{INDICES_LEN}_cuda"
+    kernel_name = (
+        f"static_gather_{PARAMS_BATCH}_{PARAMS_LEN}_{INDICES_LEN}_cuda"
+    )
     try:
         kernel_func = getattr(lib, kernel_name)
     except AttributeError:
@@ -118,9 +145,9 @@ if __name__ == "__main__":
     #   float* output
     # );
     kernel_func.argtypes = [
-        ctypes.POINTER(ctypes.c_float),      # params
-        ctypes.POINTER(ctypes.c_int32),      # indices
-        ctypes.POINTER(ctypes.c_float),      # output
+        ctypes.POINTER(ctypes.c_float),  # params
+        ctypes.POINTER(ctypes.c_int32),  # indices
+        ctypes.POINTER(ctypes.c_float),  # output
     ]
     kernel_func.restype = None
 
@@ -131,7 +158,7 @@ if __name__ == "__main__":
     # Synchronize GPU (if needed, though dlboost may handle it)
     try:
         torch.cuda.synchronize()
-    except:
+    except BaseException:
         pass  # No GPU used
 
     # === 9. Compare results ===

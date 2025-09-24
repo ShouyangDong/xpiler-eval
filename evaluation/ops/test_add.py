@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-"""
-Unified test script for 'add' operator across 4 platforms: cuda, hip, bang, cpu
-Uses --config to get shape/dtype, compiles .so, runs and verifies with PyTorch.
-"""
+"""Unified test script for 'add' operator across 4 platforms: cuda, hip, bang,
+cpu Uses --config to get shape/dtype, compiles .so, runs and verifies with
+PyTorch."""
 import argparse
 import ctypes
 import json
 import os
-import subprocess
 import sys
-from pathlib import Path
 
 import torch
 
@@ -24,16 +21,25 @@ def add(A, B):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--so-file", required=True, help="Path to compiled .so file")
-    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
+    parser.add_argument(
+        "--so-file", required=True, help="Path to compiled .so file"
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda", "hip", "bang", "cpu"],
+        help="Target platform",
+    )
 
     args = parser.parse_args()
 
     # --- Parse config ---
     try:
         if os.path.exists(args.config):
-            with open(args.config, 'r') as f:
+            with open(args.config, "r") as f:
                 config = json.load(f)
         else:
             config = json.loads(args.config)
@@ -61,7 +67,7 @@ def main():
         "hip": "cuda",  # ROCm uses cuda device in PyTorch
         "bang": "cpu",  # MLU data generated on CPU
     }
-    device = device_map[args.target]
+    device_map[args.target]
 
     # --- Generate input tensors ---
     A = torch.randn(*shape, dtype=dtype, device="cpu")
@@ -120,7 +126,11 @@ def main():
     out_ptr = result_flat.ctypes.data_as(ctypes.POINTER(ctype))
 
     # Set function signature
-    kernel_func.argtypes = [ctypes.POINTER(ctype), ctypes.POINTER(ctype), ctypes.POINTER(ctype)]
+    kernel_func.argtypes = [
+        ctypes.POINTER(ctype),
+        ctypes.POINTER(ctype),
+        ctypes.POINTER(ctype),
+    ]
     kernel_func.restype = None
 
     # --- Call kernel ---
@@ -131,7 +141,9 @@ def main():
         sys.exit(1)
 
     # --- Reshape result ---
-    result_tensor = torch.from_numpy(result_flat).reshape(golden.shape).to("cpu")
+    result_tensor = (
+        torch.from_numpy(result_flat).reshape(golden.shape).to("cpu")
+    )
 
     # --- Verify ---
     if torch.allclose(result_tensor, golden, rtol=1e-3, atol=1e-3):

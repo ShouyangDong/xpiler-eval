@@ -5,8 +5,9 @@ import os
 import subprocess
 
 import torch
-from evaluation.utils import run_dlboost_compilation as run_compilation
+
 from evaluation.macros import DLBOOST_MACROS as macro
+from evaluation.utils import run_dlboost_compilation as run_compilation
 
 
 def parse_config(config_input):
@@ -21,11 +22,11 @@ def parse_config(config_input):
     }
     """
     if os.path.isfile(config_input):
-        with open(config_input, 'r') as f:
+        with open(config_input, "r") as f:
             config = json.load(f)
     else:
         config = json.loads(config_input)
-    
+
     shape = config["args"]
     perm = config["perm"]
     return shape, perm
@@ -55,7 +56,7 @@ if __name__ == "__main__":
     base_name = os.path.basename(args.file)
     name = base_name.split("_")[0]  # e.g., "transpose"
     shapes_str = base_name.replace(".cpp", "")
-    
+
     # Attempt to parse shape from filename (for validation)
     try:
         shape_from_filename = [int(x) for x in shapes_str.split("_")[1:]]
@@ -66,10 +67,14 @@ if __name__ == "__main__":
     input_shape, perm = parse_config(args.config)
     output_shape = [input_shape[i] for i in perm]  # permuted shape
 
-    print(f"🔍 Testing {name.upper()} with input shape {input_shape} -> output shape {output_shape}, perm={perm}")
+    print(
+        f"🔍 Testing {name.upper()} with input shape {input_shape} -> output shape {output_shape}, perm={perm}"
+    )
 
     # ✅ Generate input tensor
-    input_tensor = torch.rand(input_shape, dtype=torch.float32, requires_grad=False)
+    input_tensor = torch.rand(
+        input_shape, dtype=torch.float32, requires_grad=False
+    )
     input_flat = input_tensor.numpy()  # C-order
     input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
@@ -107,11 +112,12 @@ if __name__ == "__main__":
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
     kernel_func = getattr(lib, name)
 
-    
     rank = len(input_shape)
 
     if rank not in [2, 3, 4]:
-        raise NotImplementedError(f"Rank {rank} not supported. Only 2D, 3D, and 4D are supported.")
+        raise NotImplementedError(
+            f"Rank {rank} not supported. Only 2D, 3D, and 4D are supported."
+        )
 
     # Construct argtypes: [float*, float*, d0, d1, ..., p0, p1, ...]
     argtypes = [
@@ -133,7 +139,9 @@ if __name__ == "__main__":
     kernel_func(*args_list)
 
     # ✅ Get output并 reshape
-    computed_flat = torch.tensor([result_array[i] for i in range(output_numel)])
+    computed_flat = torch.tensor(
+        [result_array[i] for i in range(output_numel)]
+    )
     computed_tensor = computed_flat.view(output_shape)
 
     # ✅ verification
@@ -147,9 +155,18 @@ if __name__ == "__main__":
         print("❌ Verification failed!")
         if computed_tensor.dim() >= 2:
             print("Expected (top-left 3x3):")
-            print(expected[:min(3, expected.shape[0]), :min(3, expected.shape[1])])
+            print(
+                expected[
+                    : min(3, expected.shape[0]), : min(3, expected.shape[1])
+                ]
+            )
             print("Got (top-left 3x3):")
-            print(computed_tensor[:min(3, computed_tensor.shape[0]), :min(3, computed_tensor.shape[1])])
+            print(
+                computed_tensor[
+                    : min(3, computed_tensor.shape[0]),
+                    : min(3, computed_tensor.shape[1]),
+                ]
+            )
         diff = (computed_tensor - expected).abs()
         print(f"Max error: {diff.max().item():.2e}")
 
