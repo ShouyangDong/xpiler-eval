@@ -118,8 +118,8 @@ def main():
     )
     parser.add_argument(
         "--debug", "-d",
-        type=str,                    # 明确指定类型
-        default="",                   # 默认为空字符串
+        type=str,                    
+        default="",                   
         help="debug op name"
     )
 

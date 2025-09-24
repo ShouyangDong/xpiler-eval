@@ -115,6 +115,12 @@ def main():
         default=os.cpu_count(),
         help="Number of parallel jobs"
     )
+    parser.add_argument(
+        "--debug", "-d",
+        type=str,                    
+        default="",                   
+        help="debug op name"
+    )
 
     args = parser.parse_args()
 
@@ -136,7 +142,11 @@ def main():
 
     total = len(kernel_configs)
     success_count = 0
-
+    if args.debug:
+        kernel_configs = [
+            config for config in kernel_configs
+            if config.get("op_name") == args.debug
+        ]
     # 并行测试
     with ThreadPoolExecutor(max_workers=args.jobs) as executor:
         futures = [
