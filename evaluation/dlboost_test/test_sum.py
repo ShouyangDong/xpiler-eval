@@ -81,7 +81,7 @@ if __name__ == "__main__":
     # shared library
     so_name = args.file.replace(".cpp", ".so")
 
-    # 读取原始代码
+    # Load原始代码
     with open(args.file, "r") as f:
         code = f.read()
 

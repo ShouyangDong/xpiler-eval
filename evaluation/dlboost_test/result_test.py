@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 
-# --- 算子到测试脚本的映射 ---
+# --- Mapping from operators to test scripts ---
 TEST_SCRIPT_MAP = {
     "deformable": "test_deformable_attention.py",
     "layernorm": "test_layer_norm.py",
@@ -54,14 +54,14 @@ def run_test_for_config(config, source_dir, test_dir, target):
     op_name = config["op_name"]
     args = config["args"]
 
-    # 构造文件名
+    # Construct filename
     file_name = f"{op_name}_{'_'.join(map(str, args))}.{'cu' if target != 'cpu' else 'cpp'}"
     file_path = os.path.join(source_dir, file_name)
 
     if not os.path.exists(file_path):
         return False, f"[ERROR] File not found: {file_path} (op={op_name})"
 
-    # 查找测试脚本
+    # Find test script
     script_name = TEST_SCRIPT_MAP.get(op_name)
     if not script_name:
         return False, f"[WARN] No test script for op='{op_name}'"
@@ -124,7 +124,7 @@ def main():
 
     args = parser.parse_args()
 
-    # 读取 kernels.json
+    # Load kernels.json
     if not os.path.exists(args.json_path):
         print(f"[ERROR] kernels.json not found: {args.json_path}", file=sys.stderr)
         sys.exit(1)
@@ -147,7 +147,7 @@ def main():
             config for config in kernel_configs
             if config.get("op_name") == args.debug
         ]
-    # 并行测试
+    # Test in parallel
     with ThreadPoolExecutor(max_workers=args.jobs) as executor:
         futures = [
             executor.submit(
@@ -160,7 +160,7 @@ def main():
             for cfg in kernel_configs
         ]
 
-        # 收集结果
+        # Get the result
         with tqdm(total=total, desc=f"[{args.target.upper()}] Testing") as pbar:
             for future in as_completed(futures):
                 pbar.update(1)
@@ -170,7 +170,7 @@ def main():
                 else:
                     success_count += 1
 
-    # 汇总
+    # Summary of Results
     rate = success_count / total
     print(f"\n✅ {args.target.upper()} Test Result: {success_count}/{total} = {rate:.2%}")
     sys.exit(0 if rate == 1.0 else 1)
