@@ -1,19 +1,21 @@
 import argparse
 import ctypes
 import os
+
 import torch
 
-
+from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_dlboost_compilation as run_compilation
 
-
 # Define the min function using torch
+
+
 def min_op(x, dim):
     return torch.min(x, dim=dim, keepdim=True).values  # keep same rank
 
 
 def parse_filename(filename):
-    """Parse shape and dim from filename like min_3_4_dim1.cu"""
+    """Parse shape and dim from filename like min_3_4_dim1.cu."""
     base_name = os.path.basename(filename)
     stem = os.path.splitext(base_name)[0]  # e.g., min_3_4_dim1
 
@@ -21,12 +23,12 @@ def parse_filename(filename):
         raise ValueError(f"Invalid filename: {filename}")
 
     # Split by '_dim'
-    if '_dim' not in stem:
+    if "_dim" not in stem:
         raise ValueError(f"Missing '_dim' in filename: {stem}")
 
-    shape_part, dim_part = stem.rsplit('_dim', 1)
+    shape_part, dim_part = stem.rsplit("_dim", 1)
     try:
-        shape = list(map(int, shape_part.split('_')[1:]))  # skip 'min'
+        shape = list(map(int, shape_part.split("_")[1:]))  # skip 'min'
         dim = int(dim_part)
     except ValueError as e:
         raise ValueError(f"Cannot parse shape or dim from {stem}: {e}")
@@ -39,10 +41,19 @@ def parse_filename(filename):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test min CUDA kernel against PyTorch")
+    parser = argparse.ArgumentParser(
+        description="Test min CUDA kernel against PyTorch"
+    )
     parser.add_argument("--file", help="the source file")
-    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda", "hip", "bang", "cpu"],
+        help="Target platform",
+    )
     args = parser.parse_args()
 
     # === 1. Parse shape and dim from filename ===
@@ -108,9 +119,9 @@ if __name__ == "__main__":
     kernel_func.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # input
         ctypes.POINTER(ctypes.c_float),  # output
-        ctypes.POINTER(ctypes.c_int),    # shape (array)
-        ctypes.c_int,                    # rank (ndim)
-        ctypes.c_int,                    # dim
+        ctypes.POINTER(ctypes.c_int),  # shape (array)
+        ctypes.c_int,  # rank (ndim)
+        ctypes.c_int,  # dim
     ]
     kernel_func.restype = None
 
@@ -121,8 +132,7 @@ if __name__ == "__main__":
 
     # === 9. Compare results ===
     if torch.allclose(
-        result_cuda, result_torch,
-        rtol=1e-3, atol=1e-3, equal_nan=True
+        result_cuda, result_torch, rtol=1e-3, atol=1e-3, equal_nan=True
     ):
         print("✅ Verification successful! CUDA result matches PyTorch.")
     else:

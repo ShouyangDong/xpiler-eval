@@ -5,8 +5,9 @@ import os
 import subprocess
 
 import torch
-from evaluation.utils import run_dlboost_compilation as run_compilation
+
 from evaluation.macros import DLBOOST_MACROS as macro
+from evaluation.utils import run_dlboost_compilation as run_compilation
 
 
 def parse_config(config_input):
@@ -21,11 +22,11 @@ def parse_config(config_input):
     }
     """
     if os.path.isfile(config_input):
-        with open(config_input, 'r') as f:
+        with open(config_input, "r") as f:
             config = json.load(f)
     else:
         config = json.loads(config_input)
-    
+
     shape = config["args"]
     axes = config["axes"]
     if isinstance(axes, int):
@@ -41,8 +42,15 @@ if __name__ == "__main__":
         required=True,
         help="Path to the C++ source file (e.g., sum_3_4_5.cpp)",
     )
-    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda", "hip", "bang", "cpu"],
+        help="Target platform",
+    )
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
@@ -52,12 +60,16 @@ if __name__ == "__main__":
     try:
         shape_from_filename = [int(x) for x in shapes_str.split("_")[1:]]
     except ValueError:
-        raise ValueError(f"Invalid filename format: {args.file}. Expected: op_M_N_K.cpp")
+        raise ValueError(
+            f"Invalid filename format: {args.file}. Expected: op_M_N_K.cpp"
+        )
 
     # Get the true shape and axes from config
     config_shape, axes = parse_config(args.config)
 
-    print(f"🔍 Testing {name.upper()} with input shape {config_shape}, axes={axes}")
+    print(
+        f"🔍 Testing {name.upper()} with input shape {config_shape}, axes={axes}"
+    )
 
     # ✅ 使用 config 中的 shape，而非文件名（更可靠）
     shape = config_shape
@@ -68,7 +80,7 @@ if __name__ == "__main__":
     # ✅ 黄金标准：沿指定 axes 求和，不保留dim（与大多数 kernel 一致）
     expected_tensor = torch.sum(A, dim=axes)  # shape: reduced
     expected_numpy = expected_tensor.numpy()
-    expected_flat = expected_numpy.flatten() 
+    expected_flat = expected_numpy.flatten()
 
     # ✅ 输入指针（展平输入）
     A_flat = A.numpy()  # 自动展平为 C 顺序
@@ -119,7 +131,9 @@ if __name__ == "__main__":
 
     # ✅ Get output
     computed_array = [result_array[i] for i in range(output_size)]
-    computed_tensor = torch.tensor(computed_array).view_as(torch.from_numpy(expected_numpy))
+    computed_tensor = torch.tensor(computed_array).view_as(
+        torch.from_numpy(expected_numpy)
+    )
 
     # ✅ verification
     abs_diff = torch.abs(computed_tensor - expected_tensor)

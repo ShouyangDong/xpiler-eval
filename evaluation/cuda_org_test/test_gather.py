@@ -1,11 +1,13 @@
 # test_gather_cu.py
 import argparse
 import ctypes
+import json
 import os
 import random
 import subprocess
+import sys
+
 import torch
-import json
 
 from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_cuda_compilation as run_compilation
@@ -18,17 +20,29 @@ def element_wise_gather(params, indices, axis=0):
     return result
 
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test C++ GATHER kernel against PyTorch")
-    parser.add_argument("--file", type=str, required=True, help="Path to the .cu source file")
-    parser.add_argument("--config", required=True, help="JSON string or path (ignored for indices_len)")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
+    parser = argparse.ArgumentParser(
+        description="Test C++ GATHER kernel against PyTorch"
+    )
+    parser.add_argument(
+        "--file", type=str, required=True, help="Path to the .cu source file"
+    )
+    parser.add_argument(
+        "--config",
+        required=True,
+        help="JSON string or path (ignored for indices_len)",
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda", "hip", "bang", "cpu"],
+        help="Target platform",
+    )
     args = parser.parse_args()
     # === 1. Parse shape and axis from filename ===
     try:
         if os.path.exists(args.config) and args.config.endswith(".json"):
-            with open(args.config, 'r') as f:
+            with open(args.config, "r") as f:
                 config = json.load(f)
         else:
             config = json.loads(args.config)
@@ -49,10 +63,18 @@ if __name__ == "__main__":
     max_len = axis_dim_size
     indices_len = random.randint(min_len, max_len)
 
-    print(f"📐 Axis {AXIS} has size {axis_dim_size} → generated random indices_len = {indices_len}")
+    print(
+        f"📐 Axis {AXIS} has size {axis_dim_size} → generated random indices_len = {indices_len}"
+    )
 
     # Generate indices: include valid and out-of-bound (-1 or >= axis_dim_size)
-    indices = torch.randint(low=0, high=axis_dim_size, size=(indices_len,), dtype=torch.int64, device="cpu")
+    indices = torch.randint(
+        low=0,
+        high=axis_dim_size,
+        size=(indices_len,),
+        dtype=torch.int64,
+        device="cpu",
+    )
     print(f"🧪 params shape: {params.shape}")
     print(f"🧪 indices: {indices.tolist()}")
     print(f"⚙️  axis = {AXIS}")
@@ -63,11 +85,13 @@ if __name__ == "__main__":
 
     # 将 indices 扩展到目标形状
     # 方法：在 axis dim上 unsqueeze，然后 expand
-    indices_expanded = indices.view(*[1 if i != AXIS else -1 for i in range(params.ndim)])
+    indices_expanded = indices.view(
+        *[1 if i != AXIS else -1 for i in range(params.ndim)]
+    )
     # 例如 axis=0, ndim=3 → [-1, 1, 1]
     #      axis=1, ndim=3 → [1, -1, 1]
 
-    indices  = indices_expanded.expand(*output_shape)
+    indices = indices_expanded.expand(*output_shape)
     # === 3. Golden reference using PyTorch ===
     expected = element_wise_gather(params, indices, axis=AXIS)
     print(f"✅ Expected output shape: {expected.shape}")
@@ -75,7 +99,8 @@ if __name__ == "__main__":
     # === 4. Prepare ctypes pointers ===
     def to_ptr(tensor, dtype):
         return tensor.numpy().ctypes.data_as(ctypes.POINTER(dtype))
-    print("params shape: " ,params.shape)
+
+    print("params shape: ", params.shape)
     print("index : ", indices.shape)
     print("outptu: ", output_shape)
     params_ptr = to_ptr(params, ctypes.c_float)
@@ -140,22 +165,17 @@ if __name__ == "__main__":
 
     # === 9. Set function signature ===
     kernel_func.argtypes = [
-        ctypes.POINTER(ctypes.c_float),   # input
-        ctypes.POINTER(ctypes.c_int64),   # indices
-        ctypes.POINTER(ctypes.c_float),   # output
-        ctypes.c_int,                     # N (number of indices)
+        ctypes.POINTER(ctypes.c_float),  # input
+        ctypes.POINTER(ctypes.c_int64),  # indices
+        ctypes.POINTER(ctypes.c_float),  # output
+        ctypes.c_int,  # N (number of indices)
     ]
     kernel_func.restype = None
 
     # === 10. Call C++ kernel ===
     print("🚀 Running C++ GATHER kernel...")
     try:
-        kernel_func(
-            params_ptr,
-            indices_ptr,
-            output_ptr,
-            indices_len
-        )
+        kernel_func(params_ptr, indices_ptr, output_ptr, indices_len)
     except Exception as e:
         print(f"❌ Kernel call failed: {e}")
         exit(1)

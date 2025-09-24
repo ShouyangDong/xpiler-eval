@@ -1,7 +1,8 @@
-"""
-CUDA-specific unit test for element-wise min kernel.
+"""CUDA-specific unit test for element-wise min kernel.
+
 Supports --config and --target cuda, compiles .cu to .so using nvcc.
 """
+
 import argparse
 import ctypes
 import json
@@ -19,18 +20,30 @@ from evaluation.utils import run_cuda_compilation as run_compilation
 def reduce_min(input_tensor, axis):
     return torch.min(input_tensor, dim=axis)[0]  # 返回 values，忽略 indices
 
+
 def main():
     parser = argparse.ArgumentParser(description="CUDA min kernel tester")
-    parser.add_argument("--file", required=True, help="Path to the .cu source file (e.g., min_64_64.cu)")
-    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
-    parser.add_argument("--target", required=True, choices=["cuda"], help="Must be 'cuda' for this script")
+    parser.add_argument(
+        "--file",
+        required=True,
+        help="Path to the .cu source file (e.g., min_64_64.cu)",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda"],
+        help="Must be 'cuda' for this script",
+    )
     print("======")
     args = parser.parse_args()
 
     # --- Parse config ---
     try:
         if os.path.exists(args.config) and args.config.endswith(".json"):
-            with open(args.config, 'r') as f:
+            with open(args.config, "r") as f:
                 config = json.load(f)
         else:
             config = json.loads(args.config)
@@ -43,13 +56,16 @@ def main():
     axis = config["axes"]
     dtype_str = config.get("dtype", "float32")
 
-    print(f"🔍 Testing {op_name.upper()} on CUDA with shape {shape}, dtype={dtype_str}")
+    print(
+        f"🔍 Testing {op_name.upper()} on CUDA with shape {shape}, dtype={dtype_str}"
+    )
 
     # --- Device and dtype setup ---
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    "cuda" if torch.cuda.is_available() else "cpu"
     if not torch.cuda.is_available():
-        print("[WARNING] CUDA not available, falling back to CPU for verification.")
-        device = "cpu"
+        print(
+            "[WARNING] CUDA not available, falling back to CPU for verification."
+        )
 
     dtype_map = {
         "float32": torch.float32,
@@ -81,7 +97,8 @@ def main():
         print(f"[ERROR] Expected a .cu file, got: {cu_file}", file=sys.stderr)
         sys.exit(1)
 
-    so_file = cu_file.replace(".cu", ".so")  # e.g., min_64_64.cu → min_64_64.so
+    # e.g., min_64_64.cu → min_64_64.so
+    so_file = cu_file.replace(".cu", ".so")
 
     # --- Compile .cu to .so if .so doesn't exist or is older ---
     compile_needed = True
@@ -117,7 +134,10 @@ def main():
         lib = ctypes.CDLL(so_file)
         kernel_func = lib[op_name + "_kernel"]  # Get function by name
     except Exception as e:
-        print(f"[ERROR] Failed to load or find function '{op_name}' in {so_file}: {e}", file=sys.stderr)
+        print(
+            f"[ERROR] Failed to load or find function '{op_name}' in {so_file}: {e}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     # ========================================================
@@ -125,7 +145,7 @@ def main():
     # ========================================================
     kernel_func.argtypes = [
         ctypes.POINTER(ctype),  # A
-        ctypes.POINTER(ctype)   # out
+        ctypes.POINTER(ctype),  # out
     ]
     kernel_func.restype = None
 
@@ -142,7 +162,9 @@ def main():
     # ========================================================
     # ✅ Step 5: Reshape and verify
     # ========================================================
-    result_tensor = torch.from_numpy(result_flat).reshape(expected.shape).to("cpu")
+    result_tensor = (
+        torch.from_numpy(result_flat).reshape(expected.shape).to("cpu")
+    )
 
     # Verification
     rtol, atol = (1e-3, 1e-3) if dtype_str == "float32" else (1e-2, 5e-2)
@@ -155,6 +177,7 @@ def main():
         diff = (result_tensor - expected).abs()
         print(f"Max error: {diff.max().item()}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

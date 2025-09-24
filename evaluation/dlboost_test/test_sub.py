@@ -4,11 +4,13 @@ import os
 import subprocess
 
 import torch
-from evaluation.utils import run_dlboost_compilation as run_compilation
 
 from evaluation.macros import DLBOOST_MACROS as macro
+from evaluation.utils import run_dlboost_compilation as run_compilation
 
 # Define the sub function using torch
+
+
 def sub(A, B):
     return torch.sub(A, B)  # 或 A - B
 
@@ -21,8 +23,15 @@ if __name__ == "__main__":
         required=True,
         help="Path to the C++ source file (e.g., sub_64_64.cpp)",
     )
-    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda", "hip", "bang", "cpu"],
+        help="Target platform",
+    )
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)

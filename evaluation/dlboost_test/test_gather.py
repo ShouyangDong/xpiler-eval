@@ -3,6 +3,7 @@ import argparse
 import ctypes
 import os
 import subprocess
+
 import torch
 
 from evaluation.macros import DLBOOST_MACROS as macro
@@ -21,7 +22,7 @@ def element_wise_gather(params, indices):
 
 
 def parse_filename(filename):
-    """Parse shapes from filename like gather_100_32_16.cpp"""
+    """Parse shapes from filename like gather_100_32_16.cpp."""
     base_name = os.path.basename(filename)
     stem = os.path.splitext(base_name)[0]  # e.g., gather_100_32_16
 
@@ -29,23 +30,38 @@ def parse_filename(filename):
         raise ValueError(f"Invalid filename: {filename}")
 
     try:
-        parts = list(map(int, stem.split('_')[1:]))
+        parts = list(map(int, stem.split("_")[1:]))
     except ValueError as e:
         raise ValueError(f"Cannot parse shape from {stem}: {e}")
 
     if len(parts) != 3:
-        raise ValueError(f"Expected 3 integers in filename, got {len(parts)}: {stem}")
+        raise ValueError(
+            f"Expected 3 integers in filename, got {len(parts)}: {stem}"
+        )
 
     params_batch, params_len, indices_len = parts
-    print(f"🔍 Parsed: params[{params_batch}, {params_len}], indices[{indices_len}]")
+    print(
+        f"🔍 Parsed: params[{params_batch}, {params_len}], indices[{indices_len}]"
+    )
     return params_batch, params_len, indices_len
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test C++ GATHER kernel against PyTorch")
-    parser.add_argument("--file", type=str, required=True, help="Path to the .cpp source file")
-    parser.add_argument("--config", required=True, help="JSON string or path to kernel config")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "bang", "cpu"], help="Target platform")
+    parser = argparse.ArgumentParser(
+        description="Test C++ GATHER kernel against PyTorch"
+    )
+    parser.add_argument(
+        "--file", type=str, required=True, help="Path to the .cpp source file"
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
+    )
+    parser.add_argument(
+        "--target",
+        required=True,
+        choices=["cuda", "hip", "bang", "cpu"],
+        help="Target platform",
+    )
     args = parser.parse_args()
 
     # === 1. Parse shapes from filename ===
@@ -56,8 +72,16 @@ if __name__ == "__main__":
         exit(1)
 
     # === 2. Generate input tensors ===
-    params = torch.randn(PARAMS_BATCH, PARAMS_LEN, dtype=torch.float32, device="cpu")
-    indices = torch.randint(low=-1, high=PARAMS_BATCH+1, size=(INDICES_LEN,), dtype=torch.int32, device="cpu")
+    params = torch.randn(
+        PARAMS_BATCH, PARAMS_LEN, dtype=torch.float32, device="cpu"
+    )
+    indices = torch.randint(
+        low=-1,
+        high=PARAMS_BATCH + 1,
+        size=(INDICES_LEN,),
+        dtype=torch.int32,
+        device="cpu",
+    )
 
     print(f"🧪 params shape: {params.shape}")
     print(f"🧪 indices: {indices.tolist()}")
@@ -86,7 +110,6 @@ if __name__ == "__main__":
 
     # Optional: inject macro (e.g., for debug or config)
     code = macro + code
-
 
     # Write temporary modified file
     with open(temp_file, "w") as f:
@@ -125,12 +148,12 @@ if __name__ == "__main__":
     #   int indices_len
     # );
     kernel_func.argtypes = [
-        ctypes.POINTER(ctypes.c_float),   # params
-        ctypes.POINTER(ctypes.c_int32),   # indices
-        ctypes.POINTER(ctypes.c_float),   # output
-        ctypes.c_int,                     # params_batch
-        ctypes.c_int,                     # params_len
-        ctypes.c_int,                     # indices_len
+        ctypes.POINTER(ctypes.c_float),  # params
+        ctypes.POINTER(ctypes.c_int32),  # indices
+        ctypes.POINTER(ctypes.c_float),  # output
+        ctypes.c_int,  # params_batch
+        ctypes.c_int,  # params_len
+        ctypes.c_int,  # indices_len
     ]
     kernel_func.restype = None
 
@@ -142,7 +165,7 @@ if __name__ == "__main__":
         output_ptr,
         PARAMS_BATCH,
         PARAMS_LEN,
-        INDICES_LEN
+        INDICES_LEN,
     )
 
     # === 11. Verify result ===
