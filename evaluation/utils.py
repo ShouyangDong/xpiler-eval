@@ -124,7 +124,7 @@ def run_dlboost_compilation(so_name, file_name):
             stderr=subprocess.STDOUT,
             encoding="utf-8",
             check=True,
-            timeout=15,
+            timeout=40,
         )
         return True, output
     except subprocess.CalledProcessError as e:
@@ -149,7 +149,7 @@ def run_mlu_compilation(so_name, file_name):
             encoding="utf-8",
             check=True,
             text=True,
-            timeout=15,
+            timeout=40,
         )
         return True, output
     except subprocess.CalledProcessError as e:
@@ -174,7 +174,7 @@ def run_cuda_compilation(so_name, file_name):
             encoding="utf-8",
             check=True,
             text=True,
-            timeout=15,
+            timeout=40,
         )
         return True, output
     except subprocess.CalledProcessError as e:
@@ -198,7 +198,7 @@ def run_hip_compilation(so_name, file_name):
             encoding="utf-8",
             check=True,
             text=True,
-            timeout=15,
+            timeout=40,
         )
         return True, output
     except subprocess.CalledProcessError as e:
