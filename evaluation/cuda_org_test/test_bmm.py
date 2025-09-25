@@ -3,90 +3,122 @@ import ctypes
 import os
 import subprocess
 
-import numpy as np
+import torch
 
 from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_cuda_compilation as run_compilation
 
-# Define the batch matrix multiplication function using numpy
 
-
-def batch_matmul(A, B):
-    return np.matmul(A, B)
+def batch_matmul(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
+    """
+    Perform batch matrix multiplication using PyTorch.
+    A: (batch_size, i, j)
+    B: (batch_size, j, k)
+    Output: (batch_size, i, k)
+    """
+    return torch.matmul(A, B).to(torch.float32)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
+    parser = argparse.ArgumentParser(description="Validate batch GEMM CUDA kernel output against PyTorch")
+    parser.add_argument("--file", type=str, help="Path to the source .cu file")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+        "--config",
+        required=True,
+        help="JSON string or path to kernel configuration file"
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform",
+        help="Target platform for compilation"
     )
     args = parser.parse_args()
+
     base_name = os.path.basename(args.file)
     shapes = base_name.split(".")[0]
-    shape = [int(intg) for intg in shapes.split("_")[1:]]
-    # Generate random matrices for testing
+    shape = [int(dim) for dim in shapes.split("_")[1:]]
+    name = base_name.split("_")[0]  # Kernel name prefix
+
+    # Parse shape: batch_size, i, j, k
     batch_size, matrix_dim_i, matrix_dim_j, matrix_dim_k = shape
-    A = np.ones((batch_size, matrix_dim_i, matrix_dim_j)).astype("float16")
-    B = np.ones((batch_size, matrix_dim_j, matrix_dim_k)).astype("float16")
 
-    # Perform batch matrix multiplication using numpy
-    result_np = batch_matmul(A, B)
+    # Generate input tensors using PyTorch (float16 for input, as in original)
+    A = torch.ones((batch_size, matrix_dim_i, matrix_dim_j), dtype=torch.float16)
+    B = torch.ones((batch_size, matrix_dim_j, matrix_dim_k), dtype=torch.float16)
 
-    # Convert the matrices to contiguous memory for ctypes
-    A_ptr = A.ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
-    B_ptr = B.ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
-    name = base_name.split("_")[0]
+    # Compute expected result using PyTorch
+    result_torch = batch_matmul(A, B)  # Result is in float32 (matmul promotes)
+
+    # Ensure tensors are contiguous for ctypes pointer access
+    A_cont = A.contiguous()
+    B_cont = B.contiguous()
+    result_torch_cont = result_torch.contiguous()
+
+    # Get raw pointers to tensor data
+    # float16 is stored as uint16 in memory
+    A_ptr = ctypes.cast(A_cont.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
+    B_ptr = ctypes.cast(B_cont.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
+
+    # Output tensor uses float32
+    result_ctypes_torch = torch.zeros(
+        (batch_size, matrix_dim_i, matrix_dim_k), dtype=torch.float32
+    ).contiguous()
+    output_ptr = ctypes.cast(result_ctypes_torch.data_ptr(), ctypes.POINTER(ctypes.c_float))
+
+    # Shared library name
     so_name = args.file.replace(".cu", ".so")
+
+    # Read original CUDA source
     with open(args.file, "r") as f:
         code = f.read()
 
+    # Inject macros (e.g., config definitions)
     code = macro + code
 
-    file_name = args.file.replace(
-        base_name.replace(".cu", ""), base_name + "_bak.cu"
-    )
-    with open(file_name, mode="w") as f:
+    # Create temporary .cu file with macros
+    file_name = args.file.replace(base_name.replace(".cu", ""), base_name + "_bak.cu")
+    with open(file_name, "w") as f:
         f.write(code)
 
-    # Load the shared library with the batch matrix multiplication function
+    # Compile the kernel
     success, output = run_compilation(so_name, file_name)
+    if not success:
+        print("[ERROR] Compilation failed:")
+        print(output)
+        exit(1)
+
+    # Clean up temporary source file
     os.remove(file_name)
 
+    # Load the compiled shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
     function = getattr(lib, name + "_kernel")
-    # Define the function parameters and return types.
+
+    # Define function signature
     function.argtypes = [
-        ctypes.POINTER(ctypes.c_uint16),
-        ctypes.POINTER(ctypes.c_uint16),
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.c_int,
-        ctypes.c_int,
-        ctypes.c_int,
-        ctypes.c_int,
+        ctypes.POINTER(ctypes.c_uint16),  # A (float16 data as uint16)
+        ctypes.POINTER(ctypes.c_uint16),  # B (float16 data as uint16)
+        ctypes.POINTER(ctypes.c_float),   # Output (float32)
+        ctypes.c_int,                     # batch_size
+        ctypes.c_int,                     # i (matrix_dim_i)
+        ctypes.c_int,                     # j (matrix_dim_j)
+        ctypes.c_int,                     # k (matrix_dim_k)
     ]
     function.restype = None
-    # Call the function with the matrices and dimensions
-    result_ctypes = np.zeros(
-        (batch_size, matrix_dim_i, matrix_dim_k), dtype=np.float32
-    )
-    output_ptr = result_ctypes.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    function(A_ptr, B_ptr, output_ptr, *shape)
-    # Check if the results match
-    np.testing.assert_allclose(
-        result_ctypes,
-        result_np,
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
-        err_msg="",
-        verbose=True,
-    )
-    print("Verification successful!")
-    result = subprocess.run(["rm", so_name])
+
+    # Call the CUDA kernel
+    function(A_ptr, B_ptr, output_ptr, batch_size, matrix_dim_i, matrix_dim_j, matrix_dim_k)
+
+    # Verify results
+    if torch.allclose(result_ctypes_torch, result_torch, rtol=1e-3, atol=1e-3, equal_nan=True):
+        print("✅ Verification successful! Results match.")
+    else:
+        print("❌ Verification failed! Results do not match.")
+        # Optional: print first few elements
+        print("Expected (PyTorch):", result_torch.flatten()[:10].tolist())
+        print("Got (Kernel):", result_ctypes_torch.flatten()[:10].tolist())
+        exit(1)
+
+    # Clean up compiled library
+    subprocess.run(["rm", so_name], check=False)
