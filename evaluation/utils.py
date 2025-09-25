@@ -188,7 +188,7 @@ def run_hip_compilation(so_name, file_name):
                 "hipcc",
                 "-fPIC",
                 "-shared",
-                "-arch=sm_80",
+                "--offload-arch=gfx942",
                 "-o",
                 so_name,
                 file_name,

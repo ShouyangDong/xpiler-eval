@@ -9,6 +9,7 @@ HIP_MACROS = """
 #include <math.h>
 #include <float.h>
 #include <cmath>
+#include <hip/hip_fp16.h>
 """
 
 
