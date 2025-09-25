@@ -1,4 +1,4 @@
-#include <hip_runtime.h>
+
 #include <iostream>
 
 __global__ void __launch_bounds__(256)

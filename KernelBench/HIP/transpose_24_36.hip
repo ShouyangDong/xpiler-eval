@@ -1,4 +1,4 @@
-#include <hip_runtime.h>
+
 #include <stdio.h>
 
 __global__ void transpose(const float *__restrict__ input,

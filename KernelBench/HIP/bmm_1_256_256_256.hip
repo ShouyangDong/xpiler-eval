@@ -1,5 +1,5 @@
-__global__ void bmm(half *A, half *B, float *C) {
-  using float16x4 = __attribute__((__vector_size__(4 * sizeof(half)))) half;
+__global__ void bmm(__half *A, __half *B, float *C) {
+  using float16x4 = __attribute__((__vector_size__(4 * sizeof(__half)))) __half;
   using floatx4 = __attribute__((__vector_size__(4 * sizeof(float)))) float;
   floatx4 d = {0.0f};
 
@@ -32,18 +32,18 @@ __global__ void bmm(half *A, half *B, float *C) {
   }
 }
 
-extern "C" void bmm_kernel(half *A, half *B, float *C, int b, int m, int k,
+extern "C" void bmm_kernel(__half *A, __half *B, float *C, int b, int m, int k,
                            int n) {
-  half *d_A;
-  half *d_B;
+  __half *d_A;
+  __half *d_B;
   float *d_C;
 
-  hipMalloc(&d_A, m * k * sizeof(half));
-  hipMalloc(&d_B, k * n * sizeof(half));
+  hipMalloc(&d_A, m * k * sizeof(__half));
+  hipMalloc(&d_B, k * n * sizeof(__half));
   hipMalloc(&d_C, m * n * sizeof(float));
 
-  hipMemcpy(d_A, A, m * k * sizeof(half), hipMemcpyHostToDevice);
-  hipMemcpy(d_B, B, k * n * sizeof(half), hipMemcpyHostToDevice);
+  hipMemcpy(d_A, A, m * k * sizeof(__half), hipMemcpyHostToDevice);
+  hipMemcpy(d_B, B, k * n * sizeof(__half), hipMemcpyHostToDevice);
 
   dim3 blockSize(64);
   dim3 numBlocks((n + 16 - 1) / 16, (m + 16 - 1) / 16);

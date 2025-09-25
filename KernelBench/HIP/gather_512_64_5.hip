@@ -1,5 +1,5 @@
 
-#include <hip_runtime.h>
+
 #include <stdio.h>
 
 constexpr int D0 = 512;

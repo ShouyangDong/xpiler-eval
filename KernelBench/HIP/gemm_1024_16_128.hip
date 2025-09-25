@@ -1,4 +1,4 @@
-__global__ void gemm(half *A, half *B, float *C) {
+__global__ void gemm(__half *A, __half *B, float *C) {
   using float16x4 =
       __attribute__((__vector_size__(4 * sizeof(float16_t)))) float16_t;
   using floatx4 = __attribute__((__vector_size__(4 * sizeof(float)))) float;
@@ -38,17 +38,17 @@ __global__ void gemm(half *A, half *B, float *C) {
   }
 }
 
-extern "C" void gemm_kernel(half *A, half *B, float *C, int m, int k, int n) {
-  half *d_A;
-  half *d_B;
+extern "C" void gemm_kernel(__half *A, __half *B, float *C, int m, int k, int n) {
+  __half *d_A;
+  __half *d_B;
   float *d_C;
 
-  hipMalloc(&d_A, m * k * sizeof(half));
-  hipMalloc(&d_B, k * n * sizeof(half));
+  hipMalloc(&d_A, m * k * sizeof(__half));
+  hipMalloc(&d_B, k * n * sizeof(__half));
   hipMalloc(&d_C, m * n * sizeof(float));
 
-  hipMemcpy(d_A, A, m * k * sizeof(half), hipMemcpyHostToDevice);
-  hipMemcpy(d_B, B, k * n * sizeof(half), hipMemcpyHostToDevice);
+  hipMemcpy(d_A, A, m * k * sizeof(__half), hipMemcpyHostToDevice);
+  hipMemcpy(d_B, B, k * n * sizeof(__half), hipMemcpyHostToDevice);
 
   dim3 blockSize(64);
   dim3 numBlocks((n + 16 - 1) / 16, (m + 16 - 1) / 16);
