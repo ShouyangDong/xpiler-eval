@@ -72,7 +72,7 @@ if __name__ == "__main__":
     # Create the output array.
     output_array = np.zeros_like(input_array)
 
-    # Convert the input and output arrays to C pointer types.
+    # Convert the input and output arrays into C pointer types.
     input_ptr = input_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     gamma_ptr = gamma_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     beta_ptr = beta_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))

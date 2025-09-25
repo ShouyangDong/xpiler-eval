@@ -19,7 +19,7 @@ def compile_file(file_name):
 
     full_code = macro + code
 
-    # 2) Write backup .hip file.
+    # 2) Write backup .hip
     bak_file = os.path.join(
         os.path.dirname(file_name), f"{name_no_ext}_bak.hip"
     )
@@ -50,6 +50,7 @@ def main():
     parser.add_argument(
         "src_dir",
         help="Directory containing .hip files to compile (e.g. translated/nvidia_cpu)",
+        default="benchmark/data/hip_code_test",
     )
     args = parser.parse_args()
 

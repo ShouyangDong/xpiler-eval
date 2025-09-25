@@ -119,7 +119,7 @@ if __name__ == "__main__":
     os.remove(file_name)
     lib = CDLL(os.path.join(os.getcwd(), so_name))
     function = getattr(lib, name + "_kernel")
-    # Define the function's parameters and return types.
+    # Define the function parameters and return types.
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),
         ctypes.POINTER(ctypes.c_int),
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     ]
     function.restype = None
 
-    # Create the output array.
+    # Create an output array.
     output_array = np.zeros(
         (
             value.shape[0],
@@ -140,7 +140,7 @@ if __name__ == "__main__":
         "float32",
     )
 
-    # Convert the input and output arrays into C pointer types.
+    # Convert the input and output arrays to C pointer types.
     value_ptr = value.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     shapes_ptr = (
         shapes.int().numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_int))

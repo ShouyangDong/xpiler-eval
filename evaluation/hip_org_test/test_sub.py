@@ -9,16 +9,15 @@ from evaluation.macros import HIP_MACROS as macro
 from evaluation.utils import run_hip_compilation as run_compilation
 
 
-def ref_program(x):
+def ref_program(A, B):
     """
-    Reference implementation of the sign function using PyTorch.
-    Returns: +1 if x > 0, -1 if x < 0, 0 if x == 0.
+    Reference implementation of element-wise subtraction: A - B
     """
-    return torch.sign(x)
+    return torch.sub(A, B)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Validate Sign HIP kernel output against PyTorch")
+    parser = argparse.ArgumentParser(description="Validate HIP element-wise subtraction kernel")
     parser.add_argument("--file", type=str, help="Path to the source .hip file")
     parser.add_argument(
         "--config",
@@ -34,16 +33,38 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
-    name = "sign"
     shapes = base_name.split(".")[0]
     shape = [int(dim) for dim in shapes.split("_")[1:]]  # e.g., [1024], [32, 768]
+    total_elements = int(torch.prod(torch.tensor(shape)))  # Total number of elements
+    name = base_name.split("_")[0]  # e.g., "sub" from "sub_1024.hip"
     so_name = args.file.replace(".hip", ".so")
+
+    # Generate random input tensors
+    dtype = torch.float32
+    A = torch.rand(shape, dtype=dtype)
+    B = torch.rand(shape, dtype=dtype)
+
+    # Compute reference result using PyTorch
+    expected_output = ref_program(A, B)
+
+    # Output tensor
+    output_tensor = torch.zeros_like(A)
+
+    # Ensure contiguous memory layout for ctypes access
+    A = A.contiguous()
+    B = B.contiguous()
+    output_tensor = output_tensor.contiguous()
+
+    # Get raw pointers
+    A_ptr = ctypes.cast(A.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    B_ptr = ctypes.cast(B.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    output_ptr = ctypes.cast(output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float))
 
     # Read and modify source code
     with open(args.file, "r") as f:
         code = f.read()
 
-    code = macro + code  # Inject macros (e.g., config constants)
+    code = macro + code  # Inject macros
 
     # Write to temporary .hip file
     file_name = args.file.replace(base_name.replace(".hip", ""), base_name + "_bak.hip")
@@ -65,45 +86,25 @@ if __name__ == "__main__":
 
     # Define function signature
     function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # input array
-        ctypes.POINTER(ctypes.c_float),  # output array
-        ctypes.c_int,                    # total number of elements
+        ctypes.POINTER(ctypes.c_float),  # A
+        ctypes.POINTER(ctypes.c_float),  # B
+        ctypes.POINTER(ctypes.c_float),  # Output
+        ctypes.c_int,                    # Total number of elements
     ]
     function.restype = None
 
-    # Create input tensor
-    dtype = torch.float32
-    # Use a mix of positive, negative, and zero values to test edge cases
-    input_tensor = torch.randn(shape, dtype=dtype)
-    total_elements = input_tensor.numel()
-    # Manually set some values to zero to test edge case
-    input_tensor[input_tensor.abs() < 0.1] = 0.0  # Force some zeros
-
-    # Compute reference output using PyTorch
-    expected_output = ref_program(input_tensor)
-
-    # Output tensor
-    output_tensor = torch.zeros_like(input_tensor)
-
-    # Ensure contiguous memory layout for ctypes access
-    input_tensor = input_tensor.contiguous()
-    output_tensor = output_tensor.contiguous()
-
-    # Get raw pointers
-    input_ptr = ctypes.cast(input_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    output_ptr = ctypes.cast(output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float))
-
-    # Call the Sign kernel
-    function(input_ptr, output_ptr, total_elements)
+    # Call the subtraction kernel
+    function(A_ptr, B_ptr, output_ptr, total_elements)
 
     # Verify results
     if torch.allclose(output_tensor, expected_output, rtol=1e-3, atol=1e-3, equal_nan=True):
         print("✅ Verification successful! Results match.")
     else:
         print("❌ Verification failed! Results do not match.")
-        # Print first 10 elements for debugging
-        print("Input (first 10):", input_tensor.flatten()[:10].tolist())
-        print("Expected (Ref):", expected_output.flatten()[:10].tolist())
+        # Debug: Print first 10 elements
+        print("A (first 10):", A.flatten()[:10].tolist())
+        print("B (first 10):", B.flatten()[:10].tolist())
+        print("Expected (A-B):", expected_output.flatten()[:10].tolist())
         print("Got (Kernel):", output_tensor.flatten()[:10].tolist())
         exit(1)
 

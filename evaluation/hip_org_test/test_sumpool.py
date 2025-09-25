@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
     function = getattr(lib, name + "_kernel")
-    # Define the function's parameters and return types.
+    # Define the function parameters and return types.
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),
         ctypes.POINTER(ctypes.c_float),

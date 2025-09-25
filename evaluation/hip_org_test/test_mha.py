@@ -68,7 +68,7 @@ if __name__ == "__main__":
     lib = CDLL(os.path.join(os.getcwd(), so_name))
     # Obtain function handle
     function = getattr(lib, name + "_kernel")
-    # Define the function parameters and return types.
+    # Define the function's parameters and return types.
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),
         ctypes.POINTER(ctypes.c_float),
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         ctypes.c_int,
     ]
     function.restype = None
-    # "Create the input array."
+    # Create the input array.
     expected_output = ref_program(query, key, value)
     # Create the output array.
     output_array = np.zeros_like(query.numpy())
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     function(input_ptr_q, input_ptr_k, input_ptr_v, output_ptr, *shape)
     # Verification results
 
-    # Verification result
+    # Verification results
     np.testing.assert_allclose(
         output_array,
         expected_output.numpy(),
