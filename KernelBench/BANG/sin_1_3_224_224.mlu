@@ -1,0 +1,34 @@
+extern "C" __mlu_global__ void sin_kernel(const float *input,
+                                          float *output) {
+  
+  __nram__ float local_nram[25];
+
+  
+  const int total_elems = 1 * 3 * 224 * 224;  
+
+  
+  int global_core_id = clusterId * 4 + coreId;
+
+  
+  
+  for (int outer = 0; outer < (total_elems + 399) / 400; ++outer) {
+    
+    int block_index = outer * 16 + global_core_id;
+    if (block_index < (total_elems + 24) / 25) {
+      int offset = outer * 400 + clusterId * 100 + coreId * 25;
+
+      
+      __memcpy(local_nram,
+               input + offset,
+               25 * sizeof(float), GDRAM2NRAM);
+
+      
+      __bang_sin(local_nram, local_nram, 25);
+
+      
+      __memcpy(output + offset,
+               local_nram,
+               25 * sizeof(float), NRAM2GDRAM);
+    }
+  }
+}

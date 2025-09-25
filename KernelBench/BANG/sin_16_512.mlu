@@ -1,0 +1,18 @@
+extern "C" __mlu_global__ void sin_kernel(float *input, float *output) {
+  __nram__ float local_nram[25];
+  const int total_elems = 16 * 512;  
+  int global_core_id = clusterId * 4 + coreId;
+  const int elems_per_step = 25 * 32;
+  const int num_steps = (total_elems + elems_per_step - 1) / elems_per_step;
+
+  for (int step = 0; step < num_steps; ++step) {
+    int base_index = step * elems_per_step + global_core_id * 25;
+    if (base_index >= total_elems) break;
+    int valid_count = min(25, total_elems - base_index);
+    __memcpy(local_nram, input + base_index,
+             valid_count * sizeof(float), GDRAM2NRAM);
+    __bang_sin(local_nram, local_nram, valid_count);
+    __memcpy(output + base_index, local_nram,
+             valid_count * sizeof(float), NRAM2GDRAM);
+  }
+}
