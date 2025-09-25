@@ -34,8 +34,8 @@ def main():
     parser.add_argument(
         "--target",
         required=True,
-        choices=["cuda"],
-        help="Must be 'cuda' for this script",
+        choices=["hip"],
+        help="Must be 'hip' for this script",
     )
 
     args = parser.parse_args()
@@ -60,12 +60,6 @@ def main():
         f"🔍 Testing {op_name.upper()} on HIP with shape {shape}, dtype={dtype_str}, axes={axis}"
     )
 
-    # --- Device and dtype setup ---
-    "cuda" if torch.hipda.is_available() else "cpu"
-    if not torch.hipda.is_available():
-        print(
-            "[WARNING] HIP not available, falling back to CPU for verification."
-        )
 
     dtype_map = {
         "float32": torch.float32,

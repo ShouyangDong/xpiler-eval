@@ -1,6 +1,5 @@
 __global__ void bmm(__half *A, __half *B, float *C) {
-  using float16x4 =
-      __attribute__((__vector_size__(4 * sizeof(float16_t)))) float16_t;
+  using float16x4 = __attribute__((__vector_size__(4 * sizeof(__half)))) __half;
   using floatx4 = __attribute__((__vector_size__(4 * sizeof(float)))) float;
   floatx4 d = {0.0f};
 

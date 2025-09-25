@@ -20,7 +20,7 @@ extern "C" void min_kernel(const float *h_input, float *h_output) {
   hipMalloc(&d_output, output_size * sizeof(float));
 
   hipMemcpy(d_input, h_input, input_size * sizeof(float),
-             hipMemcpyHostToDevice);
+            hipMemcpyHostToDevice);
 
   dim3 blockSize(1);
   dim3 numBlocks(1);
@@ -28,7 +28,7 @@ extern "C" void min_kernel(const float *h_input, float *h_output) {
   min_kernel_dev<<<numBlocks, blockSize>>>(d_input, d_output);
 
   hipMemcpy(h_output, d_output, output_size * sizeof(float),
-             hipMemcpyDeviceToHost);
+            hipMemcpyDeviceToHost);
   hipFree(d_input);
   hipFree(d_output);
 }

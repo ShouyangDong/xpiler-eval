@@ -6,13 +6,14 @@ from ctypes import CDLL
 
 import torch
 import torch.nn as nn
+
 from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_cuda_compilation as run_compilation
 
 
 def ref_program(x: torch.Tensor) -> torch.Tensor:
-    """
-    GELU activation function reference implementation using PyTorch.
+    """GELU activation function reference implementation using PyTorch.
+
     Approximation: 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))
     """
     gelu = nn.GELU()
@@ -20,18 +21,20 @@ def ref_program(x: torch.Tensor) -> torch.Tensor:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Validate GELU CUDA kernel output against PyTorch")
+    parser = argparse.ArgumentParser(
+        description="Validate GELU CUDA kernel output against PyTorch"
+    )
     parser.add_argument("--file", type=str, help="Path to the source .cu file")
     parser.add_argument(
         "--config",
         required=True,
-        help="JSON string or path to kernel configuration file"
+        help="JSON string or path to kernel configuration file",
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform for compilation"
+        help="Target platform for compilation",
     )
     args = parser.parse_args()
 
@@ -50,7 +53,9 @@ if __name__ == "__main__":
     code = macro + code
 
     # Write modified code to temporary file
-    file_name = args.file.replace(base_name.replace(".cu", ""), base_name + "_bak.cu")
+    file_name = args.file.replace(
+        base_name.replace(".cu", ""), base_name + "_bak.cu"
+    )
     with open(file_name, "w") as f:
         f.write(code)
 
@@ -72,7 +77,7 @@ if __name__ == "__main__":
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # Input array (float32)
         ctypes.POINTER(ctypes.c_float),  # Output array (float32)
-        ctypes.c_int,                    # Total number of elements
+        ctypes.c_int,  # Total number of elements
     ]
     function.restype = None
 
@@ -85,14 +90,20 @@ if __name__ == "__main__":
     output_tensor = torch.zeros_like(input_tensor).contiguous()
 
     # Ensure input is contiguous and get raw pointers
-    input_ptr = ctypes.cast(input_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    output_ptr = ctypes.cast(output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    input_ptr = ctypes.cast(
+        input_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
+    output_ptr = ctypes.cast(
+        output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
 
     # Call the compiled GELU kernel
     function(input_ptr, output_ptr, total_elements)
 
     # Verify results
-    if torch.allclose(output_tensor, expected_output, rtol=1e-3, atol=1e-3, equal_nan=True):
+    if torch.allclose(
+        output_tensor, expected_output, rtol=1e-3, atol=1e-3, equal_nan=True
+    ):
         print("✅ Verification successful! Results match.")
     else:
         print("❌ Verification failed! Results do not match.")

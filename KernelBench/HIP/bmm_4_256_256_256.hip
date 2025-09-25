@@ -1,6 +1,5 @@
 __global__ void bmm(__half *A, __half *B, float *C) {
-  using float16x4 =
-      __attribute__((__vector_size__(4 * sizeof(float16_t)))) float16_t;
+  using float16x4 = __attribute__((__vector_size__(4 * sizeof(__half)))) __half;
   using floatx4 = __attribute__((__vector_size__(4 * sizeof(float)))) float;
 
   const int LDA = 256;
@@ -12,8 +11,8 @@ __global__ void bmm(__half *A, __half *B, float *C) {
   int c_row_base = (blockIdx.x % 8) * 16;
   int c_col_base = (blockIdx.x / 8) * 16;
 
-  float16_t *batch_A = A + batch_id * 256 * 256;
-  float16_t *batch_B = B + batch_id * 256 * 256;
+  __half *batch_A = A + batch_id * 256 * 256;
+  __half *batch_B = B + batch_id * 256 * 256;
   float *batch_C = C + batch_id * 256 * 256;
 
   floatx4 d = {0.0f};

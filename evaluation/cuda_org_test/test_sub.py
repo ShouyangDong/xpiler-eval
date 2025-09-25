@@ -3,7 +3,7 @@ import ctypes
 import os
 import subprocess
 
-import torch  
+import torch
 
 from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_cuda_compilation as run_compilation
@@ -17,25 +17,31 @@ def ref_program(A, B):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Validate CUDA element-wise subtraction kernel")
+    parser = argparse.ArgumentParser(
+        description="Validate CUDA element-wise subtraction kernel"
+    )
     parser.add_argument("--file", type=str, help="Path to the source .cu file")
     parser.add_argument(
         "--config",
         required=True,
-        help="JSON string or path to kernel configuration file"
+        help="JSON string or path to kernel configuration file",
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform for compilation"
+        help="Target platform for compilation",
     )
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
     shapes = base_name.split(".")[0]
-    shape = [int(dim) for dim in shapes.split("_")[1:]]  # e.g., [1024], [32, 768]
-    total_elements = int(torch.prod(torch.tensor(shape)))  # Total number of elements
+    shape = [
+        int(dim) for dim in shapes.split("_")[1:]
+    ]  # e.g., [1024], [32, 768]
+    total_elements = int(
+        torch.prod(torch.tensor(shape))
+    )  # Total number of elements
     name = base_name.split("_")[0]  # e.g., "sub" from "sub_1024.cu"
     so_name = args.file.replace(".cu", ".so")
 
@@ -58,7 +64,9 @@ if __name__ == "__main__":
     # Get raw pointers
     A_ptr = ctypes.cast(A.data_ptr(), ctypes.POINTER(ctypes.c_float))
     B_ptr = ctypes.cast(B.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    output_ptr = ctypes.cast(output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    output_ptr = ctypes.cast(
+        output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
 
     # Read and modify source code
     with open(args.file, "r") as f:
@@ -67,7 +75,9 @@ if __name__ == "__main__":
     code = macro + code  # Inject macros
 
     # Write to temporary .cu file
-    file_name = args.file.replace(base_name.replace(".cu", ""), base_name + "_bak.cu")
+    file_name = args.file.replace(
+        base_name.replace(".cu", ""), base_name + "_bak.cu"
+    )
     with open(file_name, "w") as f:
         f.write(code)
 
@@ -89,7 +99,7 @@ if __name__ == "__main__":
         ctypes.POINTER(ctypes.c_float),  # A
         ctypes.POINTER(ctypes.c_float),  # B
         ctypes.POINTER(ctypes.c_float),  # Output
-        ctypes.c_int,                    # Total number of elements
+        ctypes.c_int,  # Total number of elements
     ]
     function.restype = None
 
@@ -97,7 +107,9 @@ if __name__ == "__main__":
     function(A_ptr, B_ptr, output_ptr, total_elements)
 
     # Verify results
-    if torch.allclose(output_tensor, expected_output, rtol=1e-3, atol=1e-3, equal_nan=True):
+    if torch.allclose(
+        output_tensor, expected_output, rtol=1e-3, atol=1e-3, equal_nan=True
+    ):
         print("✅ Verification successful! Results match.")
     else:
         print("❌ Verification failed! Results do not match.")

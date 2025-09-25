@@ -3,25 +3,26 @@ import ctypes
 import os
 import subprocess
 
-import torch  
+import torch
 
 from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_cuda_compilation as run_compilation
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Validate GEMM CUDA kernel output against PyTorch")
+    parser = argparse.ArgumentParser(
+        description="Validate GEMM CUDA kernel output against PyTorch"
+    )
     parser.add_argument("--file", type=str, help="Path to the source .cu file")
     parser.add_argument(
         "--config",
         required=True,
-        help="JSON string or path to kernel configuration file"
+        help="JSON string or path to kernel configuration file",
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform for compilation"
+        help="Target platform for compilation",
     )
     args = parser.parse_args()
 
@@ -32,12 +33,14 @@ if __name__ == "__main__":
 
     M, K, N = shape  # Matrix dimensions: A (M x K), x (K x N), y (M x N)
 
-    # Create input tensors using PyTorch (float16 for input, common in mixed-precision)
+    # Create input tensors using PyTorch (float16 for input, common in
+    # mixed-precision)
     A = torch.ones((M, K), dtype=torch.float16)
     x = torch.ones((K, N), dtype=torch.float16)
 
     # Compute reference result using PyTorch matmul
-    y_torch = torch.matmul(A, x).to(torch.float32)  # Result is in float32 (promotion)
+    # Result is in float32 (promotion)
+    y_torch = torch.matmul(A, x).to(torch.float32)
 
     # Ensure tensors are contiguous for ctypes pointer access
     A_cont = A.contiguous()
@@ -50,7 +53,9 @@ if __name__ == "__main__":
 
     # Output tensor (float32)
     y_ctypes_torch = torch.zeros((M, N), dtype=torch.float32).contiguous()
-    y_ptr = ctypes.cast(y_ctypes_torch.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    y_ptr = ctypes.cast(
+        y_ctypes_torch.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
 
     # Shared library name
     so_name = args.file.replace(".cu", ".so")
@@ -63,7 +68,9 @@ if __name__ == "__main__":
     code = macro + code
 
     # Write to temporary .cu file
-    file_name = args.file.replace(base_name.replace(".cu", ""), base_name + "_bak.cu")
+    file_name = args.file.replace(
+        base_name.replace(".cu", ""), base_name + "_bak.cu"
+    )
     with open(file_name, "w") as f:
         f.write(code)
 
@@ -85,10 +92,10 @@ if __name__ == "__main__":
     function.argtypes = [
         ctypes.POINTER(ctypes.c_uint16),  # A (float16 data)
         ctypes.POINTER(ctypes.c_uint16),  # x (float16 data)
-        ctypes.POINTER(ctypes.c_float),   # y (float32 output)
-        ctypes.c_int,                     # M
-        ctypes.c_int,                     # K
-        ctypes.c_int,                     # N
+        ctypes.POINTER(ctypes.c_float),  # y (float32 output)
+        ctypes.c_int,  # M
+        ctypes.c_int,  # K
+        ctypes.c_int,  # N
     ]
     function.restype = None
 
@@ -96,7 +103,9 @@ if __name__ == "__main__":
     function(A_ptr, x_ptr, y_ptr, M, K, N)
 
     # Verify results
-    if torch.allclose(y_ctypes_torch, y_torch, rtol=1e-3, atol=1e-3, equal_nan=True):
+    if torch.allclose(
+        y_ctypes_torch, y_torch, rtol=1e-3, atol=1e-3, equal_nan=True
+    ):
         print("✅ Verification successful! Results match.")
     else:
         print("❌ Verification failed! Results do not match.")

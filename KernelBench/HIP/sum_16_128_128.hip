@@ -23,7 +23,7 @@ extern "C" void sum_kernel(const float *h_input, float *h_output) {
   hipMalloc(&d_output, output_size * sizeof(float));
 
   hipMemcpy(d_input, h_input, input_size * sizeof(float),
-             hipMemcpyHostToDevice);
+            hipMemcpyHostToDevice);
 
   int total_elements = 128 * 128;
   int blockSize = 256;
@@ -32,7 +32,7 @@ extern "C" void sum_kernel(const float *h_input, float *h_output) {
   sum_kernel_dev<<<numBlocks, blockSize>>>(d_input, d_output);
 
   hipMemcpy(h_output, d_output, output_size * sizeof(float),
-             hipMemcpyDeviceToHost);
+            hipMemcpyDeviceToHost);
 
   hipFree(d_input);
   hipFree(d_output);
