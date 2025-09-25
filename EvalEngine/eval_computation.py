@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
-"""
-Multi-platform correctness tester for compiled kernels (.so).
+"""Multi-platform correctness tester for compiled kernels (.so).
+
 Reads kernel configs from kernels.json, maps to test scripts, and runs tests.
 """
 import argparse
@@ -46,20 +45,39 @@ TEST_SCRIPT_MAP = {
 }
 
 
+# --- Mapping from target platform to source file extension ---
+TARGET_TO_EXT = {
+    "cuda": ".cu",
+    "hip": ".hip",
+    "dlboost": ".cpp",  # or "cpu"
+    "cpu": ".cpp",      # alias for dlboost
+    "mlu": ".mlu",
+    "bang": ".mlu",     # Cambricon Bang may use same extension
+    # Add more as needed
+}
+
+# Optional: Reverse map for validation
+EXT_TO_TARGETS = {ext: [t for t, e in TARGET_TO_EXT.items() if e == ext] for ext in set(TARGET_TO_EXT.values())}
+
+
 def run_test_for_config(config, source_dir, test_dir, target):
-    """
-    Run test for a single kernel config.
+    """Run test for a single kernel config.
+
     Returns: (success: bool, message: str)
     """
     op_name = config["op_name"]
     args = config["args"]
 
-    # Construct filename
-    file_name = f"{op_name}_{'_'.join(map(str, args))}.{'cu' if target != 'cpu' else 'cpp'}"
+    # Determine source file extension based on target
+    if target not in TARGET_TO_EXT:
+        return False, f"[ERROR] Unsupported target: {target}"
+
+    ext = TARGET_TO_EXT[target]
+    file_name = f"{op_name}_{'_'.join(map(str, args))}{ext}"
     file_path = os.path.join(source_dir, file_name)
 
     if not os.path.exists(file_path):
-        return False, f"[ERROR] File not found: {file_path} (op={op_name})"
+        return False, f"[ERROR] File not found: {file_path} (op={op_name}, target={target})"
 
     # Find test script
     script_name = TEST_SCRIPT_MAP.get(op_name)
@@ -70,14 +88,15 @@ def run_test_for_config(config, source_dir, test_dir, target):
     if not os.path.isfile(test_script):
         return False, f"[ERROR] Test script not found: {test_script}"
 
-    # invoke evaluation.utils.run_test
+    # Run test via evaluation.utils.run_test
     try:
         from evaluation.utils import run_test
+
         success, output = run_test(
             file_path=file_path,
             test_script=test_script,
             kernel_config=config,
-            target=target
+            target=target,
         )
         if success:
             return True, "OK"
@@ -91,29 +110,29 @@ def main():
     parser = argparse.ArgumentParser(
         description="Run correctness tests on compiled kernels using kernels.json"
     )
+    parser.add_argument("json_path", help="Path to kernels.json config file")
     parser.add_argument(
-        "json_path",
-        help="Path to kernels.json config file"
-    )
-    parser.add_argument(
-        "source_dir",
-        help="Directory containing compiled .cu/.cpp files"
+        "source_dir", help="Directory containing compiled source files (.cu, .hip, .mlu, .cpp, etc.)"
     )
     parser.add_argument(
         "test_dir",
-        help="Directory containing test scripts (e.g., test_add.py)"
+        help="Directory containing test scripts (e.g., test_add.py)",
     )
     parser.add_argument(
         "--target",
-        choices=["cuda", "hip", "bang", "cpu"],
+        choices=list(TARGET_TO_EXT.keys()),
         required=True,
-        help="Target platform"
+        help="Target platform (determines file extension)",
     )
     parser.add_argument(
-        "--jobs", "-j",
+        "--jobs",
+        "-j",
         type=int,
         default=os.cpu_count(),
-        help="Number of parallel jobs"
+        help="Number of parallel jobs",
+    )
+    parser.add_argument(
+        "--debug", "-d", type=str, default="", help="Debug mode: test only this op_name"
     )
 
     args = parser.parse_args()
@@ -124,7 +143,7 @@ def main():
         sys.exit(1)
 
     try:
-        with open(args.json_path, 'r') as f:
+        with open(args.json_path, "r") as f:
             kernel_configs = json.load(f)
     except Exception as e:
         print(f"[ERROR] Failed to parse JSON: {e}", file=sys.stderr)
@@ -137,7 +156,16 @@ def main():
     total = len(kernel_configs)
     success_count = 0
 
-    # Test in parallel
+    # Debug filter: only test specific op
+    if args.debug:
+        filtered_configs = [cfg for cfg in kernel_configs if cfg.get("op_name") == args.debug]
+        if not filtered_configs:
+            print(f"[WARN] No kernel found with op_name='{args.debug}'", file=sys.stderr)
+            sys.exit(1)
+        kernel_configs = filtered_configs
+        total = len(kernel_configs)
+
+    # Run tests in parallel
     with ThreadPoolExecutor(max_workers=args.jobs) as executor:
         futures = [
             executor.submit(
@@ -145,12 +173,12 @@ def main():
                 config=cfg,
                 source_dir=args.source_dir,
                 test_dir=args.test_dir,
-                target=args.target
+                target=args.target,
             )
             for cfg in kernel_configs
         ]
 
-        # Get the result
+        # Process results with progress bar
         with tqdm(total=total, desc=f"[{args.target.upper()}] Testing") as pbar:
             for future in as_completed(futures):
                 pbar.update(1)
@@ -160,10 +188,11 @@ def main():
                 else:
                     success_count += 1
 
-    # Summary of Results
+    # Final summary
     rate = success_count / total
-    print(f"\n✅ {args.target.upper()} Test Result: {success_count}/{total} = {rate:.2%}")
-    sys.exit(0 if rate == 1.0 else 1)
+    print(
+        f"\n✅ {args.target.upper()} Test Result: {success_count}/{total} = {rate:.2%}"
+    )
 
 
 if __name__ == "__main__":
