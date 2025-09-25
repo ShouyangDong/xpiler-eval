@@ -3,83 +3,110 @@ import ctypes
 import os
 import subprocess
 
-import numpy as np
+import torch
 
 from evaluation.macros import HIP_MACROS as macro
 from evaluation.utils import run_hip_compilation as run_compilation
 
-# Define the add function using numpy
 
-
-def add(A, B):
-    return np.add(A, B)
+def add(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
+    """
+    Element-wise addition using PyTorch.
+    """
+    return torch.add(A, B)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
+    parser = argparse.ArgumentParser(description="Validate HIP kernel output against PyTorch")
+    parser.add_argument("--file", type=str, help="Path to the source .hip file")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+        "--config",
+        required=True,
+        help="JSON string or path to kernel configuration file"
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform",
+        help="Target platform for compilation"
     )
     args = parser.parse_args()
+
     base_name = os.path.basename(args.file)
     shapes = base_name.split(".")[0]
-    shape = [int(intg) for intg in shapes.split("_")[1:]]
-    # Generate random matrices for testing
-    A = np.random.rand(*shape).astype("float32")
-    B = np.random.rand(*shape).astype("float32")
-    name = base_name.split("_")[0]
-    # Perform add using numpy
-    result_np = add(A, B)
+    shape = [int(dim) for dim in shapes.split("_")[1:]]  # Extract shape from filename
+    name = base_name.split("_")[0]  # Extract kernel name
 
-    # Convert the matrices to contiguous memory for ctypes
-    A_ptr = A.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    B_ptr = B.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    # Generate random input tensors on CPU using PyTorch
+    A = torch.rand(shape, dtype=torch.float32)
+    B = torch.rand(shape, dtype=torch.float32)
+
+    # Compute expected result using PyTorch
+    result_torch = add(A, B)
+
+    # Ensure tensors are contiguous in memory for ctypes pointer access
+    A_cont = A.contiguous()
+    B_cont = B.contiguous()
+    result_torch_cont = result_torch.contiguous()
+
+    # Get raw pointers to tensor data
+    A_ptr = ctypes.cast(A_cont.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    B_ptr = ctypes.cast(B_cont.data_ptr(), ctypes.POINTER(ctypes.c_float))
+
+    # Output shared library name
     so_name = args.file.replace(".hip", ".so")
+
+    # Read original HIP source
     with open(args.file, "r") as f:
         code = f.read()
 
+    # Prepend macro definitions (e.g., for configuration)
     code = macro + code
 
-    file_name = args.file.replace(
-        base_name.replace(".hip", ""), base_name + "_bak.hip"
-    )
-    with open(file_name, mode="w") as f:
+    # Create a backup .hip file with macros injected
+    file_name = args.file.replace(base_name.replace(".hip", ""), base_name + "_bak.hip")
+    with open(file_name, "w") as f:
         f.write(code)
 
-    # Load the shared library with the add function
+    # Compile the HIP kernel into a shared library (.so)
     success, output = run_compilation(so_name, file_name)
+    if not success:
+        print("[ERROR] Compilation failed:")
+        print(output)
+        exit(1)
+
+    # Clean up the temporary source file
     os.remove(file_name)
 
+    # Load the compiled shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
     function = getattr(lib, name + "_kernel")
-    # Define the function's parameters and return types.
+
+    # Define the function signature
     function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.c_int,
+        ctypes.POINTER(ctypes.c_float),  # Input A
+        ctypes.POINTER(ctypes.c_float),  # Input B
+        ctypes.POINTER(ctypes.c_float),  # Output
+        ctypes.c_int,                    # Total number of elements
     ]
     function.restype = None
-    # Call the function with the matrices and dimensions
-    result_ctypes = np.zeros(shape, dtype=np.float32)
-    output_ptr = result_ctypes.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    function(A_ptr, B_ptr, output_ptr, np.prod(shape))
-    # Check if the results match
-    np.testing.assert_allclose(
-        result_ctypes,
-        result_np,
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
-        err_msg="",
-        verbose=True,
-    )
-    print("Verification successful!")
-    result = subprocess.run(["rm", so_name])
+
+    # Prepare output tensor (contiguous, CPU)
+    result_ctypes_torch = torch.zeros(shape, dtype=torch.float32).contiguous()
+    output_ptr = ctypes.cast(result_ctypes_torch.data_ptr(), ctypes.POINTER(ctypes.c_float))
+
+    # Call the HIP kernel function
+    function(A_ptr, B_ptr, output_ptr, A.numel())  # Use .numel() for total elements
+
+    # Compare kernel output with PyTorch result
+    if torch.allclose(result_ctypes_torch, result_torch, rtol=1e-3, atol=1e-3, equal_nan=True):
+        print("✅ Verification successful! Results match.")
+    else:
+        print("❌ Verification failed! Results do not match.")
+        # Optional: print first few elements for debugging
+        print("Expected (PyTorch):", result_torch.flatten()[:10].tolist())
+        print("Got (Kernel):", result_ctypes_torch.flatten()[:10].tolist())
+        exit(1)
+
+    # Clean up the compiled shared library
+    subprocess.run(["rm", so_name], check=False)

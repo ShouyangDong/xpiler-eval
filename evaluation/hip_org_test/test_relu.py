@@ -49,7 +49,7 @@ if __name__ == "__main__":
     os.remove(file_name)
     lib = CDLL(os.path.join(os.getcwd(), so_name))
     function = getattr(lib, name + "_kernel")
-    # Define the function parameters and return types.
+    # Define the function's parameters and return types.
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),
         ctypes.POINTER(ctypes.c_float),
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     # Convert the input and output arrays into C pointer types.
     input_ptr = input_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     output_ptr = output_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    # Invoke the C function
+    # Calling a C function
     function(input_ptr, output_ptr, np.prod(shape))
     # Verification results
 

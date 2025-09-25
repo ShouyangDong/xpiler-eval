@@ -9,8 +9,8 @@ import sys
 
 import torch
 
-from evaluation.macros import CUDA_MACROS as macro
-from evaluation.utils import run_cuda_compilation as run_compilation
+from evaluation.macros import HIP_MACROS as macro
+from evaluation.utils import run_hip_compilation as run_compilation
 
 
 def element_wise_gather(params, indices, axis=0):
@@ -25,7 +25,7 @@ if __name__ == "__main__":
         description="Test C++ GATHER kernel against PyTorch"
     )
     parser.add_argument(
-        "--file", type=str, required=True, help="Path to the .cu source file"
+        "--file", type=str, required=True, help="Path to the .hip source file"
     )
     parser.add_argument(
         "--config",
@@ -109,8 +109,8 @@ if __name__ == "__main__":
     output_ptr = to_ptr(result_ctypes, ctypes.c_float)
 
     # === 5. Shared library name and temp file ===
-    so_name = args.file.replace(".cu", ".so")
-    temp_file = args.file.replace(".cu", "_bak.cu")
+    so_name = args.file.replace(".hip", ".so")
+    temp_file = args.file.replace(".hip", "_bak.hip")
 
     # === 6. Read original code and inject macro ===
     try:
