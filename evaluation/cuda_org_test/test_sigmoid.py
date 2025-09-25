@@ -2,82 +2,107 @@ import argparse
 import ctypes
 import os
 import subprocess
-from ctypes import CDLL
 
-import numpy as np
+import torch  
 
 from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_cuda_compilation as run_compilation
 
 
 def ref_program(x):
-    return 1 / (1 + np.exp(-x))
+    """
+    Reference Sigmoid function using PyTorch.
+    Equivalent to: 1 / (1 + exp(-x))
+    """
+    return torch.sigmoid(x)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
+    parser = argparse.ArgumentParser(description="Validate Sigmoid CUDA kernel output against PyTorch")
+    parser.add_argument("--file", type=str, help="Path to the source .cu file")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+        "--config",
+        required=True,
+        help="JSON string or path to kernel configuration file"
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform",
+        help="Target platform for compilation"
     )
     args = parser.parse_args()
+
     base_name = os.path.basename(args.file)
     name = "sigmoid"
     shapes = base_name.split(".")[0]
-    shape = [int(intg) for intg in shapes.split("_")[1:]]
+    shape = [int(dim) for dim in shapes.split("_")[1:]]  # e.g., [1024], [32, 768], etc.
+
     so_name = args.file.replace(".cu", ".so")
+
+    # Read and modify source code
     with open(args.file, "r") as f:
         code = f.read()
 
-    code = macro + code
+    code = macro + code  # Inject macros (e.g., config constants)
 
-    file_name = args.file.replace(
-        base_name.replace(".cu", ""), base_name + "_bak.cu"
-    )
-    with open(file_name, mode="w") as f:
+    # Write to temporary .cu file
+    file_name = args.file.replace(base_name.replace(".cu", ""), base_name + "_bak.cu")
+    with open(file_name, "w") as f:
         f.write(code)
 
+    # Compile the CUDA kernel
     success, output = run_compilation(so_name, file_name)
+    if not success:
+        print("[ERROR] Compilation failed:")
+        print(output)
+        exit(1)
+
     os.remove(file_name)
-    lib = CDLL(os.path.join(os.getcwd(), so_name))
+
+    # Load the compiled shared library
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
     function = getattr(lib, name + "_kernel")
-    # Define the function parameters and return types.
+
+    # Define function signature
     function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.c_int,
+        ctypes.POINTER(ctypes.c_float),  # input array
+        ctypes.POINTER(ctypes.c_float),  # output array
+        ctypes.c_int,                    # total number of elements
     ]
     function.restype = None
-    # Create the input array.
-    dtype = "float32"
-    input_array = np.random.uniform(size=shape).astype(dtype)
-    expected_output = ref_program(input_array)
 
-    # Create the output array.
-    output_array = np.zeros_like(input_array)
+    # Create input tensor
+    dtype = torch.float32
+    input_tensor = torch.randn(shape, dtype=dtype)  # Random input covering [-3, 3] range
 
-    # Convert the input and output arrays to C pointer types.
-    input_ptr = input_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    output_ptr = output_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    # Calling a C function
-    function(input_ptr, output_ptr, np.prod(shape))
-    # Verification results
+    # Compute reference output using PyTorch
+    expected_output = ref_program(input_tensor)
 
-    np.testing.assert_allclose(
-        output_array,
-        expected_output,
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
-        err_msg="",
-        verbose=True,
-    )
+    # Output tensor
+    output_tensor = torch.zeros_like(input_tensor)
 
-    print("Verification successful!")
-    result = subprocess.run(["rm", so_name])
+    # Ensure contiguous memory layout for ctypes access
+    input_tensor = input_tensor.contiguous()
+    total_elements = input_tensor.numel()
+    output_tensor = output_tensor.contiguous()
+
+    # Get raw pointers
+    input_ptr = ctypes.cast(input_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    output_ptr = ctypes.cast(output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float))
+
+    # Call the Sigmoid kernel
+    function(input_ptr, output_ptr, total_elements)
+
+    # Verify results
+    if torch.allclose(output_tensor, expected_output, rtol=1e-3, atol=1e-3, equal_nan=True):
+        print("✅ Verification successful! Results match.")
+    else:
+        print("❌ Verification failed! Results do not match.")
+        # Print first 10 elements for debugging
+        print("Expected (Ref):", expected_output.flatten()[:10].tolist())
+        print("Got (Kernel):", output_tensor.flatten()[:10].tolist())
+        exit(1)
+
+    # Clean up compiled library
+    subprocess.run(["rm", so_name], check=False)

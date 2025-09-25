@@ -3,83 +3,110 @@ import ctypes
 import os
 import subprocess
 
-import numpy as np
+import torch  
 
 from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_cuda_compilation as run_compilation
 
-# Define the sub function using numpy
 
-
-def sub(A, B):
-    return np.subtract(A, B)
+def ref_program(A, B):
+    """
+    Reference implementation of element-wise subtraction: A - B
+    """
+    return torch.sub(A, B)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
+    parser = argparse.ArgumentParser(description="Validate CUDA element-wise subtraction kernel")
+    parser.add_argument("--file", type=str, help="Path to the source .cu file")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+        "--config",
+        required=True,
+        help="JSON string or path to kernel configuration file"
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform",
+        help="Target platform for compilation"
     )
     args = parser.parse_args()
+
     base_name = os.path.basename(args.file)
     shapes = base_name.split(".")[0]
-    shape = [int(intg) for intg in shapes.split("_")[1:]]
-    # Generate random matrices for testing
-    A = np.random.rand(*shape).astype("float32")
-    B = np.random.rand(*shape).astype("float32")
-    name = base_name.split("_")[0]
-    # Perform sub using numpy
-    result_np = sub(A, B)
-
-    # Convert the matrices to contiguous memory for ctypes
-    A_ptr = A.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    B_ptr = B.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    shape = [int(dim) for dim in shapes.split("_")[1:]]  # e.g., [1024], [32, 768]
+    total_elements = int(torch.prod(torch.tensor(shape)))  # Total number of elements
+    name = base_name.split("_")[0]  # e.g., "sub" from "sub_1024.cu"
     so_name = args.file.replace(".cu", ".so")
+
+    # Generate random input tensors
+    dtype = torch.float32
+    A = torch.rand(shape, dtype=dtype)
+    B = torch.rand(shape, dtype=dtype)
+
+    # Compute reference result using PyTorch
+    expected_output = ref_program(A, B)
+
+    # Output tensor
+    output_tensor = torch.zeros_like(A)
+
+    # Ensure contiguous memory layout for ctypes access
+    A = A.contiguous()
+    B = B.contiguous()
+    output_tensor = output_tensor.contiguous()
+
+    # Get raw pointers
+    A_ptr = ctypes.cast(A.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    B_ptr = ctypes.cast(B.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    output_ptr = ctypes.cast(output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float))
+
+    # Read and modify source code
     with open(args.file, "r") as f:
         code = f.read()
 
-    code = macro + code
+    code = macro + code  # Inject macros
 
-    file_name = args.file.replace(
-        base_name.replace(".cu", ""), base_name + "_bak.cu"
-    )
-    with open(file_name, mode="w") as f:
+    # Write to temporary .cu file
+    file_name = args.file.replace(base_name.replace(".cu", ""), base_name + "_bak.cu")
+    with open(file_name, "w") as f:
         f.write(code)
 
-    # Load the shared library with the sub function
+    # Compile the CUDA kernel
     success, output = run_compilation(so_name, file_name)
+    if not success:
+        print("[ERROR] Compilation failed:")
+        print(output)
+        exit(1)
+
     os.remove(file_name)
 
+    # Load the compiled shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
     function = getattr(lib, name + "_kernel")
-    # Define the function's parameters and return types.
+
+    # Define function signature
     function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.c_int,
+        ctypes.POINTER(ctypes.c_float),  # A
+        ctypes.POINTER(ctypes.c_float),  # B
+        ctypes.POINTER(ctypes.c_float),  # Output
+        ctypes.c_int,                    # Total number of elements
     ]
     function.restype = None
-    # Call the function with the matrices and dimensions
-    result_ctypes = np.zeros(shape, dtype=np.float32)
-    output_ptr = result_ctypes.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    function(A_ptr, B_ptr, output_ptr, np.prod(shape))
-    # Check if the results match
-    np.testing.assert_allclose(
-        result_ctypes,
-        result_np,
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
-        err_msg="",
-        verbose=True,
-    )
-    print("Verification successful!")
-    result = subprocess.run(["rm", so_name])
+
+    # Call the subtraction kernel
+    function(A_ptr, B_ptr, output_ptr, total_elements)
+
+    # Verify results
+    if torch.allclose(output_tensor, expected_output, rtol=1e-3, atol=1e-3, equal_nan=True):
+        print("✅ Verification successful! Results match.")
+    else:
+        print("❌ Verification failed! Results do not match.")
+        # Debug: Print first 10 elements
+        print("A (first 10):", A.flatten()[:10].tolist())
+        print("B (first 10):", B.flatten()[:10].tolist())
+        print("Expected (A-B):", expected_output.flatten()[:10].tolist())
+        print("Got (Kernel):", output_tensor.flatten()[:10].tolist())
+        exit(1)
+
+    # Clean up compiled library
+    subprocess.run(["rm", so_name], check=False)

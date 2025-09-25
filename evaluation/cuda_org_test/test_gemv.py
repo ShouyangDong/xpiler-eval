@@ -3,83 +3,104 @@ import ctypes
 import os
 import subprocess
 
-import numpy as np
+import torch  
 
 from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_cuda_compilation as run_compilation
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
+    parser = argparse.ArgumentParser(description="Validate GEMV CUDA kernel output against PyTorch")
+    parser.add_argument("--file", type=str, help="Path to the source .cu file")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+        "--config",
+        required=True,
+        help="JSON string or path to kernel configuration file"
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform",
+        help="Target platform for compilation"
     )
     args = parser.parse_args()
+
     base_name = os.path.basename(args.file)
+    name = base_name.split("_")[0]  # Kernel name, e.g., "gemv"
     shapes = base_name.split(".")[0]
-    name = base_name.split("_")[0]
-    shape = [int(intg) for intg in shapes.split("_")[1:]]
-    # Generate random matrices for testing
-    # Define the input matrix A and vector x
-    A = np.random.rand(*shape).astype(np.float32)
-    x = np.random.rand(shape[1]).astype(np.float32)
+    shape = [int(dim) for dim in shapes.split("_")[1:]]  # [M, N] where A is (M x N), x is (N,)
+    
+    M, N = shape  # M: rows, N: cols
 
-    # Create an empty vector y
-    y_ctypes = np.zeros(shape[0], dtype=np.float32)
+    # Create input tensors using PyTorch
+    A = torch.randn(M, N, dtype=torch.float32)
+    x = torch.randn(N, dtype=torch.float32)
 
-    # Convert the matrices to contiguous memory for ctypes
-    A_ptr = A.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    x_ptr = x.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    y_ptr = y_ctypes.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    # Reference result using PyTorch matmul
+    y_torch = torch.matmul(A, x)  # Shape: (M,)
 
-    # Perform gemv using numpy
-    y_np = np.matmul(A, x)
+    # Ensure tensors are contiguous for ctypes
+    A_cont = A.contiguous()
+    x_cont = x.contiguous()
+    y_torch_cont = y_torch.contiguous()
 
-    # Load the shared library with the batch matrix multiplication function
+    # Allocate output tensor
+    y_ctypes_torch = torch.zeros(M, dtype=torch.float32).contiguous()
+
+    # Get raw pointers
+    A_ptr = ctypes.cast(A_cont.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    x_ptr = ctypes.cast(x_cont.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    y_ptr = ctypes.cast(y_ctypes_torch.data_ptr(), ctypes.POINTER(ctypes.c_float))
+
+    # Shared library name
     so_name = args.file.replace(".cu", ".so")
+
+    # Read and modify source code
     with open(args.file, "r") as f:
         code = f.read()
 
-    code = macro + code
+    code = macro + code  # Inject macros (e.g., config constants)
 
-    file_name = args.file.replace(
-        base_name.replace(".cu", ""), base_name + "_bak.cu"
-    )
-    with open(file_name, mode="w") as f:
+    # Write to temporary .cu file
+    file_name = args.file.replace(base_name.replace(".cu", ""), base_name + "_bak.cu")
+    with open(file_name, "w") as f:
         f.write(code)
 
-    # Load the shared library with the batch matrix multiplication function
+    # Compile the kernel
     success, output = run_compilation(so_name, file_name)
+    if not success:
+        print("[ERROR] Compilation failed:")
+        print(output)
+        exit(1)
 
+    # Clean up temporary source file
     os.remove(file_name)
+
+    # Load the compiled shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
     function = getattr(lib, name + "_kernel")
-    # Define the function's parameters and return types.
+
+    # Define function signature
     function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.c_int,
-        ctypes.c_int,
+        ctypes.POINTER(ctypes.c_float),  # A (M x N matrix)
+        ctypes.POINTER(ctypes.c_float),  # x (N vector)
+        ctypes.POINTER(ctypes.c_float),  # y (M vector, output)
+        ctypes.c_int,                    # M (rows)
+        ctypes.c_int,                    # N (cols)
     ]
     function.restype = None
-    # Call the function with the matrices and dimensions
-    function(A_ptr, x_ptr, y_ptr, shape[0], shape[1])
-    # Check if the results match
-    np.testing.assert_allclose(
-        y_ctypes,
-        y_np,
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
-        err_msg="",
-        verbose=True,
-    )
-    print("Verification successful!")
-    result = subprocess.run(["rm", so_name])
+
+    # Call the GEMV kernel
+    function(A_ptr, x_ptr, y_ptr, M, N)
+
+    # Verify results
+    if torch.allclose(y_ctypes_torch, y_torch, rtol=1e-3, atol=1e-3, equal_nan=True):
+        print("✅ Verification successful! Results match.")
+    else:
+        print("❌ Verification failed! Results do not match.")
+        print("Expected (PyTorch):", y_torch.tolist())
+        print("Got (Kernel):", y_ctypes_torch.tolist())
+        exit(1)
+
+    # Clean up compiled library
+    subprocess.run(["rm", so_name], check=False)
