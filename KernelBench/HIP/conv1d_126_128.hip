@@ -8,7 +8,7 @@ __global__ void conv1d(float *input, float *kernel, float *output) {
   }
 }
 
-extern "C" void conv1d_kernel(float *input, float *output, float *kernel,
+extern "C" void conv1d_kernel(float *input, float *kernel, float *output,
                               int input_size, int output_size) {
   float *d_input, *d_kernel, *d_output;
   int kernel_size = input_size - output_size + 1;
