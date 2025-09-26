@@ -35,7 +35,7 @@ extern "C" void batchnorm_kernel(const float *h_input, float *h_output,
   hipMalloc(&d_beta, 1 * sizeof(float));
 
   hipMemcpy(d_input, h_input, input_size * sizeof(float),
-             hipMemcpyHostToDevice);
+            hipMemcpyHostToDevice);
   hipMemcpy(d_mean, h_mean, 1 * sizeof(float), hipMemcpyHostToDevice);
   hipMemcpy(d_variance, h_variance, 1 * sizeof(float), hipMemcpyHostToDevice);
   hipMemcpy(d_gamma, h_gamma, 1 * sizeof(float), hipMemcpyHostToDevice);
@@ -48,7 +48,7 @@ extern "C" void batchnorm_kernel(const float *h_input, float *h_output,
                                       d_gamma, d_beta);
 
   hipMemcpy(h_output, d_output, input_size * sizeof(float),
-             hipMemcpyDeviceToHost);
+            hipMemcpyDeviceToHost);
 
   hipFree(d_input);
   hipFree(d_output);

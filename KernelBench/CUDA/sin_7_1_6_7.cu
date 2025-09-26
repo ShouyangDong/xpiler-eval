@@ -8,9 +8,8 @@ __global__ void __launch_bounds__(294)
   }
 }
 
-extern "C" void sin_kernel(float *h_A, float *h_C, int a, int b, int c, int d) {
+extern "C" void sin_kernel(float *h_A, float *h_C, int total) {
   float *d_A, *d_C;
-  const int total = a * b * c * d;
 
   cudaMalloc(&d_A, total * sizeof(float));
   cudaMalloc(&d_C, total * sizeof(float));

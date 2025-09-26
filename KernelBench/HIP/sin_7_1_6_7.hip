@@ -8,22 +8,21 @@ __global__ void __launch_bounds__(294)
   }
 }
 
-extern "C" void sin_kernel(float *h_A, float *h_C, int a, int b, int c, int d) {
+extern "C" void sin_kernel(float *h_A, float *h_C, int total) {
   float *d_A, *d_C;
-  const int total = a * b * c * d;
 
-  hipMalloc(&d_A, total * sizeof(float));
-  hipMalloc(&d_C, total * sizeof(float));
+  cudaMalloc(&d_A, total * sizeof(float));
+  cudaMalloc(&d_C, total * sizeof(float));
 
-  hipMemcpy(d_A, h_A, total * sizeof(float), hipMemcpyHostToDevice);
+  cudaMemcpy(d_A, h_A, total * sizeof(float), cudaMemcpyHostToDevice);
 
   dim3 blockSize(294);
   dim3 numBlocks(1);
 
   sin<<<numBlocks, blockSize>>>(d_A, d_C);
 
-  hipMemcpy(h_C, d_C, total * sizeof(float), hipMemcpyDeviceToHost);
+  cudaMemcpy(h_C, d_C, total * sizeof(float), cudaMemcpyDeviceToHost);
 
-  hipFree(d_A);
-  hipFree(d_C);
+  cudaFree(d_A);
+  cudaFree(d_C);
 }
