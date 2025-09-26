@@ -11,20 +11,20 @@ __global__ void __launch_bounds__(256)
 extern "C" void sin_kernel(float *h_A, float *h_C, int total_elements) {
   float *d_A, *d_C;
 
-  cudaMalloc(&d_A, total_elements * sizeof(float));
-  cudaMalloc(&d_C, total_elements * sizeof(float));
+  hipMalloc(&d_A, total_elements * sizeof(float));
+  hipMalloc(&d_C, total_elements * sizeof(float));
 
-  cudaMemcpy(d_A, h_A, total_elements * sizeof(float), cudaMemcpyHostToDevice);
+  hipMemcpy(d_A, h_A, total_elements * sizeof(float), hipMemcpyHostToDevice);
 
   dim3 blockSize(256);
 
   dim3 numBlocks((total_elements + blockSize.x - 1) / blockSize.x);
 
   sin<<<numBlocks, blockSize>>>(d_A, d_C);
-  cudaDeviceSynchronize();
+  hipDeviceSynchronize();
 
-  cudaMemcpy(h_C, d_C, total_elements * sizeof(float), cudaMemcpyDeviceToHost);
+  hipMemcpy(h_C, d_C, total_elements * sizeof(float), hipMemcpyDeviceToHost);
 
-  cudaFree(d_A);
-  cudaFree(d_C);
+  hipFree(d_A);
+  hipFree(d_C);
 }
