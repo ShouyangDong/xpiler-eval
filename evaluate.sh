@@ -1,33 +1,32 @@
 #!/usr/bin/env bash
-# run_benchmark.sh - Cross-platform benchmarking script for code translation testing
+# run_benchmark.sh - Cross-platform kernel compilation and correctness testing with success rate summary
 
 set -euo pipefail
 
-# === Default values (can be overridden via command line) ===
+# === Default values ===
 BENCH_DIR=""
 OUT_ROOT_DIR="."
 
-# === Help function ===
+# === Help message ===
 usage() {
     cat << EOF
 Usage: $0 [OPTIONS]
 
-This script compiles and tests translated code across different hardware platforms (CPU, MLU, CUDA, HIP).
-It runs compilation and correctness tests for each source -> target platform pair.
+This script compiles and tests translated kernels across multiple hardware backends.
+It runs compilation and correctness verification for each source → target platform pair.
 
 OPTIONS:
-    -b, --bench-dir DIR       Root directory containing source code tests (required)
-    -o, --out-root DIR        Output root directory for results (default: .)
+    -b, --bench-dir DIR       Root directory containing source test code (required)
+    -o, --out-root DIR        Output root for results and logs (default: .)
     -h, --help                Show this help message and exit
 
 EXAMPLES:
-    $0 -b /path/to/benchmarks
-    $0 -b ./benchmarks -o ./output_results
+    $0 -b ./benchmarks
+    $0 -b ./benchmarks -o ./results
 
 ENVIRONMENT VARIABLES:
-    You can also set:
-      BENCH_DIR     - Path to benchmark directory (required)
-      OUT_ROOT_DIR  - Output directory (optional, default: current dir)
+    BENCH_DIR      - Path to benchmarks (required)
+    OUT_ROOT_DIR   - Output directory (optional)
 
 NOTE: Command-line arguments take precedence over environment variables.
 EOF
@@ -42,7 +41,7 @@ while [[ "$#" -gt 0 ]]; do
                 BENCH_DIR="$2"
                 shift 2
             else
-                echo "Error: Argument for --bench-dir is missing" >&2
+                echo "Error: Missing value for --bench-dir" >&2
                 usage
             fi
             ;;
@@ -51,7 +50,7 @@ while [[ "$#" -gt 0 ]]; do
                 OUT_ROOT_DIR="$2"
                 shift 2
             else
-                echo "Error: Argument for --out-root is missing" >&2
+                echo "Error: Missing value for --out-root" >&2
                 usage
             fi
             ;;
@@ -59,15 +58,15 @@ while [[ "$#" -gt 0 ]]; do
             usage
             ;;
         *)
-            echo "Unknown option: $1"
+            echo "Unknown option: $1" >&2
             usage
             ;;
     esac
 done
 
-# === Validate required inputs ===
+# === Validate inputs ===
 if [[ -z "$BENCH_DIR" ]]; then
-    echo "Error: BENCH_DIR must be provided via -b or environment variable." >&2
+    echo "Error: BENCH_DIR is required. Use -b or set environment variable." >&2
     usage
 fi
 
@@ -76,22 +75,22 @@ if [[ ! -d "$BENCH_DIR" ]]; then
     exit 1
 fi
 
-# === Platform configuration ===
-declare -A COMPILE_SCRIPTS=(
-    ["cpu"]="benchmark/evaluation/dlboost_test/compilation.py"
-    ["mlu"]="benchmark/evaluation/mlu_test/compilation.py"
-    ["cuda"]="benchmark/evaluation/cuda_test/compilation.py"
-    ["hip"]="benchmark/evaluation/hip_test/compilation.py"
+# === Platform mappings ===
+declare -A TARGET_TO_BACKEND=(
+    ["cpu"]="dlboost"
+    ["mlu"]="mlu"
+    ["cuda"]="cuda"
+    ["hip"]="hip"
 )
 
-declare -A TEST_SCRIPTS=(
-    ["cpu"]="benchmark/evaluation/dlboost_test/result_test.py"
-    ["mlu"]="benchmark/evaluation/mlu_test/result_test.py"
-    ["cuda"]="benchmark/evaluation/cuda_test/result_test.py"
-    ["hip"]="benchmark/evaluation/hip_test/result_test.py"
+declare -A TARGET_TO_JSON=(
+    ["cpu"]="c.json"
+    ["mlu"]="mlu.json"
+    ["cuda"]="cuda.json"
+    ["hip"]="hip.json"
 )
 
-# === Direction pairs: source:target ===
+# === Test directions: source:target ===
 DIRECTIONS=(
     "mlu:cpu"
     "cpu:mlu"
@@ -107,43 +106,88 @@ DIRECTIONS=(
     "hip:cpu"
 )
 
+# === Script and config paths ===
+COMPILE_SCRIPT="EvalEngine/eval_compilation.py"
+TEST_SCRIPT="EvalEngine/eval_computation.py"
+JSON_DIR="TransEval"
+
+# === Validate dependencies ===
+if [[ ! -f "$COMPILE_SCRIPT" ]]; then
+    echo "Error: Compiler script not found: $COMPILE_SCRIPT" >&2
+    exit 1
+fi
+
+if [[ ! -f "$TEST_SCRIPT" ]]; then
+    echo "Error: Test script not found: $TEST_SCRIPT" >&2
+    exit 1
+fi
+
+if [[ ! -d "$JSON_DIR" ]]; then
+    echo "Error: JSON config directory not found: $JSON_DIR" >&2
+    exit 1
+fi
+
+# === Initialize counters ===
+TOTAL_DIRS=${#DIRECTIONS[@]}
+COMPILE_SUCCESS=0
+CORRECTNESS_SUCCESS=0
+
 # === Main execution loop ===
 for dir_pair in "${DIRECTIONS[@]}"; do
     src_plat="${dir_pair%%:*}"
     dst_plat="${dir_pair##*:}"
 
+    backend="${TARGET_TO_BACKEND[$dst_plat]}"
+    json_file="$JSON_DIR/${TARGET_TO_JSON[$dst_plat]}"
     src_dir="$BENCH_DIR/${src_plat}_code_test"
     out_dir="$OUT_ROOT_DIR/${src_plat}_${dst_plat}"
 
-    # Ensure output directory exists
+    # Validate platform support
+    if [[ -z "${backend:-}" ]]; then
+        echo "❌ Unsupported target platform: $dst_plat"
+        continue
+    fi
+
+    if [[ ! -f "$json_file" ]]; then
+        echo "❌ Config file not found: $json_file"
+        continue
+    fi
+
     mkdir -p "$out_dir"
 
-    # 1) Compilation Test
-    compile_py="${COMPILE_SCRIPTS[$dst_plat]}"
-    if [[ ! -f "$compile_py" ]]; then
-        echo "Error: Compilation script not found: $compile_py" >&2
-        exit 1
+    echo "=> $src_plat → $dst_plat [Backend: $backend]"
+
+    # --- 1) Compilation ---
+    echo "   🛠️  Compiling kernel..."
+    if python3 "$COMPILE_SCRIPT" --backend "$backend" "$src_dir" --output-dir "$out_dir" >"$out_dir/compile.log" 2>&1; then
+        echo "   ✅ Compilation succeeded"
+        ((COMPILE_SUCCESS++))
+    else
+        echo "   ❌ Compilation failed (log: $out_dir/compile.log)"
     fi
 
-    echo "-> Compiling translated code for $dst_plat using $compile_py"
-    python3 "$compile_py" "$out_dir"
-
-    # 2) Correctness Test
-    test_py="${TEST_SCRIPTS[$dst_plat]}"
-    if [[ ! -f "$test_py" ]]; then
-        echo "Error: Test script not found: $test_py" >&2
-        exit 1
+    # --- 2) Correctness Test ---
+    echo "   🧪 Running correctness test..."
+    if python3 "$TEST_SCRIPT" "$json_file" "$out_dir" "$src_dir" --target "$dst_plat" --jobs 4 >"$out_dir/test.log" 2>&1; then
+        echo "   ✅ Test passed"
+        ((CORRECTNESS_SUCCESS++))
+    else
+        echo "   ❌ Test failed (log: $out_dir/test.log)"
     fi
 
-    ref_data_dir="benchmark/evaluation/${dst_plat}_test"
-    if [[ ! -d "$ref_data_dir" ]]; then
-        echo "Warning: Reference data directory not found: $ref_data_dir" >&2
-    fi
-
-    echo "-> Running correctness tests on $dst_plat with $test_py"
-    python3 "$test_py" "$out_dir" "$ref_data_dir"
-
-	# TODO: add performance test
+    echo ""
 done
 
-echo "All benchmark directions completed."
+# === 📊 Final Summary ===
+echo "📊 Benchmark Summary"
+echo "────────────────────────────────────"
+printf "  Total directions:    %2d\n" "$TOTAL_DIRS"
+printf "  Compilation:         %2d / %d" "$COMPILE_SUCCESS" "$TOTAL_DIRS"
+compile_rate=$(echo "scale=1; $COMPILE_SUCCESS * 100 / $TOTAL_DIRS" | bc -l)
+printf " (%.1f%%)\n" "$compile_rate"
+
+printf "  Correctness:         %2d / %d" "$CORRECTNESS_SUCCESS" "$TOTAL_DIRS"
+correctness_rate=$(echo "scale=1; $CORRECTNESS_SUCCESS * 100 / $TOTAL_DIRS" | bc -l)
+printf " (%.1f%%)\n" "$correctness_rate"
+echo "────────────────────────────────────"
+echo "🎉 All benchmark directions completed."
