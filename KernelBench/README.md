@@ -1,30 +1,49 @@
 # Cross-Platform Kernel Sources for Deep Learning Operators
+This directory contains source code implementations of deep learning operator kernels for multiple hardware platforms.
 
-This directory contains source code implementations of deep learning operator kernels for multiple hardware platforms.  
-Each subdirectory corresponds to a specific backend and includes platform-optimized operator code.
+Each subdirectory corresponds to a specific backend and includes platform-specific code used in conjunction with the JSON configuration files in the `TransEval/` directory.
+
+The JSON files (e.g., c.json, cuda.json, mlu.json, hip.json) define the list of operators to be tested and their input configurations.
+
+The source code here provides the ground-truth implementations for each platform, which are used as references during cross-platform translation and correctness verification.
 
 ## Directory Structure
 
-- `BANG/` – Source code for **Cambricon MLU** platform (written in BANG-C)
-- `C/` – Source code for **CPU** platform (written in standard C)
-- `CUDA/` – Source code for **NVIDIA GPUs** (written in CUDA C)
-- `HIP/` – Source code for **AMD GPUs** (written in HIP)
-- `Tensor_core/` -Source code for **NVIDIA GPUs** (written in CUDA C with Tensor Cores)
+- MLU/ – Source code for Cambricon MLU platform (written in BANG-C)
+
+    Corresponds to kernels defined in `TransEval/mlu.json`
+- C/ – Source code for CPU platform (written in standard C)
+
+    Corresponds to kernels defined in `TransEval/c.json`
+- CUDA/ – Source code for NVIDIA GPUs (written in CUDA C)
+
+    Includes both standard CUDA kernels and Tensor Core-optimized variants
+
+    Corresponds to kernels defined in `TransEval/cuda.json`
+- HIP/ – Source code for AMD GPUs (written in HIP)
+
+    Corresponds to kernels defined in `TransEval/hip.json`
+
+
 ## Description
+Each platform directory contains hand-optimized or auto-generated kernels for a variety of tensor operators, such as conv2d, matmul, add, relu, and more. The set of operators implemented in each directory exactly matches the operator list specified in its corresponding JSON configuration file in `TransEval/`.
 
-Each platform directory contains hand-optimized or auto-generated kernels for a variety of tensor operators,  
-such as `conv2d`, `matmul`, `add`, and more. These implementations are designed to take advantage of  
-each platform's specific compute model, memory hierarchy, and instruction set.
+These implementations are designed to:
 
-This source code can be used for:
-- Performance benchmarking across heterogeneous platforms
-- Compiler backend development and validation
-- Cross-platform operator translation
-- Reference implementations for operator-level optimizations
+- Leverage each platform’s compute model, memory hierarchy, and instruction set 
+- Serve as reference implementations for correctness validation
+- Support end-to-end testing of kernel translation frameworks
+
+## Usage
+This repository structure is designed for:
+
+- Cross-platform kernel translation testing
+- Correctness verification via comparison against golden outputs defined in JSON configs
+- Performance benchmarking across heterogeneous hardware
+- Compiler and backend development for deep learning frameworks
 
 ## Notes
-
-- Kernels are organized by operator name or function.
-- Code style and dependencies may vary slightly across platforms.
-- All implementations are focused on performance and correctness in deep learning workloads.
-
+Kernels are organized by operator name (e.g., matmul/, conv2d/) within each platform directory.
+Code style, dependencies, and build requirements may vary across platforms.
+All implementations prioritize correctness and performance in deep learning workloads.
+The `TransEval/*.json` files are the authoritative source for which operators and shapes are tested.
