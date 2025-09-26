@@ -10,8 +10,8 @@ from evaluation.utils import run_cuda_compilation as run_compilation
 
 
 def batch_matmul(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
-    """
-    Perform batch matrix multiplication using PyTorch.
+    """Perform batch matrix multiplication using PyTorch.
+
     A: (batch_size, i, j)
     B: (batch_size, j, k)
     Output: (batch_size, i, k)
@@ -20,18 +20,20 @@ def batch_matmul(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Validate batch GEMM CUDA kernel output against PyTorch")
+    parser = argparse.ArgumentParser(
+        description="Validate batch GEMM CUDA kernel output against PyTorch"
+    )
     parser.add_argument("--file", type=str, help="Path to the source .cu file")
     parser.add_argument(
         "--config",
         required=True,
-        help="JSON string or path to kernel configuration file"
+        help="JSON string or path to kernel configuration file",
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform for compilation"
+        help="Target platform for compilation",
     )
     args = parser.parse_args()
 
@@ -44,8 +46,12 @@ if __name__ == "__main__":
     batch_size, matrix_dim_i, matrix_dim_j, matrix_dim_k = shape
 
     # Generate input tensors using PyTorch (float16 for input, as in original)
-    A = torch.ones((batch_size, matrix_dim_i, matrix_dim_j), dtype=torch.float16)
-    B = torch.ones((batch_size, matrix_dim_j, matrix_dim_k), dtype=torch.float16)
+    A = torch.ones(
+        (batch_size, matrix_dim_i, matrix_dim_j), dtype=torch.float16
+    )
+    B = torch.ones(
+        (batch_size, matrix_dim_j, matrix_dim_k), dtype=torch.float16
+    )
 
     # Compute expected result using PyTorch
     result_torch = batch_matmul(A, B)  # Result is in float32 (matmul promotes)
@@ -64,7 +70,9 @@ if __name__ == "__main__":
     result_ctypes_torch = torch.zeros(
         (batch_size, matrix_dim_i, matrix_dim_k), dtype=torch.float32
     ).contiguous()
-    output_ptr = ctypes.cast(result_ctypes_torch.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    output_ptr = ctypes.cast(
+        result_ctypes_torch.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
 
     # Shared library name
     so_name = args.file.replace(".cu", ".so")
@@ -77,7 +85,9 @@ if __name__ == "__main__":
     code = macro + code
 
     # Create temporary .cu file with macros
-    file_name = args.file.replace(base_name.replace(".cu", ""), base_name + "_bak.cu")
+    file_name = args.file.replace(
+        base_name.replace(".cu", ""), base_name + "_bak.cu"
+    )
     with open(file_name, "w") as f:
         f.write(code)
 
@@ -99,19 +109,29 @@ if __name__ == "__main__":
     function.argtypes = [
         ctypes.POINTER(ctypes.c_uint16),  # A (float16 data as uint16)
         ctypes.POINTER(ctypes.c_uint16),  # B (float16 data as uint16)
-        ctypes.POINTER(ctypes.c_float),   # Output (float32)
-        ctypes.c_int,                     # batch_size
-        ctypes.c_int,                     # i (matrix_dim_i)
-        ctypes.c_int,                     # j (matrix_dim_j)
-        ctypes.c_int,                     # k (matrix_dim_k)
+        ctypes.POINTER(ctypes.c_float),  # Output (float32)
+        ctypes.c_int,  # batch_size
+        ctypes.c_int,  # i (matrix_dim_i)
+        ctypes.c_int,  # j (matrix_dim_j)
+        ctypes.c_int,  # k (matrix_dim_k)
     ]
     function.restype = None
 
     # Call the CUDA kernel
-    function(A_ptr, B_ptr, output_ptr, batch_size, matrix_dim_i, matrix_dim_j, matrix_dim_k)
+    function(
+        A_ptr,
+        B_ptr,
+        output_ptr,
+        batch_size,
+        matrix_dim_i,
+        matrix_dim_j,
+        matrix_dim_k,
+    )
 
     # Verify results
-    if torch.allclose(result_ctypes_torch, result_torch, rtol=1e-3, atol=1e-3, equal_nan=True):
+    if torch.allclose(
+        result_ctypes_torch, result_torch, rtol=1e-3, atol=1e-3, equal_nan=True
+    ):
         print("✅ Verification successful! Results match.")
     else:
         print("❌ Verification failed! Results do not match.")

@@ -88,7 +88,7 @@ if __name__ == "__main__":
         [[84, 117], [42, 59], [21, 30], [11, 15]], dtype=torch.long
     )
     level_start_index = torch.cat(
-        (shapes.new_zeros((1,)), shapes.prod(1).hipmsum(0)[:-1])
+        (shapes.new_zeros((1,)), shapes.prod(1).cumsum(0)[:-1])
     )
     S = sum([(H * W).item() for H, W in shapes])
 

@@ -1,6 +1,5 @@
 __global__ void gemm(__half *A, __half *B, float *C) {
-  using float16x4 =
-      __attribute__((__vector_size__(4 * sizeof(float16_t)))) float16_t;
+  using float16x4 = __attribute__((__vector_size__(4 * sizeof(__half)))) __half;
   using floatx4 = __attribute__((__vector_size__(4 * sizeof(float)))) float;
 
   const int c_row_base = blockIdx.y * 16;
@@ -36,7 +35,8 @@ __global__ void gemm(__half *A, __half *B, float *C) {
   }
 }
 
-extern "C" void gemm_kernel(__half *A, __half *B, float *C, int m, int k, int n) {
+extern "C" void gemm_kernel(__half *A, __half *B, float *C, int m, int k,
+                            int n) {
   __half *d_A;
   __half *d_B;
   float *d_C;

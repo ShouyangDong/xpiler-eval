@@ -23,7 +23,7 @@ extern "C" void max_kernel(const float *h_input, float *h_output) {
   hipMalloc(&d_output, output_size * sizeof(float));
 
   hipMemcpy(d_input, h_input, input_size * sizeof(float),
-             hipMemcpyHostToDevice);
+            hipMemcpyHostToDevice);
 
   dim3 blockSize(256);
   dim3 numBlocks((1024 + 255) / 256);
@@ -31,7 +31,7 @@ extern "C" void max_kernel(const float *h_input, float *h_output) {
   max_dev<<<numBlocks, blockSize>>>(d_input, d_output);
 
   hipMemcpy(h_output, d_output, output_size * sizeof(float),
-             hipMemcpyDeviceToHost);
+            hipMemcpyDeviceToHost);
 
   hipFree(d_input);
   hipFree(d_output);
