@@ -22,7 +22,7 @@ extern "C" void gemv_kernel(float *A, float *x, float *y, int m, int n) {
   int blockSize = 32;
   int numBlocks = (m + blockSize - 1) / blockSize;
 
-  gemv<<<numBlocks, blockSize>>>(d_y, d_A, d_x);
+  gemv<<<numBlocks, blockSize>>>(d_A, d_x, d_y);
 
   hipMemcpy(y, d_y, m * sizeof(float), hipMemcpyDeviceToHost);
 

@@ -27,19 +27,19 @@ extern "C" void batchnorm_kernel(const float *h_input, float *h_output,
   float *d_input, *d_output, *d_mean, *d_variance, *d_gamma, *d_beta;
   const int input_size = 4096;
 
-  cudaMalloc(&d_input, input_size * sizeof(float));
-  cudaMalloc(&d_output, input_size * sizeof(float));
-  cudaMalloc(&d_mean, 4 * sizeof(float));
-  cudaMalloc(&d_variance, 4 * sizeof(float));
-  cudaMalloc(&d_gamma, 4 * sizeof(float));
-  cudaMalloc(&d_beta, 4 * sizeof(float));
+  hipMalloc(&d_input, input_size * sizeof(float));
+  hipMalloc(&d_output, input_size * sizeof(float));
+  hipMalloc(&d_mean, 4 * sizeof(float));
+  hipMalloc(&d_variance, 4 * sizeof(float));
+  hipMalloc(&d_gamma, 4 * sizeof(float));
+  hipMalloc(&d_beta, 4 * sizeof(float));
 
-  cudaMemcpy(d_input, h_input, input_size * sizeof(float),
-             cudaMemcpyHostToDevice);
-  cudaMemcpy(d_mean, h_mean, 4 * sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_variance, h_variance, 4 * sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_gamma, h_gamma, 4 * sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_beta, h_beta, 4 * sizeof(float), cudaMemcpyHostToDevice);
+  hipMemcpy(d_input, h_input, input_size * sizeof(float),
+             hipMemcpyHostToDevice);
+  hipMemcpy(d_mean, h_mean, 4 * sizeof(float), hipMemcpyHostToDevice);
+  hipMemcpy(d_variance, h_variance, 4 * sizeof(float), hipMemcpyHostToDevice);
+  hipMemcpy(d_gamma, h_gamma, 4 * sizeof(float), hipMemcpyHostToDevice);
+  hipMemcpy(d_beta, h_beta, 4 * sizeof(float), hipMemcpyHostToDevice);
 
   dim3 blockSize(256);
   dim3 numBlocks((input_size + 255) / 256);
@@ -47,13 +47,13 @@ extern "C" void batchnorm_kernel(const float *h_input, float *h_output,
   batchnorm<<<numBlocks, blockSize>>>(d_input, d_output, d_mean, d_variance,
                                       d_gamma, d_beta);
 
-  cudaMemcpy(h_output, d_output, input_size * sizeof(float),
-             cudaMemcpyDeviceToHost);
+  hipMemcpy(h_output, d_output, input_size * sizeof(float),
+             hipMemcpyDeviceToHost);
 
-  cudaFree(d_input);
-  cudaFree(d_output);
-  cudaFree(d_mean);
-  cudaFree(d_variance);
-  cudaFree(d_gamma);
-  cudaFree(d_beta);
+  hipFree(d_input);
+  hipFree(d_output);
+  hipFree(d_mean);
+  hipFree(d_variance);
+  hipFree(d_gamma);
+  hipFree(d_beta);
 }
