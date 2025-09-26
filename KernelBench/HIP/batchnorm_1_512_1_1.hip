@@ -32,15 +32,15 @@ extern "C" void batchnorm_kernel(const float *h_input, float *h_output,
   hipMalloc(&d_beta, num_channels * sizeof(float));
 
   hipMemcpy(d_input, h_input, input_size * sizeof(float),
-             hipMemcpyHostToDevice);
+            hipMemcpyHostToDevice);
   hipMemcpy(d_mean, h_mean, num_channels * sizeof(float),
-             hipMemcpyHostToDevice);
+            hipMemcpyHostToDevice);
   hipMemcpy(d_variance, h_variance, num_channels * sizeof(float),
-             hipMemcpyHostToDevice);
+            hipMemcpyHostToDevice);
   hipMemcpy(d_gamma, h_gamma, num_channels * sizeof(float),
-             hipMemcpyHostToDevice);
+            hipMemcpyHostToDevice);
   hipMemcpy(d_beta, h_beta, num_channels * sizeof(float),
-             hipMemcpyHostToDevice);
+            hipMemcpyHostToDevice);
 
   dim3 blockSize(256);
   dim3 numBlocks((input_size + 255) / 256);
@@ -49,7 +49,7 @@ extern "C" void batchnorm_kernel(const float *h_input, float *h_output,
                                       d_gamma, d_beta);
 
   hipMemcpy(h_output, d_output, input_size * sizeof(float),
-             hipMemcpyDeviceToHost);
+            hipMemcpyDeviceToHost);
 
   hipFree(d_input);
   hipFree(d_output);
