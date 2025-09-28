@@ -6,7 +6,7 @@ constexpr int H = 14;
 constexpr int W = 14;
 constexpr int TOTAL_ELEMENTS = N * C * H * W;
 
-__global__ void scatter_kernel(const float *__restrict__ input,
+__global__ void scatter(const float *__restrict__ input,
                                const int *__restrict__ indices,
                                float *__restrict__ output) {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -56,7 +56,7 @@ extern "C" void scatter_kernel(const float *h_input, const int *h_indices,
   int total_threads = TOTAL_ELEMENTS;
   int grid_size = (total_threads + block_size - 1) / block_size;
 
-  scatter_kernel<<<grid_size, block_size>>>(d_input, d_indices, d_output);
+  scatter<<<grid_size, block_size>>>(d_input, d_indices, d_output);
 
   cudaMemcpy(h_output, d_output, output_bytes, cudaMemcpyDeviceToHost);
 

@@ -3,11 +3,11 @@ import ctypes
 import os
 import subprocess
 import re
-
-import torch
 import json
-from evaluation.macros import CUDA_MACROS as macro
-from evaluation.utils import run_cuda_compilation as run_compilation
+import torch
+
+from evaluation.macros import HIP_MACROS as macro
+from evaluation.utils import run_hip_compilation as run_compilation
 
 
 def concat_reference(tensors, axis):
@@ -23,14 +23,14 @@ if __name__ == "__main__":
 
     base_name = os.path.basename(args.file)
     name = base_name.split("_")[0]
+
     config = json.loads(args.config)
     axis = config["axis"]
     try:
-        shape_parts = base_name.replace(f".cu", "").split("_")
+        shape_parts = base_name.replace(f".hip", "").split("_")
         N, C, H, W = map(int, shape_parts[1:5])
     except Exception as e:
         raise ValueError(f"Invalid filename format: {base_name}") from e
-
     print(f"Testing {name.upper()} | Shape: [{N},{C},{H},{W}] | Axis: {axis}")
 
     input1 = torch.rand(N, C, H, W, dtype=torch.float32)
@@ -44,18 +44,18 @@ if __name__ == "__main__":
     output_flat = torch.zeros_like(expected.flatten())
     output_ptr = output_flat.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
-    so_name = args.file.replace(".cu", ".so")
+    so_name = args.file.replace(".hip", ".so")
 
     with open(args.file, "r") as f:
         code = f.read()
     code = macro + code
 
-    temp_file = args.file.replace(".cu", "_bak.cu")
+    temp_file = args.file.replace(".hip", "_bak.hip")
     with open(temp_file, "w") as f:
         f.write(code)
 
     print(f"Compiling {temp_file} -> {so_name}")
-    success, log = run_compilation(so_name, temp_file)
+    success, log = run_compilation(so_name, temp_file, target=args.target)
     if not success:
         print("Compilation failed:")
         print(log)
