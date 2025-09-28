@@ -2481,5 +2481,309 @@
             64
         ],
         "axes": 1
+    },
+   {
+        "op_name": "instancenorm",
+        "dtype": "float32",
+        "args": [1, 3, 224, 224]
+    },
+    {
+        "op_name": "instancenorm",
+        "dtype": "float32",
+        "args": [1, 64, 112, 112]
+    },
+    {
+        "op_name": "instancenorm",
+        "dtype": "float32",
+        "args": [1, 128, 56, 56]
+    },
+    {
+        "op_name": "instancenorm",
+        "dtype": "float32",
+        "args": [1, 256, 28, 28]
+    },
+    {
+        "op_name": "instancenorm",
+        "dtype": "float32",
+        "args": [1, 512, 14, 14]
+    },
+    {
+        "op_name": "instancenorm",
+        "dtype": "float32",
+        "args": [1, 512, 7, 7]
+    },
+    {
+        "op_name": "instancenorm",
+        "dtype": "float32",
+        "args": [4, 3, 256, 256]
+    },
+    {
+        "op_name": "instancenorm",
+        "dtype": "float32",
+        "args": [1, 1, 64, 64]
+    },
+    {
+        "op_name": "dense",
+        "dtype": "float32",
+        "args": [1, 64, 64]
+    },
+    {
+        "op_name": "dense",
+        "dtype": "float32",
+        "args": [1, 128, 128]
+    },
+    {
+        "op_name": "dense",
+        "dtype": "float32",
+        "args": [1, 256, 256]
+    },
+    {
+        "op_name": "dense",
+        "dtype": "float32",
+        "args": [1, 512, 512]
+    },
+    {
+        "op_name": "dense",
+        "dtype": "float32",
+        "args": [1, 768, 768]
+    },
+    {
+        "op_name": "dense",
+        "dtype": "float32",
+        "args": [1, 1024, 1024]
+    },
+    {
+        "op_name": "dense",
+        "dtype": "float32",
+        "args": [4, 512, 512]
+    },
+    {
+        "op_name": "dense",
+        "dtype": "float32",
+        "args": [8, 768, 3072]
+    },
+    {
+        "op_name": "concate",
+        "dtype": "float32",
+        "args": [1, 64, 56, 56],
+        "axis": 1
+    },
+    {
+        "op_name": "concate",
+        "dtype": "float32",
+        "args": [1, 128, 28, 28],
+        "axis": 1
+    },
+    {
+        "op_name": "concate",
+        "dtype": "float32",
+        "args": [1, 256, 14, 14],
+        "axis": 1
+    },
+    {
+        "op_name": "concate",
+        "dtype": "float32",
+        "args": [1, 512, 7, 7],
+        "axis": 1
+    },
+    {
+        "op_name": "concate",
+        "dtype": "float32",
+        "args": [4, 32, 112, 112],
+        "axis": 1
+    },
+    {
+        "op_name": "concate",
+        "dtype": "float32",
+        "args": [1, 64, 56, 112],
+        "axis": 3
+    },
+    {
+        "op_name": "concate",
+        "dtype": "float32",
+        "args": [1, 64, 112, 56],
+        "axis": 2
+    },
+    {
+        "op_name": "concate",
+        "dtype": "float32",
+        "args": [8, 768, 1, 1],
+        "axis": 1
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [1, 64, 56, 56],
+        "axis": 1
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [1, 128, 28, 28],
+        "axis": 1
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [1, 256, 14, 14],
+        "axis": 1
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [1, 512, 7, 7],
+        "axis": 1
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [4, 32, 112, 112],
+        "axis": 1
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [1, 64, 56, 112],
+        "axis": 3
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [1, 64, 112, 56],
+        "axis": 2
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [8, 768, 1, 1],
+        "axis": 1
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [1, 64, 56, 56],
+        "axis": 1
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [1, 128, 28, 28],
+        "axis": 1
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [1, 256, 14, 14],
+        "axis": 1
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [1, 512, 7, 7],
+        "axis": 1
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [4, 32, 112, 112],
+        "axis": 1
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [1, 64, 56, 112],
+        "axis": 3
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [1, 64, 112, 56],
+        "axis": 2
+    },
+    {
+        "op_name": "scatter",
+        "dtype": "float32",
+        "args": [8, 768, 1, 1],
+        "axis": 1
+    },
+    {
+        "op_name": "gatemlp",
+        "dtype": "float32",
+        "args": [1, 64, 64]
+    },
+    {
+        "op_name": "gatemlp",
+        "dtype": "float32",
+        "args": [1, 128, 128]
+    },
+    {
+        "op_name": "gatemlp",
+        "dtype": "float32",
+        "args": [1, 256, 256]
+    },
+    {
+        "op_name": "gatemlp",
+        "dtype": "float32",
+        "args": [1, 512, 512]
+    },
+    {
+        "op_name": "gatemlp",
+        "dtype": "float32",
+        "args": [1, 768, 768]
+    },
+    {
+        "op_name": "gatemlp",
+        "dtype": "float32",
+        "args": [1, 1024, 1024]
+    },
+    {
+        "op_name": "gatemlp",
+        "dtype": "float32",
+        "args": [4, 512, 512]
+    },
+    {
+        "op_name": "gatemlp",
+        "dtype": "float32",
+        "args": [8, 768, 3072]
+    },
+    {
+        "op_name": "gqa",
+        "dtype": "float32",
+        "args": [1, 64, 768, 12]
+    },
+    {
+        "op_name": "gqa",
+        "dtype": "float32",
+        "args": [1, 128, 768, 12]
+    },
+    {
+        "op_name": "gqa",
+        "dtype": "float32",
+        "args": [1, 256, 768, 12]
+    },
+    {
+        "op_name": "gqa",
+        "dtype": "float32",
+        "args": [1, 512, 768, 12]
+    },
+    {
+        "op_name": "gqa",
+        "dtype": "float32",
+        "args": [4, 128, 1024, 16]
+    },
+    {
+        "op_name": "gqa",
+        "dtype": "float32",
+        "args": [8, 64, 2048, 32]
+    },
+    {
+        "op_name": "gqa",
+        "dtype": "float32",
+        "args": [1, 2048, 4096, 32]
+    },
+    {
+        "op_name": "gqa",
+        "dtype": "float32",
+        "args": [8, 1024, 8192, 64]
     }
 ]
