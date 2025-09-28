@@ -41,16 +41,16 @@ extern "C" void scatter_kernel(const float *h_input, const int *h_indices,
   int *d_indices;
   float *d_output;
 
-  cudaMalloc(&d_input, input_bytes);
-  cudaMalloc(&d_indices, indices_bytes);
-  cudaMalloc(&d_output, output_bytes);
+  hipMalloc(&d_input, input_bytes);
+  hipMalloc(&d_indices, indices_bytes);
+  hipMalloc(&d_output, output_bytes);
 
   // Copy input data (acts as base for output)
-  cudaMemcpy(d_input, h_input, input_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_indices, h_indices, indices_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_input, h_input, input_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_indices, h_indices, indices_bytes, hipMemcpyHostToDevice);
 
   // Initialize output with input values
-  cudaMemcpy(d_output, d_input, input_bytes, cudaMemcpyDeviceToDevice);
+  hipMemcpy(d_output, d_input, input_bytes, hipMemcpyDeviceToDevice);
 
   const int block_size = 256;
   int total_threads = TOTAL_ELEMENTS;
@@ -58,9 +58,9 @@ extern "C" void scatter_kernel(const float *h_input, const int *h_indices,
 
   scatter<<<grid_size, block_size>>>(d_input, d_indices, d_output);
 
-  cudaMemcpy(h_output, d_output, output_bytes, cudaMemcpyDeviceToHost);
+  hipMemcpy(h_output, d_output, output_bytes, hipMemcpyDeviceToHost);
 
-  cudaFree(d_input);
-  cudaFree(d_indices);
-  cudaFree(d_output);
+  hipFree(d_input);
+  hipFree(d_indices);
+  hipFree(d_output);
 }
