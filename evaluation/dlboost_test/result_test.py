@@ -45,7 +45,7 @@ TEST_SCRIPT_MAP = {
     "sin": "test_sin.py",
     "scatter": "test_scatter.py",
     "instancenorm": "test_instancenorm.py",
-    "concate": "test_concate",
+    "concat": "test_concat",
 }
 
 
