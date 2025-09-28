@@ -37,7 +37,7 @@ if __name__ == "__main__":
         N, C, H, W = map(int, shape_parts[1:5])
     except Exception as e:
         raise ValueError(f"Invalid filename format: {base_name}") from e
-    print(f"Testing {name.upper()} | Shape: [{N},{C},{H},{W}] | Axis: {dim}")
+    print(f"Testing {kernel_name.upper()} | Shape: [{N},{C},{H},{W}] | Axis: {dim}")
 
     try:
         shape_str = base_name.replace(f".hip", "")

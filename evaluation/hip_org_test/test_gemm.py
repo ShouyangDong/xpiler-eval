@@ -32,9 +32,9 @@ if __name__ == "__main__":
 
     M, K, N = shape  # Matrix dimensions: A (M x K), x (K x N), y (M x N)
 
-    # Create input tensors using PyTorch (float16 for input, common in mixed-precision)
-    A = torch.ones((M, K), dtype=torch.float16)
-    x = torch.ones((K, N), dtype=torch.float16)
+    # Create input tensors using PyTorch (float32 for input, common in mixed-precision)
+    A = torch.ones((M, K), dtype=torch.float32)
+    x = torch.ones((K, N), dtype=torch.float32)
 
     # Compute reference result using PyTorch matmul
     y_torch = torch.matmul(A, x).to(torch.float32)  # Result is in float32 (promotion)
@@ -44,9 +44,9 @@ if __name__ == "__main__":
     x_cont = x.contiguous()
     y_torch_cont = y_torch.contiguous()
 
-    # Get raw pointers (float16 stored as uint16 in memory)
-    A_ptr = ctypes.cast(A_cont.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
-    x_ptr = ctypes.cast(x_cont.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
+    # Get raw pointers (float32 stored as uint16 in memory)
+    A_ptr = ctypes.cast(A_cont.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    x_ptr = ctypes.cast(x_cont.data_ptr(), ctypes.POINTER(ctypes.c_float))
 
     # Output tensor (float32)
     y_ctypes_torch = torch.zeros((M, N), dtype=torch.float32).contiguous()
@@ -83,8 +83,8 @@ if __name__ == "__main__":
 
     # Define function signature
     function.argtypes = [
-        ctypes.POINTER(ctypes.c_uint16),  # A (float16 data)
-        ctypes.POINTER(ctypes.c_uint16),  # x (float16 data)
+        ctypes.POINTER(ctypes.c_float),  # A (float32 data)
+        ctypes.POINTER(ctypes.c_float),  # x (float32 data)
         ctypes.POINTER(ctypes.c_float),   # y (float32 output)
         ctypes.c_int,                     # M
         ctypes.c_int,                     # K
