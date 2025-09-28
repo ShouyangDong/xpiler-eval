@@ -107,7 +107,7 @@ def conv2d_nhwc(
     return output_nhwc
 
 
-def run_dlboost_compilation(so_name, file_name):
+def run_cpp_compilation(so_name, file_name):
     try:
         output = subprocess.run(
             [

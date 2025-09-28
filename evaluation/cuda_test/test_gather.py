@@ -5,7 +5,7 @@ import os
 
 import torch
 
-from evaluation.utils import run_dlboost_compilation as run_compilation
+from evaluation.utils import run_cpp_compilation as run_compilation
 
 # Define the gather function using PyTorch
 
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     with open(temp_file, "w") as f:
         f.write(code)
 
-    # Compile using dlboost
+    # Compile using cpp
     success, compile_output = run_compilation(so_name, temp_file)
     if not success:
         print(f"❌ Compilation failed:\n{compile_output}")
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     print(f"🚀 Running CUDA kernel: {kernel_name}")
     kernel_func(params_ptr, indices_ptr, output_ptr)
 
-    # Synchronize GPU (if needed, though dlboost may handle it)
+    # Synchronize GPU (if needed, though cpp may handle it)
     try:
         torch.cuda.synchronize()
     except BaseException:

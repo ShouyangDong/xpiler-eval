@@ -13,7 +13,7 @@ HIP_MACROS = """
 """
 
 
-DLBOOST_MACROS = """
+CPP_MACROS = """
 #include <stdio.h>
 #include <immintrin.h>
 #include <time.h>
