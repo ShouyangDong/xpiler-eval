@@ -40,6 +40,9 @@ TEST_FILE_MAPPING = {
     "mean": "test_mean.py",
     "batchnorm": "test_batchnorm.py",
     "sub": "test_sub.py",
+    "scatter": "test_scatter.py",
+    "instancenorm": "test_instancenorm.py",
+    "concat": "test_concat",
 }
 
 

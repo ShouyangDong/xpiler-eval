@@ -1,0 +1,8 @@
+// Auto-generated: scatter with args [8, 768, 1, 1]
+// TODO: Implement kernel for scatter_8_768_1_1.mlu
+
+#include <iostream>
+
+void scatter_8_768_1_1.mlu() {
+    std::cout << "Running scatter_8_768_1_1.mlu..." << std::endl;
+}
