@@ -3,11 +3,11 @@ import ctypes
 import os
 import subprocess
 import re
-import json
+
 import torch
 
-from evaluation.macros import CUDA_MACROS as macro
-from evaluation.utils import run_cuda_compilation as run_compilation
+from evaluation.macros import CPP_MACROS as macro
+from evaluation.utils import run_cpp_compilation as run_compilation
 
 
 def scatter_reference(self_tensor, indices_tensor, src_tensor, dim):
@@ -29,10 +29,15 @@ if __name__ == "__main__":
 
     base_name = os.path.basename(args.file)
     kernel_name = base_name.split("_")[0]
-    config =json.loads(args.config)
-    dim = config["axis"]
+
+    # Parse dim from filename: scatter_1_64_56_112_dim3.cpp
+    dim_match = re.search(r"_dim(\d)\.cpp", base_name)
+    if not dim_match:
+        raise ValueError("Filename must contain _dimN.cpp to specify dimension")
+    dim = int(dim_match.group(1))
+
     try:
-        shape_str = base_name.replace(f".cu", "")
+        shape_str = base_name.replace(f"_dim{dim}.cpp", "")
         N, C, H, W = map(int, shape_str.split("_")[1:5])
     except Exception as e:
         raise ValueError(f"Invalid filename format: {base_name}") from e
@@ -56,14 +61,14 @@ if __name__ == "__main__":
     output_flat = torch.zeros_like(self_tensor).flatten()
     output_ptr = output_flat.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
-    so_name = args.file.replace(".cu", ".so")
+    so_name = args.file.replace(".cpp", ".so")
 
     # Inject macros and save temp file
     with open(args.file, "r") as f:
         code = f.read()
     code = macro + code
 
-    temp_file = args.file.replace(".cu", "_bak.cu")
+    temp_file = args.file.replace(".cpp", "_bak.cpp")
     with open(temp_file, "w") as f:
         f.write(code)
 

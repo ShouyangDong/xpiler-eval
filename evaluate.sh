@@ -77,7 +77,7 @@ fi
 
 # === Platform mappings ===
 declare -A TARGET_TO_BACKEND=(
-    ["cpu"]="dlboost"
+    ["cpu"]="cpp"
     ["mlu"]="mlu"
     ["cuda"]="cuda"
     ["hip"]="hip"

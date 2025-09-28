@@ -10,8 +10,8 @@ import sys
 
 import torch
 
-from evaluation.macros import DLBOOST_MACROS as macro
-from evaluation.utils import run_dlboost_compilation as run_compilation
+from evaluation.macros import CPP_MACROS as macro
+from evaluation.utils import run_cpp_compilation as run_compilation
 
 
 # --- Golden Reference Function ---

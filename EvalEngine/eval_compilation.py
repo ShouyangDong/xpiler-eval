@@ -2,7 +2,7 @@
 Unified kernel compiler for multiple backends:
   - cuda   : .cu  → NVCC
   - hip    : .hip → HIPCC / clang++
-  - dlboost: .cpp → g++ / clang++
+  - cpp: .cpp → g++ / clang++
   - mlu    : .mlu → cncc (Cambricon)
 
 Each backend uses its own macros and compiler function.
@@ -10,7 +10,7 @@ Each backend uses its own macros and compiler function.
 Usage:
   python compile_kernels.py --backend cuda ./kernels/cuda/
   python compile_kernels.py --backend hip ./kernels/hip/
-  python compile_kernels.py --backend dlboost ./kernels/dlboost/
+  python compile_kernels.py --backend cpp ./kernels/cpp/
   python compile_kernels.py --backend mlu ./kernels/mlu/
 """
 
@@ -25,13 +25,13 @@ from tqdm import tqdm
 # Ensure these are defined in the respective modules.
 from evaluation.macros import (
     CUDA_MACROS,
-    DLBOOST_MACROS,
+    CPP_MACROS,
     HIP_MACROS,
     MLU_MACROS,
 )
 from evaluation.utils import (
     run_cuda_compilation,
-    run_dlboost_compilation,
+    run_cpp_compilation,
     run_hip_compilation,
     run_mlu_compilation,
 )
@@ -74,7 +74,7 @@ def compile_file(file_path, backend):
 
     Args:
         file_path (str): Path to the source file.
-        backend (str): Backend name ('cuda', 'hip', 'dlboost', 'mlu').
+        backend (str): Backend name ('cuda', 'hip', 'cpp', 'mlu').
 
     Returns:
         bool: True if compilation succeeded, False otherwise.
@@ -138,10 +138,10 @@ BACKEND_CONFIG = {
         "desc": "AMD HIP",
         "executor": ThreadPoolExecutor,  # CPU-bound
     },
-    "dlboost": {
+    "cpp": {
         "ext": ".cpp",
-        "macros": DLBOOST_MACROS,
-        "compiler": run_dlboost_compilation,
+        "macros": CPP_MACROS,
+        "compiler": run_cpp_compilation,
         "desc": "DLBoost (PyTorch C++)",
         "executor": ThreadPoolExecutor,
     },
@@ -167,7 +167,7 @@ def main():
         "--backend",
         choices=BACKEND_CONFIG.keys(),
         required=True,
-        help="Target backend: cuda | hip | dlboost | mlu"
+        help="Target backend: cuda | hip | cpp | mlu"
     )
     parser.add_argument(
         "--jobs",

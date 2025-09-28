@@ -5,7 +5,7 @@ import os
 import torch
 
 from evaluation.macros import CUDA_MACROS as macro
-from evaluation.utils import run_dlboost_compilation as run_compilation
+from evaluation.utils import run_cpp_compilation as run_compilation
 
 # Define the sin function using torch
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     with open(temp_file, "w") as f:
         f.write(code)
 
-    # Compile using dlboost
+    # Compile using cpp
     success, compile_output = run_compilation(so_name, temp_file)
     if not success:
         print(f"❌ Compilation failed:\n{compile_output}")
