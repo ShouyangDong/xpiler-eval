@@ -43,6 +43,9 @@ TEST_SCRIPT_MAP = {
     "batchnorm": "test_batchnorm.py",
     "sub": "test_sub.py",
     "sin": "test_sin.py",
+    "instancenorm": "test_instancenorm.py",
+    "concat": "test_concat.py",
+    "scatter": "test_scatter.py",
 }
 
 
