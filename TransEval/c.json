@@ -2539,97 +2539,49 @@
         "args": [8, 768, 3072]
     },
     {
-        "op_name": "concate",
+        "op_name": "concat",
         "dtype": "float32",
         "args": [1, 64, 56, 56],
         "axis": 1
     },
     {
-        "op_name": "concate",
+        "op_name": "concat",
         "dtype": "float32",
         "args": [1, 128, 28, 28],
         "axis": 1
     },
     {
-        "op_name": "concate",
+        "op_name": "concat",
         "dtype": "float32",
         "args": [1, 256, 14, 14],
         "axis": 1
     },
     {
-        "op_name": "concate",
+        "op_name": "concat",
         "dtype": "float32",
         "args": [1, 512, 7, 7],
         "axis": 1
     },
     {
-        "op_name": "concate",
+        "op_name": "concat",
         "dtype": "float32",
         "args": [4, 32, 112, 112],
         "axis": 1
     },
     {
-        "op_name": "concate",
+        "op_name": "concat",
         "dtype": "float32",
         "args": [1, 64, 56, 112],
         "axis": 3
     },
     {
-        "op_name": "concate",
+        "op_name": "concat",
         "dtype": "float32",
         "args": [1, 64, 112, 56],
         "axis": 2
     },
     {
-        "op_name": "concate",
-        "dtype": "float32",
-        "args": [8, 768, 1, 1],
-        "axis": 1
-    },
-    {
-        "op_name": "scatter",
-        "dtype": "float32",
-        "args": [1, 64, 56, 56],
-        "axis": 1
-    },
-    {
-        "op_name": "scatter",
-        "dtype": "float32",
-        "args": [1, 128, 28, 28],
-        "axis": 1
-    },
-    {
-        "op_name": "scatter",
-        "dtype": "float32",
-        "args": [1, 256, 14, 14],
-        "axis": 1
-    },
-    {
-        "op_name": "scatter",
-        "dtype": "float32",
-        "args": [1, 512, 7, 7],
-        "axis": 1
-    },
-    {
-        "op_name": "scatter",
-        "dtype": "float32",
-        "args": [4, 32, 112, 112],
-        "axis": 1
-    },
-    {
-        "op_name": "scatter",
-        "dtype": "float32",
-        "args": [1, 64, 56, 112],
-        "axis": 3
-    },
-    {
-        "op_name": "scatter",
-        "dtype": "float32",
-        "args": [1, 64, 112, 56],
-        "axis": 2
-    },
-    {
-        "op_name": "scatter",
+        "op_name": "concat",
         "dtype": "float32",
         "args": [8, 768, 1, 1],
         "axis": 1
