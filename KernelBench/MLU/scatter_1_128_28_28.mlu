@@ -1,0 +1,8 @@
+// Auto-generated: scatter with args [1, 128, 28, 28]
+// TODO: Implement kernel for scatter_1_128_28_28.mlu
+
+#include <iostream>
+
+void scatter_1_128_28_28.mlu() {
+    std::cout << "Running scatter_1_128_28_28.mlu..." << std::endl;
+}

@@ -1,0 +1,8 @@
+// Auto-generated: concat with args [1, 512, 7, 7]
+// TODO: Implement kernel for concat_1_512_7_7.mlu
+
+#include <iostream>
+
+void concat_1_512_7_7.mlu() {
+    std::cout << "Running concat_1_512_7_7.mlu..." << std::endl;
+}
