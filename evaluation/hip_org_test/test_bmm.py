@@ -2,7 +2,6 @@ import argparse
 import ctypes
 import os
 import subprocess
-
 import torch
 
 from evaluation.macros import HIP_MACROS as macro
@@ -16,7 +15,7 @@ def batch_matmul(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
     B: (batch_size, j, k)
     Output: (batch_size, i, k)
     """
-    return torch.matmul(A, B).to(torch.float32)
+    return torch.matmul(A, B)
 
 
 if __name__ == "__main__":
@@ -38,87 +37,85 @@ if __name__ == "__main__":
     base_name = os.path.basename(args.file)
     shapes = base_name.split(".")[0]
     shape = [int(dim) for dim in shapes.split("_")[1:]]
-    name = base_name.split("_")[0]  # Kernel name prefix
+    name = base_name.split("_")[0]
 
-    # Parse shape: batch_size, i, j, k
     batch_size, matrix_dim_i, matrix_dim_j, matrix_dim_k = shape
 
-    # Generate input tensors using PyTorch (float16 for input, as in original)
-    A = torch.ones((batch_size, matrix_dim_i, matrix_dim_j), dtype=torch.float16)
-    B = torch.ones((batch_size, matrix_dim_j, matrix_dim_k), dtype=torch.float16)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if not torch.cuda.is_available():
+        print("[ERROR] ROCm not available. Please install PyTorch with ROCm support.")
+        exit(1)
 
-    # Compute expected result using PyTorch
-    result_torch = batch_matmul(A, B)  # Result is in float32 (matmul promotes)
+    # Create input tensors on AMD GPU
+    A = torch.ones((batch_size, matrix_dim_i, matrix_dim_j), dtype=torch.float32, device=device)
+    B = torch.ones((batch_size, matrix_dim_j, matrix_dim_k), dtype=torch.float32, device=device)
 
-    # Ensure tensors are contiguous for ctypes pointer access
-    A_cont = A.contiguous()
-    B_cont = B.contiguous()
-    result_torch_cont = result_torch.contiguous()
+    # Perform batch matmul on GPU
+    result_torch = batch_matmul(A, B)
 
-    # Get raw pointers to tensor data
-    # float16 is stored as uint16 in memory
-    A_ptr = ctypes.cast(A_cont.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
-    B_ptr = ctypes.cast(B_cont.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
+    # Move reference result to CPU for comparison
+    result_torch_cpu = result_torch.cpu().contiguous()
 
-    # Output tensor uses float32
-    result_ctypes_torch = torch.zeros(
+    # Host tensors for kernel (CPU memory)
+    A_host = A.cpu().contiguous()
+    B_host = B.cpu().contiguous()
+
+    # Output tensor (CPU)
+    result_ctypes = torch.zeros(
         (batch_size, matrix_dim_i, matrix_dim_k), dtype=torch.float32
     ).contiguous()
-    output_ptr = ctypes.cast(result_ctypes_torch.data_ptr(), ctypes.POINTER(ctypes.c_float))
+
+    # Get raw pointers (CPU memory)
+    A_ptr = ctypes.cast(A_host.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    B_ptr = ctypes.cast(B_host.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    output_ptr = ctypes.cast(result_ctypes.data_ptr(), ctypes.POINTER(ctypes.c_float))
 
     # Shared library name
     so_name = args.file.replace(".hip", ".so")
 
-    # Read original HIP source
+    # Read and inject macros
     with open(args.file, "r") as f:
         code = f.read()
 
-    # Inject macros (e.g., config definitions)
     code = macro + code
 
-    # Create temporary .hip file with macros
+    # Write to temporary .hip file
     file_name = args.file.replace(base_name.replace(".hip", ""), base_name + "_bak.hip")
     with open(file_name, "w") as f:
         f.write(code)
 
-    # Compile the kernel
+    # Compile kernel
     success, output = run_compilation(so_name, file_name)
     if not success:
         print("[ERROR] Compilation failed:")
         print(output)
         exit(1)
 
-    # Clean up temporary source file
     os.remove(file_name)
 
-    # Load the compiled shared library
+    # Load and call kernel
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    function = getattr(lib, name + "_kernel")
+    kernel_func = getattr(lib, name + "_kernel")
 
-    # Define function signature
-    function.argtypes = [
-        ctypes.POINTER(ctypes.c_uint16),  # A (float16 data as uint16)
-        ctypes.POINTER(ctypes.c_uint16),  # B (float16 data as uint16)
-        ctypes.POINTER(ctypes.c_float),   # Output (float32)
-        ctypes.c_int,                     # batch_size
-        ctypes.c_int,                     # i (matrix_dim_i)
-        ctypes.c_int,                     # j (matrix_dim_j)
-        ctypes.c_int,                     # k (matrix_dim_k)
+    kernel_func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
     ]
-    function.restype = None
+    kernel_func.restype = None
 
-    # Call the HIP kernel
-    function(A_ptr, B_ptr, output_ptr, batch_size, matrix_dim_i, matrix_dim_j, matrix_dim_k)
+    kernel_func(A_ptr, B_ptr, output_ptr, batch_size, matrix_dim_i, matrix_dim_j, matrix_dim_k)
 
     # Verify results
-    if torch.allclose(result_ctypes_torch, result_torch, rtol=1e-3, atol=1e-3, equal_nan=True):
+    if torch.allclose(result_ctypes, result_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True):
         print("✅ Verification successful! Results match.")
     else:
         print("❌ Verification failed! Results do not match.")
-        # Optional: print first few elements
-        print("Expected (PyTorch):", result_torch.flatten()[:10].tolist())
-        print("Got (Kernel):", result_ctypes_torch.flatten()[:10].tolist())
         exit(1)
 
-    # Clean up compiled library
+    # Clean up
     subprocess.run(["rm", so_name], check=False)
