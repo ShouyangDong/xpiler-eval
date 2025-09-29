@@ -4,5 +4,5 @@
 #include <iostream>
 
 void gatemlp_1_512_512() {
-    std::cout << "Running gatemlp_1_512_512.cpp..." << std::endl;
+  std::cout << "Running gatemlp_1_512_512.cpp..." << std::endl;
 }

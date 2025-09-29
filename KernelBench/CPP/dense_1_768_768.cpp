@@ -4,5 +4,5 @@
 #include <iostream>
 
 void dense_1_768_768() {
-    std::cout << "Running dense_1_768_768.cpp..." << std::endl;
+  std::cout << "Running dense_1_768_768.cpp..." << std::endl;
 }

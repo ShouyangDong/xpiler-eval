@@ -45,9 +45,7 @@ def compile_cpp_file(file_path):
 
 def main():
     if len(sys.argv) != 2:
-        print(
-            f"Usage: {sys.argv[0]} <cpp_source_directory>", file=sys.stderr
-        )
+        print(f"Usage: {sys.argv[0]} <cpp_source_directory>", file=sys.stderr)
         sys.exit(1)
 
     src_dir = sys.argv[1]

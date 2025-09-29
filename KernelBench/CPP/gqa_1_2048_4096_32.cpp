@@ -4,5 +4,5 @@
 #include <iostream>
 
 void gqa_1_2048_4096_32() {
-    std::cout << "Running gqa_1_2048_4096_32.cpp..." << std::endl;
+  std::cout << "Running gqa_1_2048_4096_32.cpp..." << std::endl;
 }

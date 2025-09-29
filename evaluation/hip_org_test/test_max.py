@@ -60,7 +60,6 @@ def main():
         f"🔍 Testing {op_name.upper()} on HIP with shape {shape}, dtype={dtype_str}, axes={axis}"
     )
 
-
     dtype_map = {
         "float32": torch.float32,
         "float16": torch.float16,

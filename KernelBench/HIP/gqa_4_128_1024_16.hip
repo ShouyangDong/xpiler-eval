@@ -4,5 +4,5 @@
 #include <iostream>
 
 void gqa_4_128_1024_16.hip() {
-    std::cout << "Running gqa_4_128_1024_16.hip..." << std::endl;
+  std::cout << "Running gqa_4_128_1024_16.hip..." << std::endl;
 }

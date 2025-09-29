@@ -17,11 +17,11 @@ extern "C" void scatter(const float *input, const int *indices, float *output) {
         for (int c_idx = 0; c_idx < C; c_idx++) {
           // Get the target channel index from the indices tensor
           int target_c = indices[n * C * H * W + c_idx * H * W + h * W + w];
-          
+
           // Bounds check
           if (target_c >= 0 && target_c < 128) {
             // Scatter: output[n][target_c][h][w] = input[n][c_idx][h][w]
-            output[n * 128 * H * W + target_c * H * W + h * W + w] = 
+            output[n * 128 * H * W + target_c * H * W + h * W + w] =
                 input[n * C * H * W + c_idx * H * W + h * W + w];
           }
         }

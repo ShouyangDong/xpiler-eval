@@ -4,5 +4,5 @@
 #include <iostream>
 
 void dense_1_1024_1024() {
-    std::cout << "Running dense_1_1024_1024.cpp..." << std::endl;
+  std::cout << "Running dense_1_1024_1024.cpp..." << std::endl;
 }

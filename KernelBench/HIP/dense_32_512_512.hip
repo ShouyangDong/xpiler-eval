@@ -6,36 +6,37 @@
 #define N_outer 512
 #define K_outer 512
 
-__global__ void dense(const float *A, const float *B, const float *C,  float *D) {
-    int m_base = blockIdx.x * M;
-    int n_base = blockIdx.y * N;
-    using float4 = __attribute__((__vector_size__(K * sizeof(float)))) float;
-    float4 dmn = {0};
-    for (int kk = 0; kk < K_outer; kk += K) {
-         int a_row = m_base + threadIdx.x;
-         int a_col = kk + threadIdx.y;
-         float amk = A[a_row * K_outer + a_col];
+__global__ void dense(const float *A, const float *B, const float *C,
+                      float *D) {
+  int m_base = blockIdx.x * M;
+  int n_base = blockIdx.y * N;
+  using float4 = __attribute__((__vector_size__(K * sizeof(float)))) float;
+  float4 dmn = {0};
+  for (int kk = 0; kk < K_outer; kk += K) {
+    int a_row = m_base + threadIdx.x;
+    int a_col = kk + threadIdx.y;
+    float amk = A[a_row * K_outer + a_col];
 
-         int b_row = kk + threadIdx.y;
-         int b_col = n_base + threadIdx.x;
-         float bkn = B[b_row * N_outer + b_col];
+    int b_row = kk + threadIdx.y;
+    int b_col = n_base + threadIdx.x;
+    float bkn = B[b_row * N_outer + b_col];
 
-         dmn = __builtin_amdgcn_mfma_f32_16x16x4f32(amk, bkn, dmn, 0, 0, 0);
+    dmn = __builtin_amdgcn_mfma_f32_16x16x4f32(amk, bkn, dmn, 0, 0, 0);
+  }
+  for (int i = 0; i < 4; ++i) {
+    int local_row = threadIdx.y * 4 + i;
+    int local_col = threadIdx.x;
+
+    int global_row = m_base + local_row;
+    int global_col = n_base + local_col;
+    if (global_row < M_outer && global_col < N_outer) {
+      D[global_row * N_outer + global_col] = dmn[i] + C[global_col];
     }
-    for (int i = 0; i < 4; ++i) {
-        int local_row = threadIdx.y * 4 + i; 
-        int local_col = threadIdx.x;
-
-        int global_row = m_base + local_row;
-        int global_col = n_base + local_col;
-        if (global_row < M_outer && global_col < N_outer) {
-            D[global_row * N_outer + global_col] = dmn[i] + C[global_col];
-        }
-    }
+  }
 }
 
-extern "C" void dense_kernel(float *A, float *B, float *C, float *D, int m, int k,
-                            int n) {
+extern "C" void dense_kernel(float *A, float *B, float *C, float *D, int m,
+                             int k, int n) {
   float *d_A;
   float *d_B;
   float *d_C;
@@ -49,8 +50,8 @@ extern "C" void dense_kernel(float *A, float *B, float *C, float *D, int m, int 
   hipMemcpy(d_A, A, m * k * sizeof(float), hipMemcpyHostToDevice);
   hipMemcpy(d_B, B, k * n * sizeof(float), hipMemcpyHostToDevice);
   hipMemcpy(d_C, C, n * sizeof(float), hipMemcpyHostToDevice);
-  dim3 grid((m + M -1 ) / M, (n + N - 1) / N); 
-  dim3 block(16, 4, 1);  
+  dim3 grid((m + M - 1) / M, (n + N - 1) / N);
+  dim3 block(16, 4, 1);
   dense<<<grid, block>>>(d_A, d_B, d_C, d_D);
 
   hipMemcpy(D, d_D, m * n * sizeof(float), hipMemcpyDeviceToHost);

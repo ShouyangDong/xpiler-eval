@@ -3,40 +3,45 @@ import ctypes
 import os
 import subprocess
 
-import torch  
+import torch
 
 from evaluation.macros import HIP_MACROS as macro
 from evaluation.utils import run_hip_compilation as run_compilation
 
 
 def ref_program(x):
-    """
-    Reference Sigmoid function using PyTorch.
+    """Reference Sigmoid function using PyTorch.
+
     Equivalent to: 1 / (1 + exp(-x))
     """
     return torch.sigmoid(x)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Validate Sigmoid HIP kernel output against PyTorch")
-    parser.add_argument("--file", type=str, help="Path to the source .hip file")
+    parser = argparse.ArgumentParser(
+        description="Validate Sigmoid HIP kernel output against PyTorch"
+    )
+    parser.add_argument(
+        "--file", type=str, help="Path to the source .hip file"
+    )
     parser.add_argument(
         "--config",
         required=True,
-        help="JSON string or path to kernel configuration file"
+        help="JSON string or path to kernel configuration file",
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform for compilation"
+        help="Target platform for compilation",
     )
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
     name = "sigmoid"
     shapes = base_name.split(".")[0]
-    shape = [int(dim) for dim in shapes.split("_")[1:]]  # e.g., [1024], [32, 768], etc.
+    # e.g., [1024], [32, 768], etc.
+    shape = [int(dim) for dim in shapes.split("_")[1:]]
 
     so_name = args.file.replace(".hip", ".so")
 
@@ -47,7 +52,9 @@ if __name__ == "__main__":
     code = macro + code  # Inject macros (e.g., config constants)
 
     # Write to temporary .hip file
-    file_name = args.file.replace(base_name.replace(".hip", ""), base_name + "_bak.hip")
+    file_name = args.file.replace(
+        base_name.replace(".hip", ""), base_name + "_bak.hip"
+    )
     with open(file_name, "w") as f:
         f.write(code)
 
@@ -68,13 +75,14 @@ if __name__ == "__main__":
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # input array
         ctypes.POINTER(ctypes.c_float),  # output array
-        ctypes.c_int,                    # total number of elements
+        ctypes.c_int,  # total number of elements
     ]
     function.restype = None
 
     # Create input tensor
     dtype = torch.float32
-    input_tensor = torch.randn(shape, dtype=dtype)  # Random input covering [-3, 3] range
+    # Random input covering [-3, 3] range
+    input_tensor = torch.randn(shape, dtype=dtype)
 
     # Compute reference output using PyTorch
     expected_output = ref_program(input_tensor)
@@ -88,14 +96,20 @@ if __name__ == "__main__":
     output_tensor = output_tensor.contiguous()
 
     # Get raw pointers
-    input_ptr = ctypes.cast(input_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    output_ptr = ctypes.cast(output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    input_ptr = ctypes.cast(
+        input_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
+    output_ptr = ctypes.cast(
+        output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
 
     # Call the Sigmoid kernel
     function(input_ptr, output_ptr, total_elements)
 
     # Verify results
-    if torch.allclose(output_tensor, expected_output, rtol=1e-3, atol=1e-3, equal_nan=True):
+    if torch.allclose(
+        output_tensor, expected_output, rtol=1e-3, atol=1e-3, equal_nan=True
+    ):
         print("✅ Verification successful! Results match.")
     else:
         print("❌ Verification failed! Results do not match.")

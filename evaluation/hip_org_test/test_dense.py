@@ -2,38 +2,44 @@ import argparse
 import ctypes
 import os
 import subprocess
-import torch
 
+import torch
 
 from evaluation.macros import HIP_MACROS as macro
 from evaluation.utils import run_hip_compilation as run_compilation
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Validate Dense (Linear) HIP kernel output against PyTorch")
-    parser.add_argument("--file", type=str, help="Path to the source .hip file")
+    parser = argparse.ArgumentParser(
+        description="Validate Dense (Linear) HIP kernel output against PyTorch"
+    )
+    parser.add_argument(
+        "--file", type=str, help="Path to the source .hip file"
+    )
     parser.add_argument(
         "--config",
         required=True,
-        help="JSON string or path to kernel configuration file"
+        help="JSON string or path to kernel configuration file",
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform for compilation"
+        help="Target platform for compilation",
     )
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
-    # Example filename: dense_16_1024_1024.hip → shape = [batch, in_feat, out_feat]
+    # Example filename: dense_16_1024_1024.hip → shape = [batch, in_feat,
+    # out_feat]
     shapes = base_name.split(".")[0]
     shape = [int(dim) for dim in shapes.split("_")[1:]]
-    
+
     name = base_name.split("_")[0]  # e.g., 'dense'
 
     if len(shape) != 3:
-        print("[ERROR] Filename should encode: dense_batch_in_features_out_features.hip")
+        print(
+            "[ERROR] Filename should encode: dense_batch_in_features_out_features.hip"
+        )
         exit(1)
 
     batch_size, in_features, out_features = shape
@@ -44,12 +50,18 @@ if __name__ == "__main__":
         print("[WARNING] ROCm not available. Running on CPU.")
 
     # Generate input and parameters
-    x = torch.randn(batch_size, in_features, dtype=torch.float32, device=device)
-    weight = torch.randn(out_features, in_features, dtype=torch.float32, device=device)
+    x = torch.randn(
+        batch_size, in_features, dtype=torch.float32, device=device
+    )
+    weight = torch.randn(
+        out_features, in_features, dtype=torch.float32, device=device
+    )
     bias = torch.randn(out_features, dtype=torch.float32, device=device)
 
     # Reference: PyTorch Linear forward
-    y_torch = torch.nn.functional.linear(x, weight, bias)  # shape: (batch_size, out_features)
+    y_torch = torch.nn.functional.linear(
+        x, weight, bias
+    )  # shape: (batch_size, out_features)
 
     # Move reference result to CPU for comparison
     y_torch_cpu = y_torch.cpu().contiguous()
@@ -60,12 +72,18 @@ if __name__ == "__main__":
     bias_host = bias.cpu().contiguous()
 
     # Output buffer (CPU)
-    y_kernel = torch.zeros(batch_size, out_features, dtype=torch.float32).contiguous()
+    y_kernel = torch.zeros(
+        batch_size, out_features, dtype=torch.float32
+    ).contiguous()
 
     # Get raw pointers
     x_ptr = ctypes.cast(x_host.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    weight_ptr = ctypes.cast(weight_host.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    bias_ptr = ctypes.cast(bias_host.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    weight_ptr = ctypes.cast(
+        weight_host.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
+    bias_ptr = ctypes.cast(
+        bias_host.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
     y_ptr = ctypes.cast(y_kernel.data_ptr(), ctypes.POINTER(ctypes.c_float))
 
     # Shared library name
@@ -101,18 +119,30 @@ if __name__ == "__main__":
         ctypes.POINTER(ctypes.c_float),  # weight (W)
         ctypes.POINTER(ctypes.c_float),  # bias (b)
         ctypes.POINTER(ctypes.c_float),  # output (y)
-        ctypes.c_int,                    # batch_size
-        ctypes.c_int,                    # in_features
-        ctypes.c_int,                    # out_features
+        ctypes.c_int,  # batch_size
+        ctypes.c_int,  # in_features
+        ctypes.c_int,  # out_features
     ]
     dense_func.restype = None
 
     # Call the Dense kernel
-    dense_func(x_ptr, weight_ptr, bias_ptr, y_ptr, batch_size, in_features, out_features)
+    dense_func(
+        x_ptr,
+        weight_ptr,
+        bias_ptr,
+        y_ptr,
+        batch_size,
+        in_features,
+        out_features,
+    )
 
     # Verify results
-    if torch.allclose(y_kernel, y_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True):
-        print("✅ Verification successful! Dense layer output matches PyTorch.")
+    if torch.allclose(
+        y_kernel, y_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True
+    ):
+        print(
+            "✅ Verification successful! Dense layer output matches PyTorch."
+        )
     else:
         print("❌ Verification failed! Results do not match.")
         exit(1)

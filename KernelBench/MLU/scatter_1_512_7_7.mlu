@@ -4,5 +4,5 @@
 #include <iostream>
 
 void scatter_1_512_7_7.mlu() {
-    std::cout << "Running scatter_1_512_7_7.mlu..." << std::endl;
+  std::cout << "Running scatter_1_512_7_7.mlu..." << std::endl;
 }

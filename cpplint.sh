@@ -2,7 +2,7 @@
 
 echo "Formatting C, HIP, MLU and CUDA files ..."
 
-find KernelBench/C -name "*.cpp" -exec clang-format -i {} \;
+find KernelBench/CPP -name "*.cpp" -exec clang-format -i {} \;
 
 find KernelBench/CUDA -name "*.cu" -exec clang-format -i {} \;
 

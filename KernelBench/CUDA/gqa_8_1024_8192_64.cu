@@ -4,5 +4,5 @@
 #include <iostream>
 
 void gqa_8_1024_8192_64.cu() {
-    std::cout << "Running gqa_8_1024_8192_64.cu..." << std::endl;
+  std::cout << "Running gqa_8_1024_8192_64.cu..." << std::endl;
 }

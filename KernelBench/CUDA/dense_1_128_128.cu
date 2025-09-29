@@ -4,5 +4,5 @@
 #include <iostream>
 
 void dense_1_128_128.cu() {
-    std::cout << "Running dense_1_128_128.cu..." << std::endl;
+  std::cout << "Running dense_1_128_128.cu..." << std::endl;
 }

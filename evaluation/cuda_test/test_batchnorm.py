@@ -34,7 +34,7 @@ def parse_filename(filename):
         raise ValueError(f"Invalid filename: {filename}")
 
     try:
-        shape_str = stem[len("batchnorm_"):]
+        shape_str = stem[len("batchnorm_") :]
         shape = list(map(int, shape_str.split("_")))
     except Exception as e:
         raise ValueError(f"Cannot parse shape from {stem}: {e}")
