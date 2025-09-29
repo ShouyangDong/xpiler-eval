@@ -2525,42 +2525,42 @@
     {
         "op_name": "dense",
         "dtype": "float32",
-        "args": [1, 64, 64]
+        "args": [16, 64, 64]
     },
     {
         "op_name": "dense",
         "dtype": "float32",
-        "args": [1, 128, 128]
+        "args": [16, 128, 128]
     },
     {
         "op_name": "dense",
         "dtype": "float32",
-        "args": [1, 256, 256]
+        "args": [16, 256, 256]
     },
     {
         "op_name": "dense",
         "dtype": "float32",
-        "args": [1, 512, 512]
+        "args": [16, 512, 512]
     },
     {
         "op_name": "dense",
         "dtype": "float32",
-        "args": [1, 768, 768]
+        "args": [64, 768, 768]
     },
     {
         "op_name": "dense",
         "dtype": "float32",
-        "args": [1, 1024, 1024]
+        "args": [16, 1024, 1024]
     },
     {
         "op_name": "dense",
         "dtype": "float32",
-        "args": [4, 512, 512]
+        "args": [32, 512, 512]
     },
     {
         "op_name": "dense",
         "dtype": "float32",
-        "args": [8, 768, 3072]
+        "args": [80, 768, 3072]
     },
     {
         "op_name": "concat",
