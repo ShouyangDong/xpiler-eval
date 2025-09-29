@@ -1,64 +1,58 @@
-__global__ void bmm(__half *A, __half *B, float *C) {
-  using float16x4 = __attribute__((__vector_size__(4 * sizeof(__half)))) __half;
-  using floatx4 = __attribute__((__vector_size__(4 * sizeof(float)))) float;
+#define M 16
+#define N 16
+#define K 4
 
-  const int LDA = 256;
-  const int LDB = 256;
-  const int LDC = 256;
-  const int BATCH_SIZE = 4;
+#define B_outer 4
+#define M_outer 256
+#define N_outer 256
+#define K_outer 256
 
-  int batch_id = blockIdx.z;
-  int c_row_base = (blockIdx.x % 8) * 16;
-  int c_col_base = (blockIdx.x / 8) * 16;
 
-  __half *batch_A = A + batch_id * 256 * 256;
-  __half *batch_B = B + batch_id * 256 * 256;
-  float *batch_C = C + batch_id * 256 * 256;
+__global__ void bmm(const float *A, const float *B, float *D) {
+    int m_base = blockIdx.x * M;
+    int n_base = blockIdx.y * N;
+    using float4 = __attribute__((__vector_size__(K * sizeof(float)))) float;
+    float4 dmn = {0};
 
-  floatx4 d = {0.0f};
+    for (int kk = 0; kk < K_outer; kk += K) {
+         int a_row = m_base + threadIdx.x;
+         int a_col = kk + threadIdx.y;
+         float amk = A[blockIdx.z * M_outer * K_outer + a_row * K_outer + a_col];
 
-  for (int k_step = 0; k_step < 256; k_step += 16) {
-    float16x4 a, b;
+         int b_row = kk + threadIdx.y;
+         int b_col = n_base + threadIdx.x;
+         float bkn = B[blockIdx.z * K_outer * N_outer + b_row * N_outer + b_col];
 
-#pragma unroll
-    for (int i = 0; i < 4; ++i) {
-
-      int a_row = c_row_base + threadIdx.x;
-      int a_col = k_step + threadIdx.y * 4 + i;
-      a[i] = batch_A[a_row * LDA + a_col];
-
-      int b_row = k_step + threadIdx.y * 4 + i;
-      int b_col = c_col_base + threadIdx.x;
-      b[i] = batch_B[b_row * LDB + b_col];
+         dmn = __builtin_amdgcn_mfma_f32_16x16x4f32(amk, bkn, dmn, 0, 0, 0);
     }
+    for (int i = 0; i < 4; ++i) {
+        int local_row = threadIdx.y * 4 + i; 
+        int local_col = threadIdx.x;
 
-    d = __builtin_amdgcn_mfma_f32_16x16x16f16(a, b, d, 0, 0, 0);
-  }
-
-#pragma unroll
-  for (int i = 0; i < 4; ++i) {
-    int c_row = c_row_base + threadIdx.x;
-    int c_col = c_col_base + threadIdx.y * 4 + i;
-    batch_C[c_row * LDC + c_col] = d[i];
-  }
+        int global_row = m_base + local_row;
+        int global_col = n_base + local_col;
+        if (global_row < M_outer && global_col < N_outer) {
+            D[blockIdx.z * M_outer * N_outer + global_row * N_outer + global_col] = dmn[i];
+        }
+    }
 }
 
-extern "C" void bmm_kernel(__half *A, __half *B, float *C, int b, int m, int k,
-                           int n) {
-  __half *d_A;
-  __half *d_B;
+extern "C" void bmm_kernel(float *A, float *B, float *C, int b, int m, int k,
+                            int n) {
+  float *d_A;
+  float *d_B;
   float *d_C;
 
-  hipMalloc(&d_A, b * m * k * sizeof(__half));
-  hipMalloc(&d_B, b * k * n * sizeof(__half));
+  hipMalloc(&d_A, b * m * k * sizeof(float));
+  hipMalloc(&d_B, b * k * n * sizeof(float));
   hipMalloc(&d_C, b * m * n * sizeof(float));
 
-  hipMemcpy(d_A, A, b * m * k * sizeof(__half), hipMemcpyHostToDevice);
-  hipMemcpy(d_B, B, b * k * n * sizeof(__half), hipMemcpyHostToDevice);
+  hipMemcpy(d_A, A, b * m * k * sizeof(float), hipMemcpyHostToDevice);
+  hipMemcpy(d_B, B, b * k * n * sizeof(float), hipMemcpyHostToDevice);
 
-  dim3 blockSize(64, 1, 4);
-  dim3 numBlocks((n + 16 - 1) / 16, (m + 16 - 1) / 16);
-  bmm<<<numBlocks, blockSize>>>(d_A, d_B, d_C);
+  dim3 grid((m + M -1 ) / M, (n + N - 1) / N, b); 
+  dim3 block(16, 4, 1);  
+  bmm<<<grid, block>>>(d_A, d_B, d_C);
 
   hipMemcpy(C, d_C, b * m * n * sizeof(float), hipMemcpyDeviceToHost);
 

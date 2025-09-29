@@ -2,8 +2,7 @@ import argparse
 import ctypes
 import os
 import subprocess
-
-import torch  
+import torch
 
 from evaluation.macros import HIP_MACROS as macro
 from evaluation.utils import run_hip_compilation as run_compilation
@@ -28,79 +27,82 @@ if __name__ == "__main__":
     base_name = os.path.basename(args.file)
     name = base_name.split("_")[0]  # Kernel name, e.g., "gemv"
     shapes = base_name.split(".")[0]
-    shape = [int(dim) for dim in shapes.split("_")[1:]]  # [M, N] where A is (M x N), x is (N,)
+    shape = [int(dim) for dim in shapes.split("_")[1:]]  # [M, N]
     
-    M, N = shape  # M: rows, N: cols
+    M, N = shape
 
-    # Create input tensors using PyTorch
-    A = torch.randn(M, N, dtype=torch.float32)
-    x = torch.randn(N, dtype=torch.float32)
+    # Set device to AMD GPU if available
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if not torch.cuda.is_available():
+        print("[ERROR] ROCm not available. Please install PyTorch with ROCm support.")
+        exit(1)
 
-    # Reference result using PyTorch matmul
+    # Create tensors on AMD GPU
+    A = torch.randn(M, N, dtype=torch.float32, device=device)
+    x = torch.randn(N, dtype=torch.float32, device=device)
+
+    # Perform matmul on AMD GPU
     y_torch = torch.matmul(A, x)  # Shape: (M,)
 
-    # Ensure tensors are contiguous for ctypes
-    A_cont = A.contiguous()
-    x_cont = x.contiguous()
-    y_torch_cont = y_torch.contiguous()
+    # Move reference result back to CPU for comparison
+    y_torch_cpu = y_torch.cpu().contiguous()
 
-    # Allocate output tensor
-    y_ctypes_torch = torch.zeros(M, dtype=torch.float32).contiguous()
+    # Host tensors for kernel input (float32)
+    A_host = A.cpu().contiguous()
+    x_host = x.cpu().contiguous()
 
-    # Get raw pointers
-    A_ptr = ctypes.cast(A_cont.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    x_ptr = ctypes.cast(x_cont.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    y_ptr = ctypes.cast(y_ctypes_torch.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    # Output tensor on CPU
+    y_ctypes = torch.zeros(M, dtype=torch.float32).contiguous()
+
+    # Get raw pointers (CPU memory)
+    A_ptr = ctypes.cast(A_host.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    x_ptr = ctypes.cast(x_host.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    y_ptr = ctypes.cast(y_ctypes.data_ptr(), ctypes.POINTER(ctypes.c_float))
 
     # Shared library name
     so_name = args.file.replace(".hip", ".so")
 
-    # Read and modify source code
+    # Read and inject macros
     with open(args.file, "r") as f:
         code = f.read()
 
-    code = macro + code  # Inject macros (e.g., config constants)
+    code = macro + code
 
     # Write to temporary .hip file
     file_name = args.file.replace(base_name.replace(".hip", ""), base_name + "_bak.hip")
     with open(file_name, "w") as f:
         f.write(code)
 
-    # Compile the kernel
+    # Compile kernel
     success, output = run_compilation(so_name, file_name)
     if not success:
         print("[ERROR] Compilation failed:")
         print(output)
         exit(1)
 
-    # Clean up temporary source file
     os.remove(file_name)
 
-    # Load the compiled shared library
+    # Load and call kernel
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    function = getattr(lib, name + "_kernel")
+    kernel_func = getattr(lib, name + "_kernel")
 
-    # Define function signature
-    function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # A (M x N matrix)
-        ctypes.POINTER(ctypes.c_float),  # x (N vector)
-        ctypes.POINTER(ctypes.c_float),  # y (M vector, output)
-        ctypes.c_int,                    # M (rows)
-        ctypes.c_int,                    # N (cols)
+    kernel_func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.c_int,
+        ctypes.c_int,
     ]
-    function.restype = None
+    kernel_func.restype = None
 
-    # Call the GEMV kernel
-    function(A_ptr, x_ptr, y_ptr, M, N)
+    kernel_func(A_ptr, x_ptr, y_ptr, M, N)
 
     # Verify results
-    if torch.allclose(y_ctypes_torch, y_torch, rtol=1e-3, atol=1e-3, equal_nan=True):
+    if torch.allclose(y_ctypes, y_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True):
         print("✅ Verification successful! Results match.")
     else:
         print("❌ Verification failed! Results do not match.")
-        print("Expected (PyTorch):", y_torch.tolist())
-        print("Got (Kernel):", y_ctypes_torch.tolist())
         exit(1)
 
-    # Clean up compiled library
+    # Clean up
     subprocess.run(["rm", so_name], check=False)
