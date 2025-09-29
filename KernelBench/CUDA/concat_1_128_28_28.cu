@@ -5,14 +5,16 @@ constexpr int C = 128;
 constexpr int H = 28;
 constexpr int W = 28;
 constexpr int TOTAL_ELEMENTS = N * C * H * W;
-constexpr int OUTPUT_C = C * 2; // Concatenating two tensors of 128 channels -> 256 channels
+constexpr int OUTPUT_C =
+    C * 2; // Concatenating two tensors of 128 channels -> 256 channels
 constexpr int OUTPUT_TOTAL_ELEMENTS = N * OUTPUT_C * H * W;
 
 __global__ void concat(const float *__restrict__ input1,
-                              const float *__restrict__ input2,
-                              float *__restrict__ output) {
+                       const float *__restrict__ input2,
+                       float *__restrict__ output) {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
-  if (tid >= OUTPUT_TOTAL_ELEMENTS) return;
+  if (tid >= OUTPUT_TOTAL_ELEMENTS)
+    return;
 
   // Decode output index
   int n = tid / (OUTPUT_C * H * W);

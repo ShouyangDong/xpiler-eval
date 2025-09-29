@@ -4,5 +4,5 @@
 #include <iostream>
 
 void gqa_4_128_1024_16() {
-    std::cout << "Running gqa_4_128_1024_16.cpp..." << std::endl;
+  std::cout << "Running gqa_4_128_1024_16.cpp..." << std::endl;
 }

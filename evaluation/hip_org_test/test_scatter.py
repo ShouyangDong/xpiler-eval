@@ -1,9 +1,9 @@
 import argparse
 import ctypes
+import json
 import os
 import subprocess
-import re
-import json
+
 import torch
 
 from evaluation.macros import HIP_MACROS as macro
@@ -11,10 +11,7 @@ from evaluation.utils import run_hip_compilation as run_compilation
 
 
 def scatter_reference(self_tensor, indices_tensor, src_tensor, dim):
-    """
-    Mimic torch.Tensor.scatter_
-    self.scatter_(dim, indices, src)
-    """
+    """Mimic torch.Tensor.scatter_ self.scatter_(dim, indices, src)"""
     result = self_tensor.clone()
     result.scatter_(dim, indices_tensor, src_tensor)
     return result
@@ -22,9 +19,13 @@ def scatter_reference(self_tensor, indices_tensor, src_tensor, dim):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--file", type=str, required=True, help="Path to C++ source file")
+    parser.add_argument(
+        "--file", type=str, required=True, help="Path to C++ source file"
+    )
     parser.add_argument("--config", required=True)
-    parser.add_argument("--target", choices=["cuda", "hip", "bang", "cpu"], required=True)
+    parser.add_argument(
+        "--target", choices=["cuda", "hip", "bang", "cpu"], required=True
+    )
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
@@ -37,7 +38,9 @@ if __name__ == "__main__":
         N, C, H, W = map(int, shape_parts[1:5])
     except Exception as e:
         raise ValueError(f"Invalid filename format: {base_name}") from e
-    print(f"Testing {kernel_name.upper()} | Shape: [{N},{C},{H},{W}] | Axis: {dim}")
+    print(
+        f"Testing {kernel_name.upper()} | Shape: [{N},{C},{H},{W}] | Axis: {dim}"
+    )
 
     try:
         shape_str = base_name.replace(f".hip", "")
@@ -45,24 +48,42 @@ if __name__ == "__main__":
     except Exception as e:
         raise ValueError(f"Invalid filename format: {base_name}") from e
 
-    print(f"Testing {kernel_name.upper()} | Shape: [{N},{C},{H},{W}] | Dim: {dim}")
+    print(
+        f"Testing {kernel_name.upper()} | Shape: [{N},{C},{H},{W}] | Dim: {dim}"
+    )
 
     # Create tensors
     self_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
     src_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
     # indices must be within valid range for the target dimension
     size_dim = [N, C, H, W][dim]
-    indices_tensor = torch.randint(0, size_dim, (N, C, H, W), dtype=torch.int32)
+    indices_tensor = torch.randint(
+        0, size_dim, (N, C, H, W), dtype=torch.int32
+    )
 
     # Golden reference
     expected = scatter_reference(self_tensor, indices_tensor, src_tensor, dim)
 
     # Prepare pointers
-    self_ptr = self_tensor.flatten().numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    indices_ptr = indices_tensor.flatten().numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_int))
-    src_ptr = src_tensor.flatten().numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    self_ptr = (
+        self_tensor.flatten()
+        .numpy()
+        .ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    )
+    indices_ptr = (
+        indices_tensor.flatten()
+        .numpy()
+        .ctypes.data_as(ctypes.POINTER(ctypes.c_int))
+    )
+    src_ptr = (
+        src_tensor.flatten()
+        .numpy()
+        .ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    )
     output_flat = torch.zeros_like(self_tensor).flatten()
-    output_ptr = output_flat.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    output_ptr = output_flat.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
 
     so_name = args.file.replace(".cpp", ".so")
 
@@ -89,9 +110,9 @@ if __name__ == "__main__":
     kernel_func = getattr(lib, kernel_name)
     kernel_func.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # self
-        ctypes.POINTER(ctypes.c_int),    # indices
+        ctypes.POINTER(ctypes.c_int),  # indices
         ctypes.POINTER(ctypes.c_float),  # src
-        ctypes.POINTER(ctypes.c_float)   # output
+        ctypes.POINTER(ctypes.c_float),  # output
     ]
     kernel_func.restype = None
 
@@ -101,7 +122,9 @@ if __name__ == "__main__":
     result_reshaped = output_flat.reshape(expected.shape)
 
     # Verify
-    is_correct = torch.allclose(result_reshaped, expected, rtol=1e-4, atol=1e-4)
+    is_correct = torch.allclose(
+        result_reshaped, expected, rtol=1e-4, atol=1e-4
+    )
 
     if is_correct:
         print("Verification successful!")

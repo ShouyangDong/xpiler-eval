@@ -55,14 +55,16 @@ if __name__ == "__main__":
     N, C, H, W = shape_parts
     total_elements = N * C * H * W
 
-    print(f"🔍 Testing {name.upper()} with shape [N,C,H,W] = [{N},{C},{H},{W}]")
+    print(
+        f"🔍 Testing {name.upper()} with shape [N,C,H,W] = [{N},{C},{H},{W}]"
+    )
 
     # Generate random input
     input_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
 
     # Parameters: gamma (weight), beta (bias)
     weight = torch.rand(C, dtype=torch.float32)  # gamma
-    bias = torch.rand(C, dtype=torch.float32)   # beta
+    bias = torch.rand(C, dtype=torch.float32)  # beta
     eps = 1e-5
 
     # Golden reference
@@ -70,7 +72,9 @@ if __name__ == "__main__":
 
     # Flatten input for C++ (row-major)
     input_flat = input_tensor.flatten()
-    input_ptr = input_flat.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    input_ptr = input_flat.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
 
     # Prepare parameter pointers
     weight_ptr = weight.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
@@ -78,7 +82,9 @@ if __name__ == "__main__":
 
     # Output tensor
     result_ctypes = torch.zeros_like(input_flat)
-    output_ptr = result_ctypes.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    output_ptr = result_ctypes.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
 
     # Shared library name
     so_name = args.file.replace(".cu", ".so")
@@ -113,11 +119,11 @@ if __name__ == "__main__":
         ctypes.POINTER(ctypes.c_float),  # output    (N*C*H*W)
         ctypes.POINTER(ctypes.c_float),  # weight    (C,)
         ctypes.POINTER(ctypes.c_float),  # bias      (C,)
-        ctypes.c_int,                    # N
-        ctypes.c_int,                    # C
-        ctypes.c_int,                    # H
-        ctypes.c_int,                    # W
-        ctypes.c_float,                  # eps
+        ctypes.c_int,  # N
+        ctypes.c_int,  # C
+        ctypes.c_int,  # H
+        ctypes.c_int,  # W
+        ctypes.c_float,  # eps
     ]
     kernel_func.restype = None
 

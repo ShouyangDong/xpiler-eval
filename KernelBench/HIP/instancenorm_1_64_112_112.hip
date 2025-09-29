@@ -1,8 +1,7 @@
 __global__ void __launch_bounds__(256)
-instancenorm(const float *__restrict__ input, 
-                    float *__restrict__ output,
-                    const float *__restrict__ gamma,
-                    const float *__restrict__ beta) {
+    instancenorm(const float *__restrict__ input, float *__restrict__ output,
+                 const float *__restrict__ gamma,
+                 const float *__restrict__ beta) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   const int N = 1, C = 64, H = 112, W = 112;
   const int spatial = H * W;
@@ -60,16 +59,22 @@ extern "C" void instancenorm_kernel(const float *h_input, float *h_output,
   hipMalloc(&d_gamma, param_size * sizeof(float));
   hipMalloc(&d_beta, param_size * sizeof(float));
 
-  hipMemcpy(d_input, h_input, total_elements * sizeof(float), hipMemcpyHostToDevice);
-  if (h_gamma) hipMemcpy(d_gamma, h_gamma, param_size * sizeof(float), hipMemcpyHostToDevice);
-  if (h_beta) hipMemcpy(d_beta, h_beta, param_size * sizeof(float), hipMemcpyHostToDevice);
+  hipMemcpy(d_input, h_input, total_elements * sizeof(float),
+            hipMemcpyHostToDevice);
+  if (h_gamma)
+    hipMemcpy(d_gamma, h_gamma, param_size * sizeof(float),
+              hipMemcpyHostToDevice);
+  if (h_beta)
+    hipMemcpy(d_beta, h_beta, param_size * sizeof(float),
+              hipMemcpyHostToDevice);
 
   dim3 blockSize(256);
   dim3 numBlocks((total_elements + blockSize.x - 1) / blockSize.x);
 
   instancenorm<<<numBlocks, blockSize>>>(d_input, d_output, d_gamma, d_beta);
 
-  hipMemcpy(h_output, d_output, total_elements * sizeof(float), hipMemcpyDeviceToHost);
+  hipMemcpy(h_output, d_output, total_elements * sizeof(float),
+            hipMemcpyDeviceToHost);
 
   hipFree(d_input);
   hipFree(d_output);

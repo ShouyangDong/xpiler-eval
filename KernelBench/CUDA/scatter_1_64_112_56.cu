@@ -7,10 +7,11 @@ constexpr int W = 56;
 constexpr int TOTAL_ELEMENTS = N * C * H * W;
 
 __global__ void scatter(const float *__restrict__ input,
-                               const int *__restrict__ indices,
-                               float *__restrict__ output) {
+                        const int *__restrict__ indices,
+                        float *__restrict__ output) {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
-  if (tid >= TOTAL_ELEMENTS) return;
+  if (tid >= TOTAL_ELEMENTS)
+    return;
 
   // Decode thread index
   int n = tid / (C * H * W);
@@ -22,20 +23,22 @@ __global__ void scatter(const float *__restrict__ input,
 
   // Get target index from indices tensor for axis=2 (height)
   int target_h = indices[tid];
-  
+
   // Bounds check
   if (target_h >= 0 && target_h < 112) {
-    // Calculate output index: scatter input[n][c][h_idx][w] -> output[n][c][target_h][w]
+    // Calculate output index: scatter input[n][c][h_idx][w] ->
+    // output[n][c][target_h][w]
     int output_idx = n * 64 * H * W + c * H * W + target_h * W + w;
     output[output_idx] = input[tid];
   }
 }
 
 extern "C" void scatter_kernel(const float *h_input, const int *h_indices,
-                              float *h_output) {
+                               float *h_output) {
   size_t input_bytes = TOTAL_ELEMENTS * sizeof(float);
   size_t indices_bytes = TOTAL_ELEMENTS * sizeof(int);
-  size_t output_bytes = N * 64 * H * W * sizeof(float); // output has shape [1,64,112,56]
+  size_t output_bytes =
+      N * 64 * H * W * sizeof(float); // output has shape [1,64,112,56]
 
   float *d_input;
   int *d_indices;

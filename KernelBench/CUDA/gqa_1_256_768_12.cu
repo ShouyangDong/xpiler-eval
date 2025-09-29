@@ -4,5 +4,5 @@
 #include <iostream>
 
 void gqa_1_256_768_12.cu() {
-    std::cout << "Running gqa_1_256_768_12.cu..." << std::endl;
+  std::cout << "Running gqa_1_256_768_12.cu..." << std::endl;
 }

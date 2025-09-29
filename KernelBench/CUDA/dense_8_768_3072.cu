@@ -4,5 +4,5 @@
 #include <iostream>
 
 void dense_8_768_3072.cu() {
-    std::cout << "Running dense_8_768_3072.cu..." << std::endl;
+  std::cout << "Running dense_8_768_3072.cu..." << std::endl;
 }

@@ -4,5 +4,5 @@
 #include <iostream>
 
 void instancenorm_1_3_224_224.mlu() {
-    std::cout << "Running instancenorm_1_3_224_224.mlu..." << std::endl;
+  std::cout << "Running instancenorm_1_3_224_224.mlu..." << std::endl;
 }

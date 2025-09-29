@@ -4,5 +4,5 @@
 #include <iostream>
 
 void gatemlp_1_1024_1024.cu() {
-    std::cout << "Running gatemlp_1_1024_1024.cu..." << std::endl;
+  std::cout << "Running gatemlp_1_1024_1024.cu..." << std::endl;
 }

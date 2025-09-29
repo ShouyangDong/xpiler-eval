@@ -10,31 +10,35 @@ from evaluation.utils import run_hip_compilation as run_compilation
 
 
 def add(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
-    """
-    Element-wise addition using PyTorch.
-    """
+    """Element-wise addition using PyTorch."""
     return torch.add(A, B)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Validate HIP kernel output against PyTorch")
-    parser.add_argument("--file", type=str, help="Path to the source .hip file")
+    parser = argparse.ArgumentParser(
+        description="Validate HIP kernel output against PyTorch"
+    )
+    parser.add_argument(
+        "--file", type=str, help="Path to the source .hip file"
+    )
     parser.add_argument(
         "--config",
         required=True,
-        help="JSON string or path to kernel configuration file"
+        help="JSON string or path to kernel configuration file",
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform for compilation"
+        help="Target platform for compilation",
     )
     args = parser.parse_args()
 
     base_name = os.path.basename(args.file)
     shapes = base_name.split(".")[0]
-    shape = [int(dim) for dim in shapes.split("_")[1:]]  # Extract shape from filename
+    shape = [
+        int(dim) for dim in shapes.split("_")[1:]
+    ]  # Extract shape from filename
     name = base_name.split("_")[0]  # Extract kernel name
 
     # Generate random input tensors on CPU using PyTorch
@@ -64,7 +68,9 @@ if __name__ == "__main__":
     code = macro + code
 
     # Create a backup .hip file with macros injected
-    file_name = args.file.replace(base_name.replace(".hip", ""), base_name + "_bak.hip")
+    file_name = args.file.replace(
+        base_name.replace(".hip", ""), base_name + "_bak.hip"
+    )
     with open(file_name, "w") as f:
         f.write(code)
 
@@ -87,19 +93,24 @@ if __name__ == "__main__":
         ctypes.POINTER(ctypes.c_float),  # Input A
         ctypes.POINTER(ctypes.c_float),  # Input B
         ctypes.POINTER(ctypes.c_float),  # Output
-        ctypes.c_int,                    # Total number of elements
+        ctypes.c_int,  # Total number of elements
     ]
     function.restype = None
 
     # Prepare output tensor (contiguous, CPU)
     result_ctypes_torch = torch.zeros(shape, dtype=torch.float32).contiguous()
-    output_ptr = ctypes.cast(result_ctypes_torch.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    output_ptr = ctypes.cast(
+        result_ctypes_torch.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
 
     # Call the HIP kernel function
-    function(A_ptr, B_ptr, output_ptr, A.numel())  # Use .numel() for total elements
+    # Use .numel() for total elements
+    function(A_ptr, B_ptr, output_ptr, A.numel())
 
     # Compare kernel output with PyTorch result
-    if torch.allclose(result_ctypes_torch, result_torch, rtol=1e-3, atol=1e-3, equal_nan=True):
+    if torch.allclose(
+        result_ctypes_torch, result_torch, rtol=1e-3, atol=1e-3, equal_nan=True
+    ):
         print("✅ Verification successful! Results match.")
     else:
         print("❌ Verification failed! Results do not match.")

@@ -2,6 +2,7 @@ import argparse
 import ctypes
 import os
 import subprocess
+
 import torch
 
 from evaluation.macros import HIP_MACROS as macro
@@ -9,8 +10,8 @@ from evaluation.utils import run_hip_compilation as run_compilation
 
 
 def batch_matmul(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
-    """
-    Perform batch matrix multiplication using PyTorch.
+    """Perform batch matrix multiplication using PyTorch.
+
     A: (batch_size, i, j)
     B: (batch_size, j, k)
     Output: (batch_size, i, k)
@@ -19,18 +20,22 @@ def batch_matmul(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Validate batch GEMM HIP kernel output against PyTorch")
-    parser.add_argument("--file", type=str, help="Path to the source .hip file")
+    parser = argparse.ArgumentParser(
+        description="Validate batch GEMM HIP kernel output against PyTorch"
+    )
+    parser.add_argument(
+        "--file", type=str, help="Path to the source .hip file"
+    )
     parser.add_argument(
         "--config",
         required=True,
-        help="JSON string or path to kernel configuration file"
+        help="JSON string or path to kernel configuration file",
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform for compilation"
+        help="Target platform for compilation",
     )
     args = parser.parse_args()
 
@@ -43,12 +48,22 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if not torch.cuda.is_available():
-        print("[ERROR] ROCm not available. Please install PyTorch with ROCm support.")
+        print(
+            "[ERROR] ROCm not available. Please install PyTorch with ROCm support."
+        )
         exit(1)
 
     # Create input tensors on AMD GPU
-    A = torch.ones((batch_size, matrix_dim_i, matrix_dim_j), dtype=torch.float32, device=device)
-    B = torch.ones((batch_size, matrix_dim_j, matrix_dim_k), dtype=torch.float32, device=device)
+    A = torch.ones(
+        (batch_size, matrix_dim_i, matrix_dim_j),
+        dtype=torch.float32,
+        device=device,
+    )
+    B = torch.ones(
+        (batch_size, matrix_dim_j, matrix_dim_k),
+        dtype=torch.float32,
+        device=device,
+    )
 
     # Perform batch matmul on GPU
     result_torch = batch_matmul(A, B)
@@ -68,7 +83,9 @@ if __name__ == "__main__":
     # Get raw pointers (CPU memory)
     A_ptr = ctypes.cast(A_host.data_ptr(), ctypes.POINTER(ctypes.c_float))
     B_ptr = ctypes.cast(B_host.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    output_ptr = ctypes.cast(result_ctypes.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    output_ptr = ctypes.cast(
+        result_ctypes.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
 
     # Shared library name
     so_name = args.file.replace(".hip", ".so")
@@ -80,7 +97,9 @@ if __name__ == "__main__":
     code = macro + code
 
     # Write to temporary .hip file
-    file_name = args.file.replace(base_name.replace(".hip", ""), base_name + "_bak.hip")
+    file_name = args.file.replace(
+        base_name.replace(".hip", ""), base_name + "_bak.hip"
+    )
     with open(file_name, "w") as f:
         f.write(code)
 
@@ -108,10 +127,20 @@ if __name__ == "__main__":
     ]
     kernel_func.restype = None
 
-    kernel_func(A_ptr, B_ptr, output_ptr, batch_size, matrix_dim_i, matrix_dim_j, matrix_dim_k)
+    kernel_func(
+        A_ptr,
+        B_ptr,
+        output_ptr,
+        batch_size,
+        matrix_dim_i,
+        matrix_dim_j,
+        matrix_dim_k,
+    )
 
     # Verify results
-    if torch.allclose(result_ctypes, result_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True):
+    if torch.allclose(
+        result_ctypes, result_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True
+    ):
         print("✅ Verification successful! Results match.")
     else:
         print("❌ Verification failed! Results do not match.")

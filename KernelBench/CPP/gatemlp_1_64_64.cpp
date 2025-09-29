@@ -4,5 +4,5 @@
 #include <iostream>
 
 void gatemlp_1_64_64() {
-    std::cout << "Running gatemlp_1_64_64.cpp..." << std::endl;
+  std::cout << "Running gatemlp_1_64_64.cpp..." << std::endl;
 }

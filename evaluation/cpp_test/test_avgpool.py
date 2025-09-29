@@ -6,7 +6,6 @@ import subprocess
 import torch
 
 from evaluation.macros import CPP_MACROS as macro
-from evaluation.utils import avgpool_np
 from evaluation.utils import run_cpp_compilation as run_compilation
 
 

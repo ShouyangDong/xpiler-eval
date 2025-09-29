@@ -2,25 +2,29 @@ import argparse
 import ctypes
 import os
 import subprocess
+
 import torch
 
 from evaluation.macros import HIP_MACROS as macro
 from evaluation.utils import run_hip_compilation as run_compilation
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Validate GEMM HIP kernel output against PyTorch")
-    parser.add_argument("--file", type=str, help="Path to the source .hip file")
+    parser = argparse.ArgumentParser(
+        description="Validate GEMM HIP kernel output against PyTorch"
+    )
+    parser.add_argument(
+        "--file", type=str, help="Path to the source .hip file"
+    )
     parser.add_argument(
         "--config",
         required=True,
-        help="JSON string or path to kernel configuration file"
+        help="JSON string or path to kernel configuration file",
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform for compilation"
+        help="Target platform for compilation",
     )
     args = parser.parse_args()
 
@@ -33,7 +37,9 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if not torch.cuda.is_available():
-        print("[ERROR] ROCm not available. Please install PyTorch with ROCm support.")
+        print(
+            "[ERROR] ROCm not available. Please install PyTorch with ROCm support."
+        )
         exit(1)
 
     A = torch.ones((M, K), dtype=torch.float16, device=device)
@@ -42,7 +48,9 @@ if __name__ == "__main__":
     y_torch = torch.matmul(A, x).to(torch.float32)
 
     y_torch_cpu = y_torch.cpu().contiguous()
-    y_torch_ptr = ctypes.cast(y_torch_cpu.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    y_torch_ptr = ctypes.cast(
+        y_torch_cpu.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
 
     A_host = torch.ones((M, K), dtype=torch.float16).contiguous()
     x_host = torch.ones((K, N), dtype=torch.float16).contiguous()
@@ -60,7 +68,9 @@ if __name__ == "__main__":
 
     code = macro + code
 
-    file_name = args.file.replace(base_name.replace(".hip", ""), base_name + "_bak.hip")
+    file_name = args.file.replace(
+        base_name.replace(".hip", ""), base_name + "_bak.hip"
+    )
     with open(file_name, "w") as f:
         f.write(code)
 
@@ -87,7 +97,9 @@ if __name__ == "__main__":
 
     function(A_ptr, x_ptr, y_ptr, M, K, N)
 
-    if torch.allclose(y_ctypes, y_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True):
+    if torch.allclose(
+        y_ctypes, y_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True
+    ):
         print("✅ Verification successful! Results match.")
     else:
         print("❌ Verification failed! Results do not match.")

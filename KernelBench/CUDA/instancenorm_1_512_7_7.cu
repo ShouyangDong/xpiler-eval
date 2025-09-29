@@ -1,11 +1,10 @@
-#include <cuda_runtime.h>
 #include <cmath>
+#include <cuda_runtime.h>
 
 __global__ void __launch_bounds__(256)
-instancenorm(const float *__restrict__ input, 
-                    float *__restrict__ output,
-                    const float *__restrict__ gamma,
-                    const float *__restrict__ beta) {
+    instancenorm(const float *__restrict__ input, float *__restrict__ output,
+                 const float *__restrict__ gamma,
+                 const float *__restrict__ beta) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   const int N = 1, C = 512, H = 7, W = 7;
   const int spatial = H * W;
@@ -63,16 +62,22 @@ extern "C" void instancenorm_kernel(const float *h_input, float *h_output,
   cudaMalloc(&d_gamma, param_size * sizeof(float));
   cudaMalloc(&d_beta, param_size * sizeof(float));
 
-  cudaMemcpy(d_input, h_input, total_elements * sizeof(float), cudaMemcpyHostToDevice);
-  if (h_gamma) cudaMemcpy(d_gamma, h_gamma, param_size * sizeof(float), cudaMemcpyHostToDevice);
-  if (h_beta) cudaMemcpy(d_beta, h_beta, param_size * sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_input, h_input, total_elements * sizeof(float),
+             cudaMemcpyHostToDevice);
+  if (h_gamma)
+    cudaMemcpy(d_gamma, h_gamma, param_size * sizeof(float),
+               cudaMemcpyHostToDevice);
+  if (h_beta)
+    cudaMemcpy(d_beta, h_beta, param_size * sizeof(float),
+               cudaMemcpyHostToDevice);
 
   dim3 blockSize(256);
   dim3 numBlocks((total_elements + blockSize.x - 1) / blockSize.x);
 
   instancenorm<<<numBlocks, blockSize>>>(d_input, d_output, d_gamma, d_beta);
 
-  cudaMemcpy(h_output, d_output, total_elements * sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(h_output, d_output, total_elements * sizeof(float),
+             cudaMemcpyDeviceToHost);
 
   cudaFree(d_input);
   cudaFree(d_output);

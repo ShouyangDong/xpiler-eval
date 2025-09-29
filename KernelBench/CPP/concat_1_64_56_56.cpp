@@ -3,10 +3,10 @@ extern "C" void concat(float *input0, float *input1, float *output) {
   int C = 64;
   int H = 56;
   int W = 56;
-  int axis = 1;  // Concatenate along channel dimension
+  int axis = 1; // Concatenate along channel dimension
 
-  int C0 = C;  // Assume input0 has C channels
-  int C1 = C;  // Assume input1 has C channels
+  int C0 = C; // Assume input0 has C channels
+  int C1 = C; // Assume input1 has C channels
   int total_C = C0 + C1;
 
   for (int n = 0; n < N; n++) {

@@ -4,5 +4,5 @@
 #include <iostream>
 
 void concat_1_512_7_7.mlu() {
-    std::cout << "Running concat_1_512_7_7.mlu..." << std::endl;
+  std::cout << "Running concat_1_512_7_7.mlu..." << std::endl;
 }

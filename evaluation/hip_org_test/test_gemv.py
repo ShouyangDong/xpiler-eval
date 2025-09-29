@@ -2,25 +2,29 @@ import argparse
 import ctypes
 import os
 import subprocess
+
 import torch
 
 from evaluation.macros import HIP_MACROS as macro
 from evaluation.utils import run_hip_compilation as run_compilation
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Validate GEMV HIP kernel output against PyTorch")
-    parser.add_argument("--file", type=str, help="Path to the source .hip file")
+    parser = argparse.ArgumentParser(
+        description="Validate GEMV HIP kernel output against PyTorch"
+    )
+    parser.add_argument(
+        "--file", type=str, help="Path to the source .hip file"
+    )
     parser.add_argument(
         "--config",
         required=True,
-        help="JSON string or path to kernel configuration file"
+        help="JSON string or path to kernel configuration file",
     )
     parser.add_argument(
         "--target",
         required=True,
         choices=["cuda", "hip", "bang", "cpu"],
-        help="Target platform for compilation"
+        help="Target platform for compilation",
     )
     args = parser.parse_args()
 
@@ -28,13 +32,15 @@ if __name__ == "__main__":
     name = base_name.split("_")[0]  # Kernel name, e.g., "gemv"
     shapes = base_name.split(".")[0]
     shape = [int(dim) for dim in shapes.split("_")[1:]]  # [M, N]
-    
+
     M, N = shape
 
     # Set device to AMD GPU if available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if not torch.cuda.is_available():
-        print("[ERROR] ROCm not available. Please install PyTorch with ROCm support.")
+        print(
+            "[ERROR] ROCm not available. Please install PyTorch with ROCm support."
+        )
         exit(1)
 
     # Create tensors on AMD GPU
@@ -69,7 +75,9 @@ if __name__ == "__main__":
     code = macro + code
 
     # Write to temporary .hip file
-    file_name = args.file.replace(base_name.replace(".hip", ""), base_name + "_bak.hip")
+    file_name = args.file.replace(
+        base_name.replace(".hip", ""), base_name + "_bak.hip"
+    )
     with open(file_name, "w") as f:
         f.write(code)
 
@@ -98,7 +106,9 @@ if __name__ == "__main__":
     kernel_func(A_ptr, x_ptr, y_ptr, M, N)
 
     # Verify results
-    if torch.allclose(y_ctypes, y_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True):
+    if torch.allclose(
+        y_ctypes, y_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True
+    ):
         print("✅ Verification successful! Results match.")
     else:
         print("❌ Verification failed! Results do not match.")

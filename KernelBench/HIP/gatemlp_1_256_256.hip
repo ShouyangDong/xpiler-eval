@@ -4,5 +4,5 @@
 #include <iostream>
 
 void gatemlp_1_256_256.hip() {
-    std::cout << "Running gatemlp_1_256_256.hip..." << std::endl;
+  std::cout << "Running gatemlp_1_256_256.hip..." << std::endl;
 }
