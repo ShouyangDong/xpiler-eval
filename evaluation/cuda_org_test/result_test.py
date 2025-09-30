@@ -46,6 +46,7 @@ TEST_SCRIPT_MAP = {
     "instancenorm": "test_instancenorm.py",
     "concat": "test_concat.py",
     "scatter": "test_scatter.py",
+    "dense": "test_dense.py",
 }
 
 

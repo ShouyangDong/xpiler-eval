@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     # Host tensors for kernel input
     x_host = x.cpu().contiguous()
-    weight_host = weight.cpu().contiguous()
+    weight_host = weight.t().cpu().contiguous()
     bias_host = bias.cpu().contiguous()
 
     # Output buffer (CPU)
