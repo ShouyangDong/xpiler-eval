@@ -1,17 +1,11 @@
-
 extern "C" void max(float *input, float *output) {
-  int rows = 1;
-  int cols = 1;
+    float max_val = -INFINITY;
 
-  for (int i = 0; i < rows; i++) {
-    output[i] = -INFINITY;
-  }
-
-  for (int i = 0; i < rows; i++) {
-    for (int j = 0; j < cols; j++) {
-      if (input[i * cols + j] > output[i]) {
-        output[i] = input[i * cols + j];
-      }
+    for (int i = 0; i < 128; i++) {
+        if (input[i] > max_val) {
+            max_val = input[i];
+        }
     }
-  }
+
+    output[0] = max_val;
 }
