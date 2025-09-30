@@ -42,7 +42,10 @@ TEST_FILE_MAPPING = {
     "sub": "test_sub.py",
     "scatter": "test_scatter.py",
     "instancenorm": "test_instancenorm.py",
-    "concat": "test_concat",
+    "concat": "test_concat.py",
+    "gatemlp": "test_gatemlp.py",
+    "gqa": "test_gqa.py",
+    "dense": "test_dense.py",
 }
 
 

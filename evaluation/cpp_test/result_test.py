@@ -45,7 +45,10 @@ TEST_SCRIPT_MAP = {
     "sin": "test_sin.py",
     "scatter": "test_scatter.py",
     "instancenorm": "test_instancenorm.py",
-    "concat": "test_concat",
+    "concat": "test_concat.py",
+    "dense": "test_dense.py",
+    "gatemlp": "test_gatemlp.py",
+    "gqa": "test_gqa.py",
 }
 
 
