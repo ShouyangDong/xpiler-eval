@@ -98,14 +98,14 @@ def generate_kernel(op_name, args, dtype="float32"):
     inputs = placeholders + ([C] if isinstance(C, te.tensor.Tensor) else [])
     func_name = f"{op_name}_{'_'.join(map(str, args))}"
 
-    # ==================== 1. 生成 C++ Kernel ====================
+    # ==================== 1. Generate C++ Kernel ====================
     with tvm.target.Target("c"):
         c_mod = tvm.build(s, inputs, target="c", name=func_name)
         c_code = c_mod.get_source()
         (OUTPUT_DIR / f"{func_name}.cpp").write_text(c_code)
         print(f"✅ {func_name}.cpp generated")
 
-    # ==================== 2. 生成 CUDA Kernel ====================
+    # ==================== 2. Generate CUDA Kernel ====================
     try:
         with tvm.target.Target("cuda"):
             cuda_mod = tvm.build(s, inputs, target="cuda", name=func_name)
@@ -115,7 +115,7 @@ def generate_kernel(op_name, args, dtype="float32"):
     except Exception as e:
         print(f"❌ CUDA failed for {func_name}: {e}")
 
-    # ==================== 3. 生成 HIP Kernel ====================
+    # ==================== 3. Generate HIP Kernel ====================
     try:
         with tvm.target.Target("rocm"):
             hip_mod = tvm.build(s, inputs, target="rocm", name=func_name)
