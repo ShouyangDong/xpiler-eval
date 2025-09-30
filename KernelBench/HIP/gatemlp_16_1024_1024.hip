@@ -6,12 +6,10 @@
 #define N_outer 1024
 #define K_outer 1024
 
-__device__ __forceinline__ float silu(float x) {
-    return x / (1.0f + expf(-x));
-}
+__device__ __forceinline__ float silu(float x) { return x / (1.0f + expf(-x)); }
 
 __global__ void gatemlp(const float *A, const float *B, const float *C,
-                      float *D) {
+                        float *D) {
   int m_base = blockIdx.x * M;
   int n_base = blockIdx.y * N;
   using float4 = __attribute__((__vector_size__(K * sizeof(float)))) float;
@@ -32,8 +30,8 @@ __global__ void gatemlp(const float *A, const float *B, const float *C,
 
   float4 result;
   for (int i = 0; i < 4; ++i) {
-      float gate = silu(dmn_AB[i]);
-      result[i] = gate * dmn_AC[i];
+    float gate = silu(dmn_AB[i]);
+    result[i] = gate * dmn_AC[i];
   }
 
   for (int i = 0; i < 4; ++i) {
@@ -49,7 +47,7 @@ __global__ void gatemlp(const float *A, const float *B, const float *C,
 }
 
 extern "C" void gatemlp_kernel(float *A, float *B, float *C, float *D, int m,
-                             int k, int n) {
+                               int k, int n) {
   float *d_A;
   float *d_B;
   float *d_C;

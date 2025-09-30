@@ -2636,43 +2636,43 @@
     },
     {
         "op_name": "gatemlp",
-        "dtype": "float32",
-        "args": [1, 64, 64]
+        "dtype": "int16",
+        "args": [16, 64, 64]
     },
     {
         "op_name": "gatemlp",
-        "dtype": "float32",
-        "args": [1, 128, 128]
+        "dtype": "int16",
+        "args": [16, 128, 128]
     },
     {
         "op_name": "gatemlp",
-        "dtype": "float32",
-        "args": [1, 256, 256]
+        "dtype": "int16",
+        "args": [8, 256, 256]
     },
     {
         "op_name": "gatemlp",
-        "dtype": "float32",
-        "args": [1, 512, 512]
+        "dtype": "int16",
+        "args": [8, 512, 512]
     },
     {
         "op_name": "gatemlp",
-        "dtype": "float32",
-        "args": [1, 768, 768]
+        "dtype": "int16",
+        "args": [8, 768, 768]
     },
     {
         "op_name": "gatemlp",
-        "dtype": "float32",
-        "args": [1, 1024, 1024]
+        "dtype": "int16",
+        "args": [8, 1024, 1024]
     },
     {
         "op_name": "gatemlp",
-        "dtype": "float32",
-        "args": [4, 512, 512]
+        "dtype": "int16",
+        "args": [32, 512, 512]
     },
     {
         "op_name": "gatemlp",
-        "dtype": "float32",
-        "args": [8, 768, 3072]
+        "dtype": "int16",
+        "args": [32, 1024, 1024]
     },
     {
         "op_name": "gqa",
