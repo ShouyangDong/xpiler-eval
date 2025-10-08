@@ -3,9 +3,9 @@ import ctypes
 import os
 import re
 import subprocess
-
+import sys
 import torch
-
+import json
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
 
@@ -27,23 +27,23 @@ if __name__ == "__main__":
 
     base_name = os.path.basename(args.file)
     name = base_name.split("_")[0]
-
-    axis_match = re.search(r"_axis(\d)\.cpp", base_name)
-    if not axis_match:
-        raise ValueError("Filename must contain _axisN.cpp")
-
-    axis = int(axis_match.group(1))
-
+    # --- Parse config ---
     try:
-        shape_parts = base_name.replace(f"_axis{axis}.cpp", "").split("_")
-        N, C, H, W = map(int, shape_parts[1:5])
+        if os.path.exists(args.config) and args.config.endswith(".json"):
+            with open(args.config, "r") as f:
+                config = json.load(f)
+        else:
+            config = json.loads(args.config)
     except Exception as e:
-        raise ValueError(f"Invalid filename format: {base_name}") from e
+        print(f"[ERROR] Failed to parse config: {e}", file=sys.stderr)
+        sys.exit(1)
+    shape = config["args"]
+    axis = config["axis"]   
 
-    print(f"Testing {name.upper()} | Shape: [{N},{C},{H},{W}] | Axis: {axis}")
+    print(f"Testing {name.upper()} | Shape: {shape} | Axis: {axis}")
 
-    input1 = torch.rand(N, C, H, W, dtype=torch.float32)
-    input2 = torch.rand(N, C, H, W, dtype=torch.float32)
+    input1 = torch.rand(*shape, dtype=torch.float32)
+    input2 = torch.rand(*shape, dtype=torch.float32)
 
     expected = concat_reference([input1, input2], axis=axis)
 
@@ -70,7 +70,7 @@ if __name__ == "__main__":
         f.write(code)
 
     print(f"Compiling {temp_file} -> {so_name}")
-    success, log = run_compilation(so_name, temp_file, target=args.target)
+    success, log = run_compilation(so_name, temp_file)
     if not success:
         print("Compilation failed:")
         print(log)
