@@ -42,25 +42,12 @@ if __name__ == "__main__":
         )
         exit(1)
 
-    A = torch.ones((M, K), dtype=torch.float16, device=device)
-    x = torch.ones((K, N), dtype=torch.float16, device=device)
+    A = torch.ones((M, K), dtype=torch.float32, device=device)
+    x = torch.ones((K, N), dtype=torch.float32, device=device)
 
-    y_torch = torch.matmul(A, x).to(torch.float32)
-
-    y_torch_cpu = y_torch.cpu().contiguous()
-    y_torch_ptr = ctypes.cast(
-        y_torch_cpu.data_ptr(), ctypes.POINTER(ctypes.c_float)
-    )
-
-    A_host = torch.ones((M, K), dtype=torch.float16).contiguous()
-    x_host = torch.ones((K, N), dtype=torch.float16).contiguous()
-
-    A_ptr = ctypes.cast(A_host.data_ptr(), ctypes.POINTER(ctypes.c_ushort))
-    x_ptr = ctypes.cast(x_host.data_ptr(), ctypes.POINTER(ctypes.c_ushort))
+    y_torch = torch.matmul(A, x)
 
     y_ctypes = torch.zeros((M, N), dtype=torch.float32).contiguous()
-    y_ptr = ctypes.cast(y_ctypes.data_ptr(), ctypes.POINTER(ctypes.c_float))
-
     so_name = args.file.replace(".hip", ".so")
 
     with open(args.file, "r") as f:
@@ -86,8 +73,8 @@ if __name__ == "__main__":
     function = getattr(lib, name + "_kernel")
 
     function.argtypes = [
-        ctypes.POINTER(ctypes.c_ushort),
-        ctypes.POINTER(ctypes.c_ushort),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
         ctypes.POINTER(ctypes.c_float),
         ctypes.c_int,
         ctypes.c_int,
@@ -95,7 +82,7 @@ if __name__ == "__main__":
     ]
     function.restype = None
 
-    function(A_ptr, x_ptr, y_ptr, M, K, N)
+    function(A.data_ptr(), x.data_ptr(), y_ctypes.data_ptr(), M, K, N)
 
     if torch.allclose(
         y_ctypes, y_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True
