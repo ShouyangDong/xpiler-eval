@@ -1,5 +1,5 @@
 extern "C" void instancenorm(float *input, float *output) {
-  int N = 1, C = 3, H = 224, W = 224;
+  int N = 1, C = 1, H = 64, W = 64;
   int spatial = H * W;
   float eps = 1e-5f;
 
