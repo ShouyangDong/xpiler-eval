@@ -1,27 +1,27 @@
 import argparse
 import ctypes
+import json
 import os
 import subprocess
+import sys
 
 import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
 
-# Define the min (element-wise) function using torch
+
+# --- Golden Reference: reduce min along axis ---
+def reduce_min(input_tensor, axis):
+    return torch.min(input_tensor, dim=axis)[0]  # 返回 values，忽略 indices
 
 
-def element_wise_min(A, B):
-    return torch.minimum(A, B)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+def main():
+    parser = argparse.ArgumentParser(description="CPU min kernel tester")
     parser.add_argument(
         "--file",
-        type=str,
         required=True,
-        help="Path to the C++ source file (e.g., min_64_64.cpp)",
+        help="Path to the .cpp source file (e.g., min_64_64.cpp)",
     )
     parser.add_argument(
         "--config", required=True, help="JSON string or path to kernel config"
@@ -29,96 +29,144 @@ if __name__ == "__main__":
     parser.add_argument(
         "--target",
         required=True,
-        choices=["cuda", "hip", "bang", "cpu"],
+        choices=["cuda", "hip", "cpu", "mlu"],
         help="Target platform",
     )
+
     args = parser.parse_args()
 
-    base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]  # "min"
-    shapes_str = base_name.split(".")[0]  # e.g., "min_64_64"
-    shape = [int(x) for x in shapes_str.split("_")[1:]]
+    # --- Parse config ---
+    try:
+        if os.path.exists(args.config) and args.config.endswith(".json"):
+            with open(args.config, "r") as f:
+                config = json.load(f)
+        else:
+            config = json.loads(args.config)
+    except Exception as e:
+        print(f"[ERROR] Failed to parse config: {e}", file=sys.stderr)
+        sys.exit(1)
 
-    print(f"🔍 Testing {name.upper()} with shape {shape}")
+    op_name = config["op_name"]
+    shape = config["args"]
+    axis = config["axes"]
+    dtype_str = config.get("dtype", "float32")
 
-    # Generate random input matrices
-    A = (
-        torch.rand(*shape, device="cpu", dtype=torch.float32) * 10 - 5
-    )  # [-5, 5]
-    B = (
-        torch.rand(*shape, device="cpu", dtype=torch.float32) * 10 - 5
-    )  # [-5, 5]
-
-    # Golden reference using PyTorch
-    expected = element_wise_min(A, B)
-
-    # Convert to NumPy and get ctypes pointers
-    A_ptr = A.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    B_ptr = B.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-
-    # Output tensor
-    result_ctypes = torch.zeros(shape, dtype=torch.float32)
-    output_ptr = result_ctypes.numpy().ctypes.data_as(
-        ctypes.POINTER(ctypes.c_float)
+    print(
+        f"🔍 Testing {op_name.upper()} on CPU with shape {shape}, dtype={dtype_str}, axes={axis}"
     )
 
-    # Shared library name
-    so_name = args.file.replace(".cpp", ".so")
+    # --- Device and dtype setup ---
+    dtype_map = {
+        "float32": torch.float32,
+        "float16": torch.float16,
+    }
+    dtype = dtype_map.get(dtype_str, torch.float32)
 
-    # Read original C++ code
-    with open(args.file, "r") as f:
-        code = f.read()
+    # --- Generate input tensors on CPU (for ctypes) ---
+    A = torch.randn(*shape, dtype=dtype, device="cpu") * 10
+    expected = reduce_min(A, axis)
 
-    code = macro + code
+    # --- Flatten and get ctypes pointers ---
+    A_flat = A.flatten().numpy()
+    result_flat = torch.zeros_like(expected).flatten().numpy()
 
-    # Create temporary modified file
-    temp_file_name = args.file.replace(".cpp", "_bak.cpp")
-    with open(temp_file_name, "w") as f:
-        f.write(code)
+    ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+    A_ptr = A_flat.ctypes.data_as(ctypes.POINTER(ctype))
+    out_ptr = result_flat.ctypes.data_as(ctypes.POINTER(ctype))
 
-    # Compile
-    print(f"⚙️ Compiling {temp_file_name} -> {so_name}")
-    success, compile_output = run_compilation(so_name, temp_file_name)
-    if not success:
-        print("❌ Compilation failed:")
-        print(compile_output)
-        exit(1)
+    # ========================================================
+    # ✅ Step 1: Input is .cpp file → Output is .so file
+    # ========================================================
+    cu_file = args.file
+    if not os.path.exists(cu_file):
+        print(f"[ERROR] Source file not found: {cu_file}", file=sys.stderr)
+        sys.exit(1)
 
-    os.remove(temp_file_name)
+    if not cu_file.endswith(".cpp"):
+        print(f"[ERROR] Expected a .cpp file, got: {cu_file}", file=sys.stderr)
+        sys.exit(1)
 
-    # Load shared library
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name)  # e.g., min
+    # e.g., min_64_64.cpp → min_64_64.so
+    so_file = cu_file.replace(".cpp", ".so")
 
-    # Function signature: void min(float*, float*, float*)
+    # --- Compile .cpp to .so if .so doesn't exist or is older ---
+    compile_needed = True
+    if os.path.exists(so_file):
+        cu_mtime = os.path.getmtime(cu_file)
+        so_mtime = os.path.getmtime(so_file)
+        if so_mtime > cu_mtime:
+            compile_needed = False  # .so is up-to-date
+
+    if compile_needed:
+        print(f"⚙️ Compiling {cu_file} → {so_file} using cpp")
+        with open(cu_file, "r") as f:
+            code = f.read()
+
+        # Patch with macros
+        patched_code = macro + code
+        temp_file = cu_file.replace(".cpp", "_patched.cpp")
+        with open(temp_file, "w") as f:
+            f.write(patched_code)
+
+        # Run compilation: cpp -> .so
+        success, output = run_compilation(so_file, temp_file)
+        os.remove(temp_file)  # Clean up
+
+        if not success:
+            print(f"[ERROR] Compilation failed:\n{output}", file=sys.stderr)
+            sys.exit(1)
+
+    # ========================================================
+    # ✅ Step 2: Load the .so library
+    # ========================================================
+    try:
+        lib = ctypes.CDLL(so_file)
+        kernel_func = lib[op_name]  # Get function by name
+    except Exception as e:
+        print(
+            f"[ERROR] Failed to load or find function '{op_name}' in {so_file}: {e}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # ========================================================
+    # ✅ Step 3: Set function signature
+    # ========================================================
     kernel_func.argtypes = [
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctype),  # A
+        ctypes.POINTER(ctype),  # out
     ]
     kernel_func.restype = None
 
-    # Call kernel
-    print(f"🚀 Running {name.upper()} kernel...")
-    kernel_func(A_ptr, B_ptr, output_ptr)
+    # ========================================================
+    # ✅ Step 4: Call the kernel
+    # ========================================================
+    try:
+        print(f"🚀 Running {op_name} kernel on CPU (via .so)...")
+        kernel_func(A_ptr, out_ptr)
+    except Exception as e:
+        print(f"[ERROR] Kernel call failed: {e}", file=sys.stderr)
+        sys.exit(1)
 
-    # Verify
-    is_correct = torch.allclose(
-        result_ctypes,
-        expected,
-        rtol=1e-3,
-        atol=1e-3,
-        equal_nan=True,
+    # ========================================================
+    # ✅ Step 5: Reshape and verify
+    # ========================================================
+    result_tensor = (
+        torch.from_numpy(result_flat).reshape(expected.shape).to("cpu")
     )
 
-    if is_correct:
-        print("✅ Verification successful! C++ min matches PyTorch.")
+    # Verification
+    rtol, atol = (1e-3, 1e-3) if dtype_str == "float32" else (1e-2, 5e-2)
+    if torch.allclose(result_tensor, expected, rtol=rtol, atol=atol):
+        print("✅ Verification successful! CPU min kernel matches PyTorch.")
+        subprocess.run(["rm", so_file], check=False)
+        sys.exit(0)
     else:
         print("❌ Verification failed!")
-        print("Expected (first 10):", expected.flatten()[:10])
-        print("Got (first 10):", result_ctypes.flatten()[:10])
-        diff = (result_ctypes - expected).abs()
-        print("Max error:", diff.max().item())
+        diff = (result_tensor - expected).abs()
+        print(f"Max error: {diff.min().item()}")
+        sys.exit(1)
 
-    # Clean up
-    subprocess.run(["rm", so_name], check=False)
+
+if __name__ == "__main__":
+    main()
