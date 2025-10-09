@@ -1,11 +1,12 @@
 import argparse
 import ctypes
+import json
 import os
-import re
 import subprocess
 import sys
+
 import torch
-import json
+
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
 
@@ -38,7 +39,7 @@ if __name__ == "__main__":
         print(f"[ERROR] Failed to parse config: {e}", file=sys.stderr)
         sys.exit(1)
     shape = config["args"]
-    axis = config["axis"]   
+    axis = config["axis"]
 
     print(f"Testing {name.upper()} | Shape: {shape} | Axis: {axis}")
 
