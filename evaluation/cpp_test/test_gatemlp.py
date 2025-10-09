@@ -6,14 +6,14 @@ import subprocess
 import numpy as np
 import torch
 
-from evaluation.macros import CUDA_MACROS as macro
-from evaluation.utils import run_cuda_compilation as run_compilation
+from evaluation.macros import CPP_MACROS as macro
+from evaluation.utils import run_cpp_compilation as run_compilation
 
 
 def ref_program(X, A, B):
     """Golden reference using PyTorch.
 
-    Inputs: X, A, B as PyTorch tensors (on CUDA)
+    Inputs: X, A, B as PyTorch tensors (on CPP)
     Output: O = SiLU(X @ A) * (X @ B) as NumPy array
     """
     O1 = torch.nn.functional.silu(torch.matmul(X, A))
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     # Parse file name: gate_mlp_4_4096.cpp -> [4, 4096]
     base_name = os.path.basename(args.file)
-    name = "gate_mlp_forward"
+    name = "gatemlp"
     shapes = base_name.split(".")[0]
     shape_parts = [
         int(intg) for intg in shapes.split("_")[2:]
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     O_ptr = O.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
     # -------------------------------
-    # 4. invoke C++/CUDA kernel
+    # 4. invoke C++ kernel
     # -------------------------------
     function(X_ptr, A_ptr, B_ptr, O_ptr, batch, dim)
 

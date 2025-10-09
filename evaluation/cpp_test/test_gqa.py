@@ -21,9 +21,6 @@ if __name__ == "__main__":
         choices=["cuda", "hip", "bang", "cpu"],
         help="Target platform",
     )
-    parser.add_argument(
-        "--batch", type=int, default=1, help="Batch size for test"
-    )
     args = parser.parse_args()
 
     # ---------------------------------------------
@@ -59,7 +56,7 @@ if __name__ == "__main__":
     # 3. Load shared library
     # ---------------------------------------------
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    gqa_func = getattr(lib, args.name + "_kernel")
+    gqa_func = getattr(lib, "gqa")
     gqa_func.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # Q
         ctypes.POINTER(ctypes.c_float),  # K
@@ -104,7 +101,7 @@ if __name__ == "__main__":
     O_ptr = O.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
     # ---------------------------------------------
-    # 6. invoke C++/CUDA kernel
+    # 6. invoke C++ kernel
     # ---------------------------------------------
     gqa_func(Q_ptr, K_ptr, V_ptr, O_ptr, batch, 2, seq_q, seq_kv, 64)
 
