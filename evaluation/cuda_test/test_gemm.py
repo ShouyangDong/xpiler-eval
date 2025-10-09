@@ -24,7 +24,7 @@ if __name__ == "__main__":
     base_name = os.path.basename(args.file)
     shapes = base_name.split(".")[0]
     shape = [int(intg) for intg in shapes.split("_")[1:]]
-    print(shape)
+
     # Generate random matrices for testing
     # Define the input matrix A and vector x
     A = np.ones((shape[0], shape[1]), dtype=np.int8)  # Keeping as int8
