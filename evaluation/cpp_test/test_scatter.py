@@ -1,7 +1,7 @@
 import argparse
 import ctypes
+import json
 import os
-import re
 import subprocess
 
 import torch
@@ -31,32 +31,18 @@ if __name__ == "__main__":
     base_name = os.path.basename(args.file)
     kernel_name = base_name.split("_")[0]
 
-    # Parse dim from filename: scatter_1_64_56_112_dim3.cpp
-    dim_match = re.search(r"_dim(\d)\.cpp", base_name)
-    if not dim_match:
-        raise ValueError(
-            "Filename must contain _dimN.cpp to specify dimension"
-        )
-    dim = int(dim_match.group(1))
+    config = json.loads(args.config)
+    dim = config["axis"]
+    shape = config["args"]
 
-    try:
-        shape_str = base_name.replace(f"_dim{dim}.cpp", "")
-        N, C, H, W = map(int, shape_str.split("_")[1:5])
-    except Exception as e:
-        raise ValueError(f"Invalid filename format: {base_name}") from e
-
-    print(
-        f"Testing {kernel_name.upper()} | Shape: [{N},{C},{H},{W}] | Dim: {dim}"
-    )
+    print(f"Testing {kernel_name.upper()} | Shape: {shape} | Dim: {dim}")
 
     # Create tensors
-    self_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
-    src_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
+    self_tensor = torch.rand(*shape, dtype=torch.float32)
+    src_tensor = torch.rand(*shape, dtype=torch.float32)
     # indices must be within valid range for the target dimension
-    size_dim = [N, C, H, W][dim]
-    indices_tensor = torch.randint(
-        0, size_dim, (N, C, H, W), dtype=torch.int32
-    )
+    size_dim = shape[dim]
+    indices_tensor = torch.randint(0, size_dim, shape, dtype=torch.int64)
 
     # Golden reference
     expected = scatter_reference(self_tensor, indices_tensor, src_tensor, dim)
@@ -94,7 +80,7 @@ if __name__ == "__main__":
         f.write(code)
 
     print(f"Compiling {temp_file} -> {so_name}")
-    success, log = run_compilation(so_name, temp_file, target=args.target)
+    success, log = run_compilation(so_name, temp_file)
     if not success:
         print("Compilation failed:")
         print(log)
@@ -129,8 +115,6 @@ if __name__ == "__main__":
         print("Verification failed!")
         diff = (result_reshaped - expected).abs()
         print("Max error:", diff.max().item())
-        print("Sample expected (top-left):", expected[0, 0, :2, :2])
-        print("Sample got (top-left):     ", result_reshaped[0, 0, :2, :2])
 
     # Cleanup
     subprocess.run(["rm", so_name], check=False)
