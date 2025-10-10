@@ -21,7 +21,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--config", required=True)
     parser.add_argument(
-        "--target", choices=["cuda", "hip", "bang", "cpu"], required=True
+        "--target", choices=["cuda", "hip", "mlu", "cpu"], required=True
     )
     args = parser.parse_args()
 

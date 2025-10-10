@@ -30,7 +30,7 @@ def main():
     parser.add_argument(
         "--target",
         required=True,
-        choices=["cuda", "hip", "bang", "cpu"],
+        choices=["cuda", "hip", "mlu", "cpu"],
         help="Target platform",
     )
 
@@ -65,7 +65,7 @@ def main():
         "cpu": "cpu",
         "cuda": "cuda",
         "hip": "cuda",  # ROCm uses cuda device in PyTorch
-        "bang": "cpu",  # MLU data generated on CPU
+        "mlu": "cpu",  # MLU data generated on CPU
     }
     device_map[args.target]
 

@@ -102,7 +102,7 @@ def main():
     )
     parser.add_argument(
         "--target",
-        choices=["cuda", "hip", "bang", "cpu"],
+        choices=["cuda", "hip", "mlu", "cpu"],
         required=True,
         help="Target platform",
     )

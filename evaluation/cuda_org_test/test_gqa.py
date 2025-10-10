@@ -18,7 +18,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--target",
         required=True,
-        choices=["cuda", "hip", "bang", "cpu"],
+        choices=["cuda", "hip", "mlu", "cpu"],
         help="Target platform",
     )
     parser.add_argument(
