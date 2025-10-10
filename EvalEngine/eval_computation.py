@@ -49,10 +49,8 @@ TEST_SCRIPT_MAP = {
 TARGET_TO_EXT = {
     "cuda": ".cu",
     "hip": ".hip",
-    "cpp": ".cpp",  # or "cpu"
-    "cpu": ".cpp",      # alias for cpp
+    "cpp": ".cpp",
     "mlu": ".mlu",
-    "bang": ".mlu",     # Cambricon Bang may use same extension
     # Add more as needed
 }
 
