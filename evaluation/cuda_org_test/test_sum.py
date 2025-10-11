@@ -18,7 +18,7 @@ def parse_config(config_input):
         "op_name": "sum",
         "dtype": "float32",
         "args": [3, 4, 5],        # input shape
-        "axes": [0] or 0          # reduction axes
+        "axis": [0] or 0          # reduction axes
     }
     """
     if os.path.isfile(config_input):
@@ -28,7 +28,7 @@ def parse_config(config_input):
         config = json.loads(config_input)
 
     shape = config["args"]
-    axes = config["axes"]
+    axes = config["axis"]
     if isinstance(axes, int):
         axes = [axes]
     return shape, axes

@@ -1,172 +1,303 @@
+"""Batch correctness tester for max reduction kernels with parallel compilation
+and testing."""
+
 import argparse
 import ctypes
 import json
+import logging
 import os
-import subprocess
-import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Tuple
 
 import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
 
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
-# --- Golden Reference: reduce max along axis ---
-def reduce_max(input_tensor, axis):
-    return torch.max(input_tensor, dim=axis)[0]  # 返回 values，忽略 indices
+
+def reference_max(input: torch.Tensor, axis: int) -> torch.Tensor:
+    """Reference max reduction using PyTorch."""
+    return torch.max(input, dim=axis)[0]  # [0] = values, [1] = indices
 
 
-def main():
-    parser = argparse.ArgumentParser(description="CPU max kernel tester")
+def parse_filename(file_name: str) -> Dict:
+    """
+    Parse filename: max_64_64.cpp → shape=[64,64], axis=1
+    Format: max_M_N.cpp → reduce along axis=1 (last dim)
+    or:     max_B_L_D.cpp → reduce along axis=2
+    Returns: dict with shape, axis, and metadata.
+    """
+    try:
+        base = os.path.splitext(file_name)[0]
+        parts = base.split("_")
+        if len(parts) < 3 or parts[0] != "max":
+            raise ValueError(f"Invalid max filename: {file_name}")
+
+        dims = [int(p) for p in parts[1:]]
+        if len(dims) == 2:
+            M, N = dims
+            shape = [M, N]
+            axis = 1  # reduce along N
+        elif len(dims) == 3:
+            B, L, D = dims
+            shape = [B, L, D]
+            axis = 2  # reduce along D
+        else:
+            raise ValueError(f"Unsupported max shape: {dims}")
+
+        output_shape = shape[:axis] + shape[axis + 1 :]
+        total_input = 1
+        for d in shape:
+            total_input *= d
+        total_output = 1
+        for d in output_shape:
+            total_output *= d
+
+        return {
+            "file": file_name,
+            "shape": shape,
+            "axis": axis,
+            "output_shape": output_shape,
+            "total_input": total_input,
+            "total_output": total_output,
+            "ndim": len(shape),
+        }
+    except Exception as e:
+        raise ValueError(f"Failed to parse {file_name}: {e}")
+
+
+def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
+    """Compile one max kernel."""
+    file_name = config["file"]
+    file_path = os.path.join(source_dir, file_name)
+    so_path = os.path.join(source_dir, file_name.replace(".cpp", ".so"))
+
+    # Use unique temp file to avoid race
+    temp_file = os.path.join(
+        source_dir,
+        f"{file_name.replace('.cpp', '')}_patched_{os.getpid()}.cpp",
+    )
+
+    if not os.path.isfile(file_path):
+        return config, False, f"[MAX] File not found: {file_path}"
+
+    try:
+        with open(file_path, "r") as f:
+            code = f.read()
+        code = macro + code
+        with open(temp_file, "w") as f:
+            f.write(code)
+    except Exception as e:
+        return config, False, f"[MAX] Patch failed {file_name}: {e}"
+
+    success, msg = run_compilation(so_path, temp_file)
+    try:
+        os.remove(temp_file)
+    except BaseException:
+        pass
+
+    if success:
+        return config, True, so_path
+    else:
+        return config, False, f"[MAX] Compile failed {file_name}: {msg}"
+
+
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on compiled max kernel."""
+    try:
+        shape = config["args"]
+        axis = config["axis"]
+        file_name = config["file"]
+        output_shape = [
+            1 if i == axis else size for i, size in enumerate(shape)
+        ]
+        # Load shared library
+        lib = ctypes.CDLL(so_path)
+        func = getattr(lib, "max", None)
+        if not func:
+            return False, f"[MAX] Function 'max' not found in {so_path}"
+
+        # Set function signature
+        dtype_str = config.get("dtype", "float32")
+        ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+
+        func.argtypes = [
+            ctypes.POINTER(ctype),  # input
+            ctypes.POINTER(ctype),  # output
+        ]
+        func.restype = None
+
+        # Generate input
+        torch.manual_seed(1234)
+        input_tensor = (
+            torch.randn(*shape, dtype=torch.float32) * 100
+        )  # scale for visibility
+        expected = reference_max(input_tensor, axis)
+
+        # Flatten and get pointers
+        input_flat = input_tensor.flatten().numpy()
+        output_flat = torch.zeros(output_shape).flatten().numpy()
+
+        input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctype))
+        output_ptr = output_flat.ctypes.data_as(ctypes.POINTER(ctype))
+
+        # Call kernel
+        func(input_ptr, output_ptr)
+
+        # Reshape and compare
+        result_reshaped = torch.from_numpy(output_flat).reshape(expected.shape)
+
+        try:
+            torch.testing.assert_close(
+                result_reshaped,
+                expected,
+                rtol=1e-3,
+                atol=1e-3,
+                check_dtype=True,
+                equal_nan=False,
+                msg=lambda msg: f"[MAX] {file_name} failed: {msg}",
+            )
+            max_abs_err = (result_reshaped - expected).abs().max().item()
+            return (
+                True,
+                f"[MAX] ✅ {file_name}| Max error: {max_abs_err:.2e}",
+            )
+        except Exception as e:
+            return False, f"[MAX] FAILED❌: {file_name} | {str(e)}"
+
+    except Exception as e:
+        return False, f"[MAX] Exception in test {file_name}: {str(e)}"
+
+
+def run_tests(
+    configs: List[dict], source_dir: str, target: str, num_workers: int = 4
+) -> List[Tuple[bool, str]]:
+    """Two-phase test: compile all → test all."""
+    logger.info(f"[MAX] Starting two-phase test for {len(configs)} kernels...")
+
+    compiled_map = {}
+    results = []
+
+    # === PHASE 1: Parallel Compilation ===
+    logger.info(f"[MAX] Phase 1/2: Compiling {len(configs)} kernels...")
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = [
+            executor.submit(compile_kernel, config, source_dir)
+            for config in configs
+        ]
+
+        for future in as_completed(futures):
+            config, success, msg = future.result()
+            if success:
+                compiled_map[config["file"]] = msg
+            else:
+                results.append((False, msg))
+
+    logger.info(
+        f"[MAX] Compilation: {len(compiled_map)} succeeded, {len([r for r in results if not r[0]])} failed."
+    )
+
+    # === PHASE 2: Parallel Testing ===
+    if compiled_map:
+        logger.info(
+            f"[MAX] Phase 2/2: Testing {len(compiled_map)} compiled kernels..."
+        )
+        test_configs = [
+            (config, compiled_map[config["file"]])
+            for config in configs
+            if config["file"] in compiled_map
+        ]
+
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = [
+                executor.submit(test_kernel, config, so_path)
+                for config, so_path in test_configs
+            ]
+
+            for future in as_completed(futures):
+                results.append(future.result())
+
+    return results
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test Max reduction kernels")
     parser.add_argument(
-        "--file",
-        required=True,
-        help="Path to the .cpp source file (e.g., max_64_64.cpp)",
+        "--config", required=True, help="JSON string or path to config file"
     )
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+        "--source_dir", default="./", help="Directory containing .cpp files"
     )
     parser.add_argument(
         "--target",
         required=True,
-        choices=["cuda", "hip", "cpu", "mlu"],
+        choices=["cuda", "hip", "mlu", "cpu"],
         help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
     )
 
     args = parser.parse_args()
 
-    # --- Parse config ---
-    try:
-        if os.path.exists(args.config) and args.config.endswith(".json"):
-            with open(args.config, "r") as f:
-                config = json.load(f)
-        else:
-            config = json.loads(args.config)
-    except Exception as e:
-        print(f"[ERROR] Failed to parse config: {e}", file=sys.stderr)
-        sys.exit(1)
-
-    op_name = config["op_name"]
-    shape = config["args"]
-    axis = config["axes"]
-    dtype_str = config.get("dtype", "float32")
-
-    print(
-        f"🔍 Testing {op_name.upper()} on CPU with shape {shape}, dtype={dtype_str}, axes={axis}"
-    )
-
-    # --- Device and dtype setup ---
-    dtype_map = {
-        "float32": torch.float32,
-        "float16": torch.float16,
-    }
-    dtype = dtype_map.get(dtype_str, torch.float32)
-
-    # --- Generate input tensors on CPU (for ctypes) ---
-    A = torch.randn(*shape, dtype=dtype, device="cpu") * 10
-    expected = reduce_max(A, axis)
-
-    # --- Flatten and get ctypes pointers ---
-    A_flat = A.flatten().numpy()
-    result_flat = torch.zeros_like(expected).flatten().numpy()
-
-    ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
-    A_ptr = A_flat.ctypes.data_as(ctypes.POINTER(ctype))
-    out_ptr = result_flat.ctypes.data_as(ctypes.POINTER(ctype))
-
-    # ========================================================
-    # ✅ Step 1: Input is .cpp file → Output is .so file
-    # ========================================================
-    cu_file = args.file
-    if not os.path.exists(cu_file):
-        print(f"[ERROR] Source file not found: {cu_file}", file=sys.stderr)
-        sys.exit(1)
-
-    if not cu_file.endswith(".cpp"):
-        print(f"[ERROR] Expected a .cpp file, got: {cu_file}", file=sys.stderr)
-        sys.exit(1)
-
-    # e.g., max_64_64.cpp → max_64_64.so
-    so_file = cu_file.replace(".cpp", ".so")
-
-    # --- Compile .cpp to .so if .so doesn't exist or is older ---
-    compile_needed = True
-    if os.path.exists(so_file):
-        cu_mtime = os.path.getmtime(cu_file)
-        so_mtime = os.path.getmtime(so_file)
-        if so_mtime > cu_mtime:
-            compile_needed = False  # .so is up-to-date
-
-    if compile_needed:
-        print(f"⚙️ Compiling {cu_file} → {so_file} using cpp")
-        with open(cu_file, "r") as f:
-            code = f.read()
-
-        # Patch with macros
-        patched_code = macro + code
-        temp_file = cu_file.replace(".cpp", "_patched.cpp")
-        with open(temp_file, "w") as f:
-            f.write(patched_code)
-
-        # Run compilation: cpp -> .so
-        success, output = run_compilation(so_file, temp_file)
-        os.remove(temp_file)  # Clean up
-
-        if not success:
-            print(f"[ERROR] Compilation failed:\n{output}", file=sys.stderr)
-            sys.exit(1)
-
-    # ========================================================
-    # ✅ Step 2: Load the .so library
-    # ========================================================
-    try:
-        lib = ctypes.CDLL(so_file)
-        kernel_func = lib[op_name]  # Get function by name
-    except Exception as e:
-        print(
-            f"[ERROR] Failed to load or find function '{op_name}' in {so_file}: {e}",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    # ========================================================
-    # ✅ Step 3: Set function signature
-    # ========================================================
-    kernel_func.argtypes = [
-        ctypes.POINTER(ctype),  # A
-        ctypes.POINTER(ctype),  # out
-    ]
-    kernel_func.restype = None
-
-    # ========================================================
-    # ✅ Step 4: Call the kernel
-    # ========================================================
-    try:
-        print(f"🚀 Running {op_name} kernel on CPU (via .so)...")
-        kernel_func(A_ptr, out_ptr)
-    except Exception as e:
-        print(f"[ERROR] Kernel call failed: {e}", file=sys.stderr)
-        sys.exit(1)
-
-    # ========================================================
-    # ✅ Step 5: Reshape and verify
-    # ========================================================
-    result_tensor = (
-        torch.from_numpy(result_flat).reshape(expected.shape).to("cpu")
-    )
-
-    # Verification
-    rtol, atol = (1e-3, 1e-3) if dtype_str == "float32" else (1e-2, 5e-2)
-    if torch.allclose(result_tensor, expected, rtol=rtol, atol=atol):
-        print("✅ Verification successful! CPU max kernel matches PyTorch.")
-        subprocess.run(["rm", so_file], check=False)
-        sys.exit(0)
+    # Parse config
+    if os.path.isfile(args.config):
+        with open(args.config, "r") as f:
+            configs = json.load(f)
     else:
-        print("❌ Verification failed!")
-        diff = (result_tensor - expected).abs()
-        print(f"Max error: {diff.max().item()}")
-        sys.exit(1)
+        try:
+            configs = json.loads(args.config)
+        except Exception as e:
+            logger.error(f"Invalid config JSON: {e}")
+            exit(1)
 
+    if isinstance(configs, dict):
+        configs = [configs]
 
-if __name__ == "__main__":
-    main()
+    # Filter and parse max kernels
+    configs = [c for c in configs if c.get("op_name") == "max"]
+    max_configs = [
+        {**config, "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp"}
+        for config in configs
+    ]
+
+    if not max_configs:
+        logger.warning("No valid 'max' kernels found in config.")
+        exit(0)
+
+    # Run tests
+    results = run_tests(
+        max_configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Log individual results
+    passed = sum(1 for r in results if r[0])
+    total = len(results)
+
+    for success, msg in results:
+        if success:
+            logger.info(msg)
+        else:
+            logger.error(msg)
+
+    # Final summary
+    if passed == total:
+        logger.info(f"🎉 All {total} MAX reduction tests passed!")
+        exit(0)
+    else:
+        logger.error(
+            f"❌ {total - passed}/{total} MAX reduction tests failed."
+        )
+        exit(1)

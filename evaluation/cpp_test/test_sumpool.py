@@ -1,19 +1,280 @@
+"""Batch correctness tester for Sum Pooling kernels."""
+
 import argparse
 import ctypes
+import json
+import logging
 import os
-import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Tuple
 
+import numpy as np
 import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
 from evaluation.utils import sumpool_np
 
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+
+def parse_config(config_input: str) -> List[Dict]:
+    """Parse config: either JSON file or JSON string."""
+    if os.path.isfile(config_input):
+        with open(config_input, "r") as f:
+            config_data = json.load(f)
+    else:
+        try:
+            config_data = json.loads(config_input)
+        except Exception as e:
+            raise ValueError(f"Invalid JSON config: {e}")
+
+    if isinstance(config_data, dict):
+        config_data = [config_data]
+
+    parsed_configs = []
+    for idx, c in enumerate(config_data):
+        try:
+            shapes = c.get("args")
+            if not isinstance(args, list) or len(args) < 2:
+                raise ValueError(
+                    f"Invalid 'args' (must be at least 2D): {args}"
+                )
+
+            ksize_stride = c.get("axis")  # reuse axes field
+            if not isinstance(ksize_stride, list) or len(ksize_stride) not in [
+                2,
+                4,
+            ]:
+                raise ValueError(
+                    f"Invalid 'axis' (must be [kH,kW] or [kH,kW,sH,sW]): {ksize_stride}"
+                )
+
+            op_name =  c.get("op_name")
+            # Construct filename
+            file_name = f"{op_name}_{'_'.join(map(str, shape))}.cpp"
+            if not file_name or not file_name.endswith(".cpp"):
+                raise ValueError(f"Invalid or missing 'file': {file_name}")
+
+            dtype = c.get("dtype", "float32")
+            if dtype not in ["float32", "float16"]:
+                raise ValueError(f"Unsupported dtype: {dtype}")
+
+            if op_name not in ["sumpool", "sum_pool"]:
+                logger.warning(
+                    f"[SUMPOOL] Expected op='sumpool', got {op_name}"
+                )
+
+            # Expand ksize_stride to 4 values
+            if len(ksize_stride) == 2:
+                # [kH, kW] → [kH, kW, kH, kW]
+                ksize_stride = ksize_stride + ksize_stride
+
+            input_shape = args
+            kernel_size = ksize_stride[:2]
+            stride = ksize_stride[2:]
+
+            parsed_configs.append(
+                {
+                    "file": file_name,
+                    "input_shape": input_shape,
+                    "kernel_size": kernel_size,
+                    "stride": stride,
+                    "dtype": dtype,
+                    "op": "sumpool",
+                }
+            )
+        except Exception as e:
+            logger.warning(f"[SUMPOOL] Skip invalid config #{idx}: {e}")
+
+    return parsed_configs
+
+
+def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
+    """Compile one sumpool kernel."""
+    file_name = config["file"]
+    file_path = os.path.join(source_dir, file_name)
+    so_path = os.path.join(source_dir, file_name.replace(".cpp", ".so"))
+
+    temp_file = os.path.join(
+        source_dir,
+        f"{file_name.replace('.cpp', '')}_patched_{os.getpid()}.cpp",
+    )
+
+    if not os.path.isfile(file_path):
+        return config, False, f"[SUMPOOL] File not found: {file_path}"
+
+    try:
+        with open(file_path, "r") as f:
+            code = f.read()
+        code = macro + code
+        with open(temp_file, "w") as f:
+            f.write(code)
+    except Exception as e:
+        return config, False, f"[SUMPOOL] Patch failed {file_name}: {e}"
+
+    success, msg = run_compilation(so_path, temp_file)
+    try:
+        os.remove(temp_file)
+    except BaseException:
+        pass
+
+    if success:
+        return config, True, so_path
+    else:
+        return config, False, f"[SUMPOOL] Compile failed {file_name}: {msg}"
+
+
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on compiled sumpool kernel."""
+    try:
+        file_name = config["file"]
+        input_shape = config["args"][:4]
+        kernel_size = config["args"][4:6]
+        stride = config["args"][6:8]
+        dtype_str = config["dtype"]
+        op_name = config["op_name"]
+
+        # Load shared library
+        lib = ctypes.CDLL(so_path)
+        func = getattr(lib, op_name, None)
+        if not func:
+            return (
+                False,
+                f"[SUMPOOL] Function '{op_name}' not found in {so_path}",
+            )
+
+        # Determine C type and numpy dtype
+        ctype_float = (
+            ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+        )
+        np_dtype = np.float32 if dtype_str == "float32" else np.float16
+        torch_dtype = (
+            torch.float32 if dtype_str == "float32" else torch.float16
+        )
+
+        # Set function signature
+        func.argtypes = [
+            ctypes.POINTER(ctype_float),  # input
+            ctypes.POINTER(ctype_float),  # output
+        ]
+        func.restype = None
+
+        # Generate input
+        input_np = np.random.rand(*input_shape).astype(np_dtype)
+        input_torch = torch.from_numpy(input_np).to(dtype=torch_dtype)
+
+        # Compute reference output
+        expected_output = sumpool_np(input_torch, kernel_size + stride)
+        output_shape = expected_output.shape
+        output_size = expected_output.numel()
+        output_np = np.zeros(output_size, dtype=np_dtype)
+
+        # Get pointers
+        input_ptr = input_np.ctypes.data_as(ctypes.POINTER(ctype_float))
+        output_ptr = output_np.ctypes.data_as(ctypes.POINTER(ctype_float))
+
+        # Call kernel
+        func(input_ptr, output_ptr)
+
+        # Convert back to tensor
+        output_torch = (
+            torch.from_numpy(output_np)
+            .view(output_shape)
+            .to(dtype=torch_dtype)
+        )
+
+        # Compare
+        rtol, atol = (1e-3, 1e-3) if dtype_str == "float32" else (5e-2, 5e-2)
+        if torch.allclose(
+            output_torch, expected_output, rtol=rtol, atol=atol, equal_nan=True
+        ):
+            max_error = (output_torch - expected_output).abs().max().item()
+            return (
+                True,
+                f"[SUMPOOL] ✅ {file_name}| In: {input_shape} → Out: {list(output_shape)} | Max error: {max_error:.2e}",
+            )
+        else:
+            max_error = (output_torch - expected_output).abs().max().item()
+            return (
+                False,
+                f"[SUMPOOL] FAILED❌: {file_name} | Max error: {max_error:.2e}",
+            )
+
+    except Exception as e:
+        return False, f"[SUMPOOL] Exception in test {file_name}: {str(e)}"
+
+
+def run_tests(
+    configs: List[dict], source_dir: str, target: str, num_workers: int = 4
+) -> List[Tuple[bool, str]]:
+    """Two-phase test: compile all → test all."""
+    logger.info(
+        f"[SUMPOOL] Starting two-phase test for {len(configs)} kernels..."
+    )
+
+    compiled_map = {}
+    results = []
+
+    # === PHASE 1: Parallel Compilation ===
+    logger.info(f"[SUMPOOL] Phase 1/2: Compiling {len(configs)} kernels...")
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = [
+            executor.submit(compile_kernel, config, source_dir)
+            for config in configs
+        ]
+
+        for future in as_completed(futures):
+            config, success, msg = future.result()
+            if success:
+                compiled_map[config["file"]] = msg
+            else:
+                results.append((False, msg))
+
+    logger.info(
+        f"[SUMPOOL] Compilation: {len(compiled_map)} succeeded, {len([r for r in results if not r[0]])} failed."
+    )
+
+    # === PHASE 2: Parallel Testing ===
+    if compiled_map:
+        logger.info(
+            f"[SUMPOOL] Phase 2/2: Testing {len(compiled_map)} compiled kernels..."
+        )
+        test_configs = [
+            (config, compiled_map[config["file"]])
+            for config in configs
+            if config["file"] in compiled_map
+        ]
+
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = [
+                executor.submit(test_kernel, config, so_path)
+                for config, so_path in test_configs
+            ]
+
+            for future in as_completed(futures):
+                results.append(future.result())
+
+    return results
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
+    parser = argparse.ArgumentParser(description="Test Sum Pooling kernels")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory containing .cpp files"
     )
     parser.add_argument(
         "--target",
@@ -21,60 +282,42 @@ if __name__ == "__main__":
         choices=["cuda", "hip", "mlu", "cpu"],
         help="Target platform",
     )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
     args = parser.parse_args()
-    base_name = os.path.basename(args.file)
 
-    name = base_name.split(".")[0].split("_")[0]
-    shape = base_name.split(".")[0].split("_")[1:5]
-    shape = [int(intg) for intg in shape]
-    kernel_stride = base_name.split(".")[0].split("_")[5:]
-    kernel_stride = [int(intg) for intg in kernel_stride]
-    input_array = torch.randn(*shape, device="cpu")
-    # Calculate the result using numpy for comparison
-    output_np = sumpool_np(input_array, kernel_stride)
-    output_array = torch.zeros(output_np.shape, dtype=torch.float32)
+    # Parse config
+    try:
+        configs = parse_config(args.config)
+    except Exception as e:
+        logger.error(f"❌ Config parsing failed: {e}")
+        exit(1)
 
-    # Convert the arrays to contiguous memory for ctypes
-    input_ptr = input_array.numpy().ctypes.data_as(
-        ctypes.POINTER(ctypes.c_float)
-    )
-    output_ptr = output_array.numpy().ctypes.data_as(
-        ctypes.POINTER(ctypes.c_float)
+    if not configs:
+        logger.warning("⚠️ No valid 'sumpool' kernels found in config.")
+        exit(0)
+
+    # Run tests
+    results = run_tests(
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
-    # Load the shared library with the avgpool function
-    so_name = args.file.replace(".cpp", ".so")
-    with open(args.file, "r") as f:
-        code = f.read()
+    # Log individual results
+    passed = sum(1 for r in results if r[0])
+    total = len(results)
 
-    code = macro + code
+    for success, msg in results:
+        if success:
+            logger.info(msg)
+        else:
+            logger.error(msg)
 
-    file_name = args.file.replace(
-        base_name.replace(".cpp", ""), base_name + "_bak.cpp"
-    )
-    with open(file_name, mode="w") as f:
-        f.write(code)
-
-    success, output = run_compilation(so_name, file_name)
-    os.remove(file_name)
-
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    function = getattr(lib, name)
-    # Define the function's parameters and return types.
-    function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
-    ]
-    function.restype = None
-    # Call the function with the matrices and dimensions
-    function(input_ptr, output_ptr)
-    # Check if the results match
-    torch.allclose(
-        output_array,
-        output_np,
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
-    )
-    print("Verification successful!")
-    result = subprocess.run(["rm", so_name])
+    # Final summary
+    if passed == total:
+        logger.info(f"🎉 All {total} Sum Pooling tests passed!")
+        exit(0)
+    else:
+        logger.error(f"❌ {total - passed}/{total} Sum Pooling tests failed.")
+        exit(1)

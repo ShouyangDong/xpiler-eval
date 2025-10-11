@@ -68,33 +68,23 @@ def minpool_np(input_tensor, kernel_stride):
 
 
 def conv2d_nchw(
-    input_tensor, in_channels, out_channels, kernel, stride, padding=0
+    input_tensor, kernels, stride, padding=0
 ):
-    # Define the convolutional layer.
-    conv_layer = torch.nn.Conv2d(
-        in_channels=in_channels,
-        out_channels=out_channels,
-        kernel_size=kernel,
-        stride=stride,
-        padding=padding,
+    output = F.conv2d(
+        input_tensor, kernels, stride=stride, padding=padding
     )
-    output = conv_layer(input_tensor)
     return output
 
 
 def conv2d_nhwc(
-    input_nhwc, in_channels, out_channels, kernel, stride, padding
+    input_nhwc, kernels, stride, padding
 ):
-    weight_hwio = torch.randn(
-        [out_channels, kernel, kernel, input_nhwc.shape[3]], device="cpu"
-    )
-
     # Convert the input from NHWC to NCHW.
     input_nchw = input_nhwc.permute(0, 3, 1, 2)
 
-    # Convert the kernel from HWIO (H, W, in_channels, out_channels) format to
+    # Convert the kernel from (O, H, W, I) format to
     # PyTorch's OIHW format.
-    weight_oihw = weight_hwio.permute(0, 3, 1, 2)
+    weight_oihw = kernels.permute(0, 3, 1, 2)
 
     # Perform convolution operations using the transformed convolution kernel
     # and input.
@@ -103,7 +93,7 @@ def conv2d_nhwc(
     )
 
     # Convert the output from NCHW back to NHWC.
-    output_nhwc = output_nchw.permute(0, 3, 1, 2)
+    output_nhwc = output_nchw.permute(0, 2, 3, 1)
     return output_nhwc
 
 
