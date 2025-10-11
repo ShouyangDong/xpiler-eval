@@ -32,7 +32,7 @@ if __name__ == "__main__":
     base_name = os.path.basename(args.file)
     shapes = base_name.split(".")[0]
     parts = [int(x) for x in shapes.split("_")[1:]]
-    batch, seq_q, seq_kv, head_dim = parts
+    batch, seq_q, seq_M, seq_K, seq_N = parts
 
     so_name = args.file.replace(".cpp", ".so")
 
@@ -79,9 +79,9 @@ if __name__ == "__main__":
     torch.manual_seed(1234)
 
     # Generate Q, K, V
-    Q = torch.rand([batch, 2, seq_q, 64], dtype=torch.float32, device="cuda")
-    K = torch.rand([batch, 2, 64, seq_kv], dtype=torch.float32, device="cuda")
-    V = torch.rand([batch, 2, seq_kv, 64], dtype=torch.float32, device="cuda")
+    Q = torch.rand([batch, seq_q, seq_M, seq_K], dtype=torch.float32, device="cuda")
+    K = torch.rand([batch, seq_q, seq_K, seq_N], dtype=torch.float32, device="cuda")
+    V = torch.rand([batch, seq_q, seq_N, seq_K], dtype=torch.float32, device="cuda")
 
     # ✅ Get the referenced ouput
     with torch.no_grad():
