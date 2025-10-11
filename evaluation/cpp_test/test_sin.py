@@ -1,120 +1,260 @@
+#!/usr/bin/env python3
+"""Batch correctness tester for Sin kernels with parallel compilation and testing."""
+
 import argparse
 import ctypes
+import json
+import logging
 import os
-import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List, Tuple, Dict
 
 import torch
+import numpy as np
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
 
 
-# Define the sin function using torch
-def sin(A):
-    return torch.sin(A)
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+
+def ref_program(x: torch.Tensor) -> torch.Tensor:
+    """Golden reference: sin(x) using PyTorch."""
+    return torch.sin(x)
+
+
+def parse_config(config_input: str) -> List[Dict]:
+    """Parse config: either JSON file or JSON string."""
+    if os.path.isfile(config_input):
+        with open(config_input, "r") as f:
+            config_data = json.load(f)
+    else:
+        try:
+            config_data = json.loads(config_input)
+        except Exception as e:
+            raise ValueError(f"Invalid JSON config: {e}")
+
+    if isinstance(config_data, dict):
+        config_data = [config_data]
+
+    parsed_configs = []
+    for idx, c in enumerate(config_data):
+        try:
+            shape = c.get("args")
+            if not isinstance(shape, list) or len(shape) < 1 or not all(isinstance(d, int) for d in shape):
+                raise ValueError(f"Invalid 'args' (must be list of int): {shape}")
+
+            file_name = c.get("file")
+            if not file_name or not file_name.endswith(".cpp"):
+                raise ValueError(f"Invalid or missing 'file': {file_name}")
+
+            dtype = c.get("dtype", "float32")
+            if dtype not in ["float32", "float16"]:
+                raise ValueError(f"Unsupported dtype: {dtype}")
+
+            op_name = c.get("op", "sin")
+            if op_name not in ["sin"]:
+                logger.warning(f"[SIN] Expected op='sin', got {op_name}")
+
+            # Optional: scale input (e.g., * 4 * pi)
+            scale = c.get("scale", 4.0 * 3.14159265359)
+
+            parsed_configs.append({
+                "file": file_name,
+                "shape": shape,
+                "dtype": dtype,
+                "op": op_name,
+                "scale": scale,
+            })
+        except Exception as e:
+            logger.warning(f"[SIN] Skip invalid config #{idx}: {e}")
+
+    return parsed_configs
+
+
+def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
+    """Compile one sin kernel."""
+    file_name = config["file"]
+    file_path = os.path.join(source_dir, file_name)
+    so_path = os.path.join(source_dir, file_name.replace(".cpp", ".so"))
+
+    temp_file = os.path.join(source_dir, f"{file_name.replace('.cpp', '')}_patched_{os.getpid()}.cpp")
+
+    if not os.path.isfile(file_path):
+        return config, False, f"[SIN] File not found: {file_path}"
+
+    try:
+        with open(file_path, "r") as f:
+            code = f.read()
+        code = macro + code
+        with open(temp_file, "w") as f:
+            f.write(code)
+    except Exception as e:
+        return config, False, f"[SIN] Patch failed {file_name}: {e}"
+
+    success, msg = run_compilation(so_file=so_path, source_file=temp_file)
+    try:
+        os.remove(temp_file)
+    except:
+        pass
+
+    if success:
+        return config, True, so_path
+    else:
+        return config, False, f"[SIN] Compile failed {file_name}: {msg}"
+
+
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on compiled sin kernel."""
+    try:
+        file_name = config["file"]
+        shape = config["shape"]
+        dtype_str = config["dtype"]
+        op_name = config["op"]
+        scale = config["scale"]
+
+        # Load shared library
+        lib = ctypes.CDLL(so_path)
+        func = getattr(lib, op_name, None)
+        if not func:
+            return False, f"[SIN] Function '{op_name}' not found in {so_path}"
+
+        # Determine C type and numpy dtype
+        ctype_float = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+        np_dtype = np.float32 if dtype_str == "float32" else np.float16
+        torch_dtype = torch.float32 if dtype_str == "float32" else torch.float16
+
+        # Set function signature
+        func.argtypes = [
+            ctypes.POINTER(ctype_float),  # input
+            ctypes.POINTER(ctype_float),  # output
+        ]
+        func.restype = None
+
+        # Generate input
+        A_np = np.random.uniform(-scale, scale, size=shape).astype(np_dtype)
+        A_torch = torch.from_numpy(A_np).to(dtype=torch_dtype)
+        expected_output = ref_program(A_torch)
+
+        # Prepare output array
+        output_np = np.zeros_like(A_np)
+        input_ptr = A_np.ctypes.data_as(ctypes.POINTER(ctype_float))
+        output_ptr = output_np.ctypes.data_as(ctypes.POINTER(ctype_float))
+
+        # Call kernel
+        func(input_ptr, output_ptr)
+
+        # Convert result back to torch tensor
+        output_torch = torch.from_numpy(output_np).to(dtype=torch_dtype)
+
+        # Compare
+        rtol, atol = (1e-3, 1e-3) if dtype_str == "float32" else (5e-2, 5e-2)
+        if torch.allclose(output_torch, expected_output, rtol=rtol, atol=atol, equal_nan=True):
+            max_error = (output_torch - expected_output).abs().max().item()
+            return True, f"[SIN] PASSED: {file_name} | Max error: {max_error:.2e}"
+        else:
+            max_error = (output_torch - expected_output).abs().max().item()
+            return False, f"[SIN] FAILED: {file_name} | Max error: {max_error:.2e}"
+
+    except Exception as e:
+        return False, f"[SIN] Exception in test {file_name}: {str(e)}"
+
+
+def run_tests(
+    configs: List[dict], source_dir: str, target: str, num_workers: int = 4
+) -> List[Tuple[bool, str]]:
+    """Two-phase test: compile all → test all."""
+    logger.info(f"[SIN] Starting two-phase test for {len(configs)} kernels...")
+
+    compiled_map = {}
+    results = []
+
+    # === PHASE 1: Parallel Compilation ===
+    logger.info(f"[SIN] Phase 1/2: Compiling {len(configs)} kernels...")
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = [
+            executor.submit(compile_kernel, config, source_dir)
+            for config in configs
+        ]
+
+        for future in as_completed(futures):
+            config, success, msg = future.result()
+            if success:
+                compiled_map[config["file"]] = msg
+            else:
+                results.append((False, msg))
+
+    logger.info(f"[SIN] Compilation: {len(compiled_map)} succeeded, {len([r for r in results if not r[0]])} failed.")
+
+    # === PHASE 2: Parallel Testing ===
+    if compiled_map:
+        logger.info(f"[SIN] Phase 2/2: Testing {len(compiled_map)} compiled kernels...")
+        test_configs = [
+            (config, compiled_map[config["file"]])
+            for config in configs
+            if config["file"] in compiled_map
+        ]
+
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = [
+                executor.submit(test_kernel, config, so_path)
+                for config, so_path in test_configs
+            ]
+
+            for future in as_completed(futures):
+                results.append(future.result())
+
+    return results
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--file",
-        type=str,
-        required=True,
-        help="Path to the C++ source file (e.g., sin_64_64.cpp)",
-    )
-    parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform",
-    )
+    parser = argparse.ArgumentParser(description="Test Sin kernels")
+    parser.add_argument("--config", required=True, help="JSON string or path to config file")
+    parser.add_argument("--source_dir", default="./", help="Directory containing .cpp files")
+    parser.add_argument("--target", required=True, choices=["cuda", "hip", "mlu", "cpu"], help="Target platform")
+    parser.add_argument("--jobs", type=int, default=4, help="Number of parallel workers")
+
     args = parser.parse_args()
 
-    base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]
-    shapes_str = base_name.split(".")[0]  # e.g., "sin_64_64"
-    shape = [
-        int(x) for x in shapes_str.split("_")[1:]
-    ]  # Extract dim, e.g.,  [64, 64]
-
-    print(f"🔍 Testing {name.upper()} with shape {shape}")
-
-    # Generate random input matrix
-    A = torch.rand(*shape, device="cpu", dtype=torch.float32) * 4 * torch.pi
-
-    # Perform sin using PyTorch (golden reference)
-    expected = sin(A)
-
-    # Convert to NumPy and get ctypes pointers
-    A_ptr = A.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-
-    # Output tensor
-    result_ctypes = torch.zeros(shape, dtype=torch.float32)
-    output_ptr = result_ctypes.numpy().ctypes.data_as(
-        ctypes.POINTER(ctypes.c_float)
-    )
-
-    # Shared library name
-    so_name = args.file.replace(".cpp", ".so")
-
-    # Read original C++ code
-    with open(args.file, "r") as f:
-        code = f.read()
-
-    # Prepend macro to C++ code
-    code = macro + code
-
-    # Create a temporary modified C++ file
-    temp_file_name = args.file.replace(".cpp", "_bak.cpp")
-    with open(temp_file_name, "w") as f:
-        f.write(code)
-
-    # Compile to shared library
-    print(f"⚙️ Compiling {temp_file_name} -> {so_name}")
-    success, compile_output = run_compilation(so_name, temp_file_name)
-    if not success:
-        print("❌ Compilation failed:")
-        print(compile_output)
+    # Parse config
+    try:
+        configs = parse_config(args.config)
+    except Exception as e:
+        logger.error(f"❌ Config parsing failed: {e}")
         exit(1)
 
-    # Clean up temp C++ file
-    os.remove(temp_file_name)
+    if not configs:
+        logger.warning("⚠️ No valid 'sin' kernels found in config.")
+        exit(0)
 
-    # Load the compiled shared library
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name)  # e.g., `sin`
+    # Run tests
+    results = run_tests(configs, args.source_dir, args.target, num_workers=args.jobs)
 
-    # Define function signature: void sin(float* input, float* output)
-    kernel_func.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # input
-        ctypes.POINTER(ctypes.c_float),  # output
-    ]
-    kernel_func.restype = None
+    # Log individual results
+    passed = sum(1 for r in results if r[0])
+    total = len(results)
 
-    # Call the C++ kernel
-    print(f"🚀 Running {name.upper()} kernel...")
-    kernel_func(A_ptr, output_ptr)
+    for success, msg in results:
+        if success:
+            logger.info(msg)
+        else:
+            logger.error(msg)
 
-    # Verify result
-    is_correct = torch.allclose(
-        result_ctypes,
-        expected,
-        rtol=1e-3,
-        atol=1e-3,
-        equal_nan=True,
-    )
-
-    if is_correct:
-        print("✅ Verification successful! C++ sin matches PyTorch.")
+    # Final summary
+    if passed == total:
+        logger.info(f"🎉 All {total} Sin tests passed!")
+        exit(0)
     else:
-        print("❌ Verification failed!")
-        print("Expected (first 10):", expected.flatten()[:10])
-        print("Got (first 10):", result_ctypes.flatten()[:10])
-        diff = (result_ctypes - expected).abs()
-        print("Max error:", diff.max().item())
-
-    # Clean up .so file
-    subprocess.run(["rm", so_name], check=False)
+        logger.error(f"❌ {total - passed}/{total} Sin tests failed.")
+        exit(1)
