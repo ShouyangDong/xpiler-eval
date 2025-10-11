@@ -53,7 +53,7 @@ def main():
 
     op_name = config["op_name"]
     shape = config["args"]
-    axis = config["axes"]
+    axis = config["axis"]
     dtype_str = config.get("dtype", "float32")
 
     print(

@@ -19,7 +19,7 @@ def parse_config(config_input):
         config = json.loads(config_input)
 
     shape = config["args"]
-    reduce_dim = config.get("axes", None)
+    reduce_dim = config.get("axis", None)
     if reduce_dim is None:
         raise ValueError("Config must contain 'reduce_dim'")
     return shape, reduce_dim

@@ -1,13 +1,15 @@
-#!/usr/bin/env python3
 """Multi-platform correctness tester for compiled kernels (.so).
 
-Reads kernel configs from kernels.json, maps to test scripts, and runs tests.
+Modified to reduce import overhead by grouping tests per operator. Each test
+script is loaded once and runs all its kernels in batch. Runs one operator at a
+time (serial) to avoid resource conflicts.
 """
+
 import argparse
 import json
 import os
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from collections import defaultdict
 
 from tqdm import tqdm
 
@@ -52,46 +54,42 @@ TEST_SCRIPT_MAP = {
 }
 
 
-def run_test_for_config(config, source_dir, test_dir, target):
-    """Run test for a single kernel config.
-
-    Returns: (success: bool, message: str)
-    """
-    op_name = config["op_name"]
-    args = config["args"]
-
-    # Construct filename
-    file_name = f"{op_name}_{'_'.join(map(str, args))}.{'cu' if target != 'cpu' else 'cpp'}"
-    file_path = os.path.join(source_dir, file_name)
-
-    if not os.path.exists(file_path):
-        return False, f"[ERROR] File not found: {file_path} (op={op_name})"
-
-    # Find test script
-    script_name = TEST_SCRIPT_MAP.get(op_name)
-    if not script_name:
-        return False, f"[WARN] No test script for op='{op_name}'"
-
-    test_script = os.path.join(test_dir, script_name)
-    if not os.path.isfile(test_script):
-        return False, f"[ERROR] Test script not found: {test_script}"
-
-    # invoke evaluation.utils.run_test
+def run_test_for_op(
+    op_name, configs, source_dir, test_script, target, job_workers
+):
+    """Run all configs of one op in a single process (shared import)."""
     try:
-        from evaluation.utils import run_test
+        # Dynamically import the test script
+        import importlib.util
 
-        success, output = run_test(
-            file_path=file_path,
-            test_script=test_script,
-            kernel_config=config,
-            target=target,
+        spec = importlib.util.spec_from_file_location(
+            f"test_{op_name}", test_script
         )
-        if success:
-            return True, "OK"
+        test_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(test_module)
+
+        # Expect: test_module.run_tests(configs, source_dir, target, num_workers=...)
+        if hasattr(test_module, "run_tests"):
+            result = test_module.run_tests(
+                configs=configs,
+                source_dir=source_dir,
+                target=target,
+                num_workers=job_workers,
+            )
+            print("[INFO]*******result: ", result)
+            # result: list of (success: bool, message: str)
+            passed = sum(1 for r in result if r[0])
+            return True, passed
+        elif hasattr(test_module, "test_all"):
+            # Fallback interface
+            result = test_module.test_all(configs, source_dir, target)
+            passed = sum(1 for r in result if r[0])
+            return True, passed
         else:
-            return False, f"[FAIL] {file_name}\n{output}"
+            return False, f"No run_tests or test_all in {test_script}"
+
     except Exception as e:
-        return False, f"[EXCEPTION] {file_name}: {str(e)}"
+        return False, f"Exception in {op_name}: {str(e)}"
 
 
 def main():
@@ -117,7 +115,7 @@ def main():
         "-j",
         type=int,
         default=os.cpu_count(),
-        help="Number of parallel jobs",
+        help="Number of parallel jobs (used inside test scripts)",
     )
     parser.add_argument(
         "--debug", "-d", type=str, default="", help="debug op name"
@@ -144,40 +142,64 @@ def main():
         print("[INFO] No kernels to test.")
         sys.exit(0)
 
-    total = len(kernel_configs)
-    success_count = 0
+    # Filter by debug op
     if args.debug:
         kernel_configs = [
-            config
-            for config in kernel_configs
-            if config.get("op_name") == args.debug
+            cfg for cfg in kernel_configs if cfg.get("op_name") == args.debug
         ]
-    # Test in parallel
-    with ThreadPoolExecutor(max_workers=args.jobs) as executor:
-        futures = [
-            executor.submit(
-                run_test_for_config,
-                config=cfg,
-                source_dir=args.source_dir,
-                test_dir=args.test_dir,
-                target=args.target,
+
+    # Group configs by op_name
+    op_to_configs = defaultdict(list)
+    for cfg in kernel_configs:
+        op_name = cfg["op_name"]
+        shapes = cfg["args"]
+        file_name = f"{op_name}_{'_'.join(map(str, shapes))}.cpp"
+        cfg["file"] = file_name
+        op_to_configs[op_name].append(cfg)
+
+    total = len(kernel_configs)
+    success_count = 0
+
+    # Run each op's tests sequentially to avoid resource conflicts
+    pbar = tqdm(
+        total=len(op_to_configs), desc=f"[{args.target.upper()}] Testing"
+    )
+
+    for op_name, configs in op_to_configs.items():
+        script_name = TEST_SCRIPT_MAP.get(op_name)
+        if not script_name:
+            print(f"[WARN] No test script for op='{op_name}'", file=sys.stderr)
+            pbar.update(1)
+            continue
+
+        test_script = os.path.join(args.test_dir, script_name)
+        if not os.path.isfile(test_script):
+            print(
+                f"[ERROR] Test script not found: {test_script}",
+                file=sys.stderr,
             )
-            for cfg in kernel_configs
-        ]
+            pbar.update(1)
+            continue
 
-        # Get the result
-        with tqdm(
-            total=total, desc=f"[{args.target.upper()}] Testing"
-        ) as pbar:
-            for future in as_completed(futures):
-                pbar.update(1)
-                success, msg = future.result()
-                if not success:
-                    print(msg, file=sys.stderr)
-                else:
-                    success_count += 1
+        # Run all configs for this op in one process (shared torch import)
+        success, count = run_test_for_op(
+            op_name=op_name,
+            configs=configs,
+            source_dir=args.source_dir,
+            test_script=test_script,
+            target=args.target,
+            job_workers=args.jobs,
+        )
 
-    # Summary of Results
+        pbar.update(1)
+        if not success:
+            print(f"[FAIL] {count}", file=sys.stderr)
+        else:
+            success_count += count
+
+    pbar.close()
+
+    # Final summary
     rate = success_count / total
     print(
         f"\n✅ {args.target.upper()} Test Result: {success_count}/{total} = {rate:.2%}"

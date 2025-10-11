@@ -213,7 +213,7 @@
             32,
             256
         ],
-        "axes": 0
+        "axis": 0
     },
     {
         "op_name": "bmm",
@@ -418,7 +418,7 @@
         "args": [
             64
         ],
-        "axes": 0
+        "axis": 0
     },
     {
         "op_name": "sub",
@@ -454,7 +454,7 @@
             64,
             512
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "gelu",
@@ -487,7 +487,7 @@
             16,
             128
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "gemm",
@@ -506,7 +506,7 @@
             16,
             8
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "softmax",
@@ -534,7 +534,7 @@
             16,
             32
         ],
-        "axes": 0
+        "axis": 0
     },
     {
         "op_name": "add",
@@ -567,7 +567,7 @@
             32,
             32
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "conv2d",
@@ -682,7 +682,7 @@
             16,
             128
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "gemm",
@@ -709,7 +709,7 @@
             1,
             64
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "min",
@@ -719,7 +719,7 @@
             10,
             20
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "depthwiseconv",
@@ -738,7 +738,7 @@
             128,
             128
         ],
-        "axes": 0
+        "axis": 0
     },
     {
         "op_name": "rmsnorm",
@@ -782,7 +782,7 @@
             128,
             256
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "sin",
@@ -939,7 +939,7 @@
             4,
             8
         ],
-        "axes": 0
+        "axis": 0
     },
     {
         "op_name": "sign",
@@ -988,7 +988,7 @@
             8,
             32
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "layernorm",
@@ -1067,7 +1067,7 @@
             1,
             64
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "relu",
@@ -1292,7 +1292,7 @@
             4,
             32
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "conv2d",
@@ -1419,7 +1419,7 @@
             5,
             64
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "conv2d",
@@ -1469,7 +1469,7 @@
             64,
             128
         ],
-        "axes": 0
+        "axis": 0
     },
     {
         "op_name": "maxpool",
@@ -1581,7 +1581,7 @@
             512,
             1024
         ],
-        "axes": 0
+        "axis": 0
     },
     {
         "op_name": "gather",
@@ -1639,7 +1639,7 @@
             3,
             32
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "deformable",
@@ -1715,7 +1715,7 @@
             16,
             128
         ],
-        "axes": 0
+        "axis": 0
     },
     {
         "op_name": "mean",
@@ -1725,7 +1725,7 @@
             128,
             32
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "conv2dnchw",
@@ -1976,7 +1976,7 @@
             8,
             32
         ],
-        "axes": 0
+        "axis": 0
     },
     {
         "op_name": "mean",
@@ -1985,7 +1985,7 @@
             4,
             1
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "sub",
@@ -2079,7 +2079,7 @@
             64,
             512
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "gather",
@@ -2097,7 +2097,7 @@
             4,
             128
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "conv2d",
@@ -2133,7 +2133,7 @@
             32,
             64
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "gather",
@@ -2171,7 +2171,7 @@
             32,
             256
         ],
-        "axes": 0
+        "axis": 0
     },
     {
         "op_name": "sign",
@@ -2213,7 +2213,7 @@
             8,
             32
         ],
-        "axes": 0
+        "axis": 0
     },
     {
         "op_name": "depthwiseconv",
@@ -2245,7 +2245,7 @@
             8,
             64
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "sub",
@@ -2430,7 +2430,7 @@
             64,
             64
         ],
-        "axes": 1
+        "axis": 1
     },
     {
         "op_name": "sin",
@@ -2446,7 +2446,7 @@
         "args": [
             128
         ],
-        "axes": 0
+        "axis": 0
     },
     {
         "op_name": "softmax",

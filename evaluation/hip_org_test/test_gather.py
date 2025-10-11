@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     op_name = config["op_name"]
     PARAMS_SHAPE = config["args"]
-    AXIS = config["axes"]
+    AXIS = config["axis"]
 
     # === 2. Generate input tensors ===
     params = torch.randn(*PARAMS_SHAPE, dtype=torch.float32, device="cpu")

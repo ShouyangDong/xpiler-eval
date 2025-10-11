@@ -2,14 +2,16 @@ import argparse
 import ctypes
 import os
 import subprocess
+
 import torch
+
 from evaluation.macros import CUDA_MACROS as macro
 from evaluation.utils import run_cuda_compilation as run_compilation
 
 
 def ref_program(X_fp16, A_fp16, B_fp16):
-    """
-    Golden reference using autocast to mimic real inference behavior.
+    """Golden reference using autocast to mimic real inference behavior.
+
     Inputs: fp16 tensors on CUDA
     Output: fp32 tensor on CUDA
     """
@@ -22,10 +24,11 @@ def ref_program(X_fp16, A_fp16, B_fp16):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--file", type=str, required=True, help="Path to .cu source file")
     parser.add_argument(
-        "--config", required=True,
-        help="JSON string or path to kernel config"
+        "--file", type=str, required=True, help="Path to .cu source file"
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to kernel config"
     )
     parser.add_argument(
         "--target",
@@ -43,7 +46,9 @@ if __name__ == "__main__":
         shape_parts = [int(x) for x in shapes.split("_")[1:]]
         batch, dim_k, dim_n = shape_parts
     except Exception as e:
-        raise ValueError(f"Invalid filename format: {base_name}. Expected: gate_mlp_batch_dim.cu") from e
+        raise ValueError(
+            f"Invalid filename format: {base_name}. Expected: gate_mlp_batch_dim.cu"
+        ) from e
 
     so_name = args.file.replace(".cu", ".so")
     temp_file = args.file.replace(".cu", "_bak.cu")
@@ -84,12 +89,13 @@ if __name__ == "__main__":
     # -------------------------------
     # 3. Set function signature
     # -------------------------------
-    # void gatemlp_kernel(const half*, const half*, const half*, float*, int, int);
+    # void gatemlp_kernel(const half*, const half*, const half*, float*, int,
+    # int);
     kernel_func.argtypes = [
         ctypes.POINTER(ctypes.c_uint16),  # X (fp16)
         ctypes.POINTER(ctypes.c_uint16),  # A (fp16)
         ctypes.POINTER(ctypes.c_uint16),  # B (fp16)
-        ctypes.POINTER(ctypes.c_float),   # O (fp32)
+        ctypes.POINTER(ctypes.c_float),  # O (fp32)
         ctypes.c_int,
         ctypes.c_int,
         ctypes.c_int,
@@ -103,7 +109,7 @@ if __name__ == "__main__":
     device = torch.device("cuda")
 
     # Generate fp16 inputs
-    X_fp16 = torch.ones(batch, dim_k, dtype=torch.float16, device=device) / 16 
+    X_fp16 = torch.ones(batch, dim_k, dtype=torch.float16, device=device) / 16
     A_fp16 = torch.ones(dim_k, dim_n, dtype=torch.float16, device=device) / 16
     B_fp16 = torch.ones(dim_k, dim_n, dtype=torch.float16, device=device) / 16
 
@@ -135,10 +141,11 @@ if __name__ == "__main__":
     # -------------------------------
     try:
         torch.testing.assert_close(
-            O, O_ref,
-            rtol=1e-2,   # fp16 计算容忍稍大误差
+            O,
+            O_ref,
+            rtol=1e-2,  # fp16 计算容忍稍大误差
             atol=1e-3,
-            msg="Output does not match reference!"
+            msg="Output does not match reference!",
         )
         print("✅ Verification successful!")
     except AssertionError as e:
