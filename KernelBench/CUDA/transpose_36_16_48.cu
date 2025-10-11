@@ -1,5 +1,3 @@
-#include <cuda_runtime.h>
-
 __global__ void transpose(const float *__restrict__ input,
                           float *__restrict__ output) {
   const int d0 = 36;

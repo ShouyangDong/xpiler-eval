@@ -1,6 +1,5 @@
 
-#include <cuda_runtime.h>
-#include <stdio.h>
+
 
 constexpr int D0 = 32;
 constexpr int D1 = 128;

@@ -1,6 +1,4 @@
-
-
-__global__ void __launch_bounds__(256)
+__global__ void __launch_bounds__(1024)
     sin(const float *__restrict__ A, float *__restrict__ T_sin) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < 262144) {
@@ -16,7 +14,7 @@ extern "C" void sin_kernel(float *h_A, float *h_C, int total_elements) {
 
   cudaMemcpy(d_A, h_A, total_elements * sizeof(float), cudaMemcpyHostToDevice);
 
-  dim3 blockSize(256);
+  dim3 blockSize(1024);
 
   dim3 numBlocks((total_elements + blockSize.x - 1) / blockSize.x);
 
