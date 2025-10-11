@@ -58,5 +58,6 @@ extern "C" void dense_kernel(float *A, float *B, float *C, float *D, int m,
 
   hipFree(d_A);
   hipFree(d_B);
+  hipFree(d_C);
   hipFree(d_D);
 }
