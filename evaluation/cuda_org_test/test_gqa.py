@@ -32,7 +32,7 @@ if __name__ == "__main__":
     base_name = os.path.basename(args.file)
     shapes = base_name.split(".")[0]
     parts = [int(x) for x in shapes.split("_")[1:]]
-    batch, seq_q, seq_kv, head_dim = parts
+    batch, seq_q, seq_M, seq_K, seq_N = parts
 
     so_name = args.file.replace(".cpp", ".so")
 
@@ -61,10 +61,10 @@ if __name__ == "__main__":
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
     gqa_func = getattr(lib, args.name + "_kernel")
     gqa_func.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # Q
-        ctypes.POINTER(ctypes.c_float),  # K
-        ctypes.POINTER(ctypes.c_float),  # V
-        ctypes.POINTER(ctypes.c_float),  # O
+        ctypes.POINTER(ctypes.c_uint16),  # Q
+        ctypes.POINTER(ctypes.c_uint16),  # K
+        ctypes.POINTER(ctypes.c_uint16),  # V
+        ctypes.POINTER(ctypes.c_uint16),  # O
         ctypes.c_int,  # batch
         ctypes.c_int,  # num_heads
         ctypes.c_int,  # seq_q
@@ -79,9 +79,9 @@ if __name__ == "__main__":
     torch.manual_seed(1234)
 
     # Generate Q, K, V
-    Q = torch.rand([batch, 2, seq_q, 64], dtype=torch.float32, device="cuda")
-    K = torch.rand([batch, 2, 64, seq_kv], dtype=torch.float32, device="cuda")
-    V = torch.rand([batch, 2, seq_kv, 64], dtype=torch.float32, device="cuda")
+    Q = torch.rand([batch, seq_q, seq_M, seq_K], dtype=torch.float16, device="cuda")
+    K = torch.rand([batch, seq_q, seq_K, seq_N], dtype=torch.float16, device="cuda")
+    V = torch.rand([batch, seq_q, seq_N, seq_K], dtype=torch.float16, device="cuda")
 
     # ✅ Get the referenced ouput
     with torch.no_grad():
@@ -98,10 +98,10 @@ if __name__ == "__main__":
     K_cpu = K.cpu().numpy()
     V_cpu = V.cpu().numpy()
 
-    Q_ptr = Q_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    K_ptr = K_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    V_ptr = V_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    O_ptr = O.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    Q_ptr = Q_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
+    K_ptr = K_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
+    V_ptr = V_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
+    O_ptr = O.ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
 
     # ---------------------------------------------
     # 6. invoke C++/CUDA kernel
