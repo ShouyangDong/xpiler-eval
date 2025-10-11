@@ -6,8 +6,8 @@ import subprocess
 import numpy as np
 import torch
 
-from evaluation.macros import CPP_MACROS as macro
-from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.macros import HIP_MACROS as macro
+from evaluation.utils import run_hip_compilation as run_compilation
 
 
 def ref_program(X, A, B):
@@ -36,15 +36,15 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    # Parse file name: gate_mlp_4_4096.cpp -> [4, 4096]
+    # Parse file name: gate_mlp_4_4096.hip -> [4, 4096]
     base_name = os.path.basename(args.file)
-    name = "gate_mlp_forward"
+    name = "gatemlp"
     shapes = base_name.split(".")[0]
     shape_parts = [
-        int(intg) for intg in shapes.split("_")[2:]
+        int(intg) for intg in shapes.split("_")[1:]
     ]  # skip "gate", "mlp"
-    batch, dim = shape_parts
-    so_name = args.file.replace(".cpp", ".so")
+    batch, dim_k, dim_n = shape_parts
+    so_name = args.file.replace(".hip", ".so")
 
     # -------------------------------
     # 1. Add macro
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         code = f.read()
     code = macro + code
 
-    file_name = args.file.replace(".cpp", "_bak.cpp")
+    file_name = args.file.replace(".hip", "_bak.hip")
     with open(file_name, "w") as f:
         f.write(code)
 
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     # 2. Load kernel
     # -------------------------------
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    function = getattr(lib, name)
+    function = getattr(lib, name + "_kernel")
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # X
         ctypes.POINTER(ctypes.c_float),  # A
@@ -77,6 +77,7 @@ if __name__ == "__main__":
         ctypes.POINTER(ctypes.c_float),  # O
         ctypes.c_int,  # batch
         ctypes.c_int,  # dim
+        ctypes.c_int,  # k
     ]
     function.restype = None
 
@@ -86,9 +87,9 @@ if __name__ == "__main__":
     torch.manual_seed(1234)
 
     #
-    X = torch.randn(batch, dim, dtype=torch.float32, device="cuda")
-    A = torch.randn(dim, dim, dtype=torch.float32, device="cuda")
-    B = torch.randn(dim, dim, dtype=torch.float32, device="cuda")
+    X = torch.randn(batch, dim_k, dtype=torch.float32, device="cuda")
+    A = torch.randn(dim_k, dim_n, dtype=torch.float32, device="cuda")
+    B = torch.randn(dim_k, dim_n, dtype=torch.float32, device="cuda")
 
     # Calculate output
     O_ref = ref_program(X, A, B)
@@ -107,7 +108,7 @@ if __name__ == "__main__":
     # -------------------------------
     # 4. invoke C++/CUDA kernel
     # -------------------------------
-    function(X_ptr, A_ptr, B_ptr, O_ptr, batch, dim)
+    function(X_ptr, A_ptr, B_ptr, O_ptr, batch, dim_k, dim_n)
 
     # -------------------------------
     # 5. Verification
