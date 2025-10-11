@@ -65,7 +65,7 @@ if __name__ == "__main__":
         f.write(code)
 
     print(f"Compiling {temp_file} -> {so_name}")
-    success, log = run_compilation(so_name, temp_file, target=args.target)
+    success, log = run_compilation(so_name, temp_file)
     if not success:
         print("Compilation failed:")
         print(log)
