@@ -1,5 +1,4 @@
-#include <cmath>
-#include <immintrin.h>
+
 
 extern "C" void conv2dnchw(float *input, float *kernel, float *output) {
   int batch_size = 16;

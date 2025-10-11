@@ -1,7 +1,3 @@
-
-
-#include <stdio.h>
-
 constexpr int D0 = 512;
 constexpr int D1 = 64;
 constexpr int D2 = 5;

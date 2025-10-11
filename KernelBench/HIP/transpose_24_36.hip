@@ -1,6 +1,3 @@
-
-#include <stdio.h>
-
 __global__ void transpose(const float *__restrict__ input,
                           float *__restrict__ output) {
   int o0 = blockIdx.y * blockDim.y + threadIdx.y;

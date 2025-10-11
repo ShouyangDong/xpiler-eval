@@ -1,7 +1,4 @@
-#include <cuda_runtime.h>
-#include <iostream>
-
-__global__ void __launch_bounds__(256)
+__global__ void __launch_bounds__(1024)
     sub_2x16x1024(const float *__restrict__ A, const float *__restrict__ B,
                   float *__restrict__ C) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -21,8 +18,8 @@ extern "C" void sub_kernel(float *h_A, float *h_B, float *h_C) {
   cudaMemcpy(d_A, h_A, total * sizeof(float), cudaMemcpyHostToDevice);
   cudaMemcpy(d_B, h_B, total * sizeof(float), cudaMemcpyHostToDevice);
 
-  dim3 blockSize(256);
-  dim3 numBlocks((total + 255) / 256);
+  dim3 blockSize(1024);
+  dim3 numBlocks((total + 1023) / 1024);
 
   sub_2x16x1024<<<numBlocks, blockSize>>>(d_A, d_B, d_C);
 

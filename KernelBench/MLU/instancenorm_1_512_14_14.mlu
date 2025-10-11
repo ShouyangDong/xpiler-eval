@@ -1,7 +1,7 @@
 // Auto-generated: instancenorm with args [1, 512, 14, 14]
 // TODO: Implement kernel for instancenorm_1_512_14_14.mlu
 
-#include <iostream>
+
 
 void instancenorm_1_512_14_14.mlu() {
   std::cout << "Running instancenorm_1_512_14_14.mlu..." << std::endl;

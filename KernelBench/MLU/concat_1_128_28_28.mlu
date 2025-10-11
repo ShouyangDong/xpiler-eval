@@ -1,7 +1,7 @@
 // Auto-generated: concat with args [1, 128, 28, 28]
 // TODO: Implement kernel for concat_1_128_28_28.mlu
 
-#include <iostream>
+
 
 void concat_1_128_28_28.mlu() {
   std::cout << "Running concat_1_128_28_28.mlu..." << std::endl;

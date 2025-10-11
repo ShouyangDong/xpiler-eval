@@ -1,5 +1,4 @@
-#include <cmath>
-#include <cuda_runtime.h>
+
 
 __global__ void __launch_bounds__(256)
     instancenorm(const float *__restrict__ input, float *__restrict__ output,
