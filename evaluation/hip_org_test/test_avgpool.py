@@ -30,8 +30,8 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
     op_name = config["op_name"]
     shape = config["args"][:4]
-    kernel_stride = shape[4:]
-    config["file"]
+    kernel_stride = config["args"][4:]
+
     input_array = torch.randn(*shape, device="cpu")
     # Calculate the result using numpy for comparison
     output_np = avgpool_np(input_array, kernel_stride)
@@ -68,16 +68,17 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         kernel_stride[2],
     )
     # Check if the results match
-    if torch.allclose(
-        output_array,
-        output_np,
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
-    ):
-        return True, f"[ADD] PASSED✅: {config['file']}"
-    else:
-        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+    try:
+        torch.allclose(
+            output_array,
+            output_np,
+            rtol=1e-03,
+            atol=1e-03,
+            equal_nan=True,
+        )
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
+    except AssertionError:
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
 
 if __name__ == "__main__":

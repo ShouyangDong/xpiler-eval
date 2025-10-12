@@ -44,7 +44,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         lib = ctypes.CDLL(so_path)
         func = getattr(lib, op_name, None)
         if not func:
-            return False, f"[SUB] Function '{op_name}' not found in {so_path}"
+            return False, f"[{op_name}] Function '{op_name}' not found in {so_path}"
 
         # Determine C type and numpy dtype
         ctype_float = (
@@ -90,17 +90,17 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             max_error = (output_torch - expected_output).abs().max().item()
             return (
                 True,
-                f"[SUB] ✅ {file_name}| Max error: {max_error:.2e}",
+                f"[{op_name}] ✅ {file_name}| Max error: {max_error:.2e}",
             )
         else:
             max_error = (output_torch - expected_output).abs().max().item()
             return (
                 False,
-                f"[SUB] FAILED❌: {file_name} | Max error: {max_error:.2e}",
+                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
             )
 
     except Exception as e:
-        return False, f"[SUB] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

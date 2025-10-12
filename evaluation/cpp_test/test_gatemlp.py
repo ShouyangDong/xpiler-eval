@@ -90,7 +90,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if not func:
             return (
                 False,
-                f"[GateMLP] Function 'gatemlp' not found in {so_path}",
+                f"[{op_name}] Function 'gatemlp' not found in {so_path}",
             )
 
         func.argtypes = [
@@ -112,18 +112,18 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if max_diff <= 2.0:
             return (
                 True,
-                f"[GateMLP] ✅ {file_name}| Max diff: {max_diff:.2f}",
+                f"[{op_name}] ✅ {file_name}| Max diff: {max_diff:.2f}",
             )
         else:
             return (
                 False,
-                f"[GateMLP] FAILED❌: {file_name} | Max diff: {
+                f"[{op_name}] FAILED❌: {file_name} | Max diff: {
                     max_diff:.2f}, Mean: {
                     mean_diff:.2f}",
             )
 
     except Exception as e:
-        return False, f"[GateMLP] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

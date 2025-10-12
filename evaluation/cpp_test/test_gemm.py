@@ -71,12 +71,12 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
                 atol=1e-3,
                 equal_nan=True,
             )
-            return True, f"[GEMM] PASSED✅: {file_name}"
+            return True, f"[{op_name}] PASSED✅: {file_name}"
         except Exception as e:
-            return False, f"[GEMM] FAILED❌: {file_name} | {e}"
+            return False, f"[{op_name}] FAILED❌: {file_name} | {e}"
 
     except Exception as e:
-        return False, f"[GEMM] Exception in test {config['file']}: {e}"
+        return False, f"[{op_name}] Exception in test {config['file']}: {e}"
 
 
 # ------------------ Main ------------------

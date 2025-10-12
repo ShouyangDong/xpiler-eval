@@ -42,7 +42,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         lib = ctypes.CDLL(so_path)
         func = getattr(lib, op_name, None)
         if not func:
-            return False, f"[GEMV] Function 'gemv' not found in {so_path}"
+            return False, f"[{op_name}] Function 'gemv' not found in {so_path}"
 
         # Set function signature
         func.argtypes = [
@@ -80,13 +80,13 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             )
             return (
                 True,
-                f"[GEMV] PASSED✅: {file_name}",
+                f"[{op_name}] PASSED✅: {file_name}",
             )
         except Exception as e:
-            return False, f"[GEMV] FAILED❌: {file_name} | {str(e)}"
+            return False, f"[{op_name}] FAILED❌: {file_name} | {str(e)}"
 
     except Exception as e:
-        return False, f"[GEMV] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

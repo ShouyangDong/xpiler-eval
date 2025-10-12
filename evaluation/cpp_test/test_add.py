@@ -33,37 +33,34 @@ def add_ref(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
+    shape = config["args"]
+    op_name = config["op_name"]
+    A = torch.rand(*shape, device="cpu")
+    B = torch.rand(*shape, device="cpu")
+    ref = add_ref(A, B)
+
+    A_ptr = A.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    B_ptr = B.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    output_tensor = torch.zeros_like(ref)
+    out_ptr = output_tensor.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+
+    # Load and call kernel
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    func.argtypes = [ctypes.POINTER(ctypes.c_float)] * 3
+    func.restype = None
+    func(A_ptr, B_ptr, out_ptr)
     try:
-        shape = config["args"]
-        op_name = config["op_name"]
-        A = torch.rand(*shape, device="cpu")
-        B = torch.rand(*shape, device="cpu")
-        ref = add_ref(A, B)
-
-        A_ptr = A.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        B_ptr = B.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        output_tensor = torch.zeros_like(ref)
-        out_ptr = output_tensor.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-
-        # Load and call kernel
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        func.argtypes = [ctypes.POINTER(ctypes.c_float)] * 3
-        func.restype = None
-        func(A_ptr, B_ptr, out_ptr)
-
         # Verify
-        if torch.allclose(
+        torch.allclose(
             output_tensor, ref, rtol=1e-3, atol=1e-3, equal_nan=True
-        ):
-            return True, f"[ADD] PASSED✅: {config['file']}"
-        else:
-            return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+        )
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
 
     except Exception as e:
-        return False, f"[ADD] Test error {config['file']}: {str(e)}"
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
 
 if __name__ == "__main__":

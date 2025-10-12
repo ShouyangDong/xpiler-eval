@@ -1,15 +1,29 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
-from ctypes import CDLL
+from typing import Tuple
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 
-from evaluation.macros import CUDA_MACROS as macro
-from evaluation.utils import run_cuda_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 @torch.no_grad()
@@ -20,7 +34,7 @@ def deformable_attention_pytorch(
     https://github.com/fundamentalvision/Deformable-DETR/blob/main/models/ops/functions/ms_deform_attn_func.py
     """
     # for debug and test only,
-    # need to use cuda version instead
+    # need to use hip version instead
     N_, S_, M_, D_ = value.shape
     _, Lq_, M_, L_, P_, _ = sampling_locations.shape
     value_list = value.split(
@@ -65,23 +79,10 @@ def deformable_attention_pytorch(
     return output.transpose(1, 2).contiguous()
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
-    parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform",
-    )
-    args = parser.parse_args()
-    base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]
-    shapes = base_name.split(".")[0]
-    shape = [int(intg) for intg in shapes.split("_")[1:]]
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]
+    shape = config["args"]
     N, M, D = shape[:3]
     Lq, L, P = shape[3:]
     shapes = torch.as_tensor(
@@ -103,21 +104,7 @@ if __name__ == "__main__":
         value, shapes, sampling_locations, attention_weights
     )
 
-    so_name = args.file.replace(".cu", ".so")
-    with open(args.file, "r") as f:
-        code = f.read()
-
-    code = macro + code
-
-    file_name = args.file.replace(
-        base_name.replace(".cu", ""), base_name + "_bak.cu"
-    )
-    with open(file_name, mode="w") as f:
-        f.write(code)
-
-    success, output = run_compilation(so_name, file_name)
-    os.remove(file_name)
-    lib = CDLL(os.path.join(os.getcwd(), so_name))
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
     function = getattr(lib, op_name + "_kernel")
     # Define the function parameters and return types.
     function.argtypes = [
@@ -167,8 +154,51 @@ if __name__ == "__main__":
         output_ptr,
     )
     # Verification results
-    np.testing.assert_allclose(
-        output_array, torch_da.numpy(), atol=1e-6, rtol=1e-6
+    try:
+        np.testing.assert_allclose(
+            output_array, torch_da.numpy(), atol=1e-6, rtol=1e-6
+        )
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
+    except AssertionError:
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
     )
-    print("Verification successful!")
-    result = subprocess.run(["rm", so_name])
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="cu")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

@@ -60,18 +60,19 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # Call the function with the matrices and dimensions
     function(input_ptr, kernel_ptr, output_ptr, shape[1], shape[0])
     # Check if the results match
-    if np.testing.assert_allclose(
-        output_ctypes,
-        output_np,
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
-        err_msg="",
-        verbose=True,
-    ):
-        return True, f"[ADD] PASSED✅: {config['file']}"
-    else:
-        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+    try:
+        np.testing.assert_allclose(
+            output_ctypes,
+            output_np,
+            rtol=1e-03,
+            atol=1e-03,
+            equal_nan=True,
+            err_msg="",
+            verbose=True,
+        )
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
+    except AssertionError:
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
 
 if __name__ == "__main__":

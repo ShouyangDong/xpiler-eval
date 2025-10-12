@@ -1,8 +1,9 @@
 import argparse
 import ctypes
 import logging
-from typing import Tuple
 import random
+from typing import Tuple
+
 import torch
 
 from evaluation.utils import (
@@ -64,8 +65,8 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # === 3. Golden reference using PyTorch ===
     expected = element_wise_gather(params, indices, axis=AXIS)
 
-
     # === 4. Prepare ctypes pointers ===
+
     def to_ptr(tensor, dtype):
         return tensor.numpy().ctypes.data_as(ctypes.POINTER(dtype))
 
@@ -97,9 +98,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     is_correct = torch.allclose(result_ctypes, expected, rtol=1e-5, atol=1e-5)
 
     if is_correct:
-        return True, f"[ADD] PASSED✅: {config['file']}"
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
     else:
-        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
 
 if __name__ == "__main__":

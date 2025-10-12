@@ -67,9 +67,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     max_error = abs_diff.max().item()
 
     if max_error <= 1e-3:
-        return True, f"[ADD] PASSED✅: {config['file']}"
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
     else:
-        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
 
 if __name__ == "__main__":

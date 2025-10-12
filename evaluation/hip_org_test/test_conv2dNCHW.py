@@ -40,9 +40,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # cpu compute
     result_cpu = conv2d_nchw(
         data_np,
-        kernel_shape[1],
-        kernel_shape[0],
-        kernel_shape[2],
+        kernel_np,
         stride_h,
         pad,
     )
@@ -86,16 +84,17 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         stride_h,
     )
     # Check if the results match
-    if torch.allclose(
-        result_ctypes,
-        result_cpu,
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
-    ):
-        return True, f"[ADD] PASSED✅: {config['file']}"
-    else:
-        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+    try:
+        torch.allclose(
+            result_ctypes,
+            result_cpu,
+            rtol=1e-03,
+            atol=1e-03,
+            equal_nan=True,
+        )
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
+    except AssertionError as e:
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
 
 if __name__ == "__main__":

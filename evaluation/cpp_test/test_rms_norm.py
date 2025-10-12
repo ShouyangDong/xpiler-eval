@@ -46,7 +46,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if not func:
             return (
                 False,
-                f"[RMSNORM] Function '{op_name}' not found in {so_path}",
+                f"[{op_name}] Function '{op_name}' not found in {so_path}",
             )
 
         # Determine C type and torch dtype
@@ -91,17 +91,17 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             max_error = (computed_flat - expected).abs().max().item()
             return (
                 True,
-                f"[RMSNORM] ✅ {file_name}| Max error: {max_error:.2e}",
+                f"[{op_name}] ✅ {file_name}| Max error: {max_error:.2e}",
             )
         else:
             max_error = (computed_flat - expected).abs().max().item()
             return (
                 False,
-                f"[RMSNORM] FAILED❌: {file_name} | Max error: {max_error:.2e}",
+                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
             )
 
     except Exception as e:
-        return False, f"[RMSNORM] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

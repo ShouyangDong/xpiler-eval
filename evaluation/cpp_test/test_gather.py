@@ -78,7 +78,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         lib = ctypes.CDLL(so_path)
         func = getattr(lib, op_name, None)
         if not func:
-            return False, f"[Gather] Function 'gather' not found in {so_path}"
+            return False, f"[{op_name}] Function 'gather' not found in {so_path}"
 
         func.argtypes = [
             ctypes.POINTER(ctypes.c_float),  # params
@@ -100,17 +100,17 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if max_abs_err < 1e-5:
             return (
                 True,
-                f"[Gather] ✅ {file_name}| Max error: {max_abs_err:.2e}",
+                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
             )
         else:
             return (
                 False,
-                f"[Gather] FAILED❌: {file_name} | Max error: {
+                f"[{op_name}] FAILED❌: {file_name} | Max error: {
                     max_abs_err:.2e}",
             )
 
     except Exception as e:
-        return False, f"[Gather] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

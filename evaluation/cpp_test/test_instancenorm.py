@@ -92,11 +92,11 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         max_err = (result_reshaped - expected).abs().max().item()
         return (
             True,
-            f"[INSTANCENORM] ✅ {file_name} PASSED | max_err={max_err:.2e}",
+            f"[{op_name}] ✅ {file_name} PASSED | max_err={max_err:.2e}",
         )
 
     except Exception as e:
-        return False, f"[INSTANCENORM] ❌ {file_name} FAILED | {str(e)}"
+        return False, f"[{op_name}] ❌ {file_name} FAILED | {str(e)}"
 
 
 # ========== CLI ==========

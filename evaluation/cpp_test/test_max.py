@@ -46,7 +46,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         lib = ctypes.CDLL(so_path)
         func = getattr(lib, op_name, None)
         if not func:
-            return False, f"[MAX] Function 'max' not found in {so_path}"
+            return False, f"[{op_name}] Function 'max' not found in {so_path}"
 
         # Set function signature
         dtype_str = config.get("dtype", "float32")
@@ -86,18 +86,18 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
                 atol=1e-3,
                 check_dtype=True,
                 equal_nan=False,
-                msg=lambda msg: f"[MAX] {file_name} failed: {msg}",
+                msg=lambda msg: f"[{op_name}] {file_name} failed: {msg}",
             )
             max_abs_err = (result_reshaped - expected).abs().max().item()
             return (
                 True,
-                f"[MAX] ✅ {file_name}| Max error: {max_abs_err:.2e}",
+                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
             )
         except Exception as e:
-            return False, f"[MAX] FAILED❌: {file_name} | {str(e)}"
+            return False, f"[{op_name}] FAILED❌: {file_name} | {str(e)}"
 
     except Exception as e:
-        return False, f"[MAX] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

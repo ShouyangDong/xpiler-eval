@@ -93,12 +93,12 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         result_reshaped = torch.from_numpy(out_np).reshape(expected.shape)
         try:
             torch.allclose(result_reshaped, expected, rtol=1e-4, atol=1e-4)
-            return True, f"[SCATTER] PASSED✅: {file_name}"
+            return True, f"[{op_name}] PASSED✅: {file_name}"
         except Exception as e:
-            return False, f"[SCATTER] FAILED❌: {file_name} | {str(e)}"
+            return False, f"[{op_name}] FAILED❌: {file_name} | {str(e)}"
 
     except Exception as e:
-        return False, f"[SCATTER] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 # ----------------- CLI -----------------

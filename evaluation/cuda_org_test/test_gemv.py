@@ -1,114 +1,119 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
 import torch
 
-from evaluation.macros import CUDA_MACROS as macro
-from evaluation.utils import run_cuda_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Validate GEMV CUDA kernel output against PyTorch"
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
-    parser.add_argument("--file", type=str, help="Path to the source .cu file")
-    parser.add_argument(
-        "--config",
-        required=True,
-        help="JSON string or path to kernel configuration file",
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform for compilation",
-    )
-    args = parser.parse_args()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
-    base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]  # Kernel name, e.g., "gemv"
-    shapes = base_name.split(".")[0]
-    # [M, N] where A is (M x N), x is (N,)
-    shape = [int(dim) for dim in shapes.split("_")[1:]]
 
-    M, N = shape  # M: rows, N: cols
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]
+    M, N = config["args"]
 
-    # Create input tensors using PyTorch
-    A = torch.randn(M, N, dtype=torch.float32)
-    x = torch.randn(N, dtype=torch.float32)
+    # Set device to AMD GPU if available
 
-    # Reference result using PyTorch matmul
+    # Create tensors on AMD GPU
+    A = torch.randn(M, N, dtype=torch.float32, device=torch.device("cuda"))
+    x = torch.randn(N, dtype=torch.float32, device=torch.device("cuda"))
+
+    # Perform matmul on AMD GPU
     y_torch = torch.matmul(A, x)  # Shape: (M,)
 
-    # Ensure tensors are contiguous for ctypes
-    A_cont = A.contiguous()
-    x_cont = x.contiguous()
-    y_torch_cont = y_torch.contiguous()
+    # Move reference result back to CPU for comparison
+    y_torch_cpu = y_torch.cpu().contiguous()
 
-    # Allocate output tensor
-    y_ctypes_torch = torch.zeros(M, dtype=torch.float32).contiguous()
+    # Host tensors for kernel input (float32)
+    A_host = A.cpu().contiguous()
+    x_host = x.cpu().contiguous()
 
-    # Get raw pointers
-    A_ptr = ctypes.cast(A_cont.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    x_ptr = ctypes.cast(x_cont.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    y_ptr = ctypes.cast(
-        y_ctypes_torch.data_ptr(), ctypes.POINTER(ctypes.c_float)
-    )
+    # Output tensor on CPU
+    y_ctypes = torch.zeros(M, dtype=torch.float32).contiguous()
 
-    # Shared library name
-    so_name = args.file.replace(".cu", ".so")
+    # Get raw pointers (CPU memory)
+    A_ptr = ctypes.cast(A_host.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    x_ptr = ctypes.cast(x_host.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    y_ptr = ctypes.cast(y_ctypes.data_ptr(), ctypes.POINTER(ctypes.c_float))
 
-    # Read and modify source code
-    with open(args.file, "r") as f:
-        code = f.read()
+    # Load and call kernel
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    kernel_func = getattr(lib, op_name + "_kernel")
 
-    code = macro + code  # Inject macros (e.g., config constants)
-
-    # Write to temporary .cu file
-    file_name = args.file.replace(
-        base_name.replace(".cu", ""), base_name + "_bak.cu"
-    )
-    with open(file_name, "w") as f:
-        f.write(code)
-
-    # Compile the kernel
-    success, output = run_compilation(so_name, file_name)
-    if not success:
-        print("[ERROR] Compilation failed:")
-        print(output)
-        exit(1)
-
-    # Clean up temporary source file
-    os.remove(file_name)
-
-    # Load the compiled shared library
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    function = getattr(lib, op_name + "_kernel")
-
-    # Define function signature
-    function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # A (M x N matrix)
-        ctypes.POINTER(ctypes.c_float),  # x (N vector)
-        ctypes.POINTER(ctypes.c_float),  # y (M vector, output)
-        ctypes.c_int,  # M (rows)
-        ctypes.c_int,  # N (cols)
+    kernel_func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.c_int,
+        ctypes.c_int,
     ]
-    function.restype = None
+    kernel_func.restype = None
 
-    # Call the GEMV kernel
-    function(A_ptr, x_ptr, y_ptr, M, N)
+    kernel_func(A_ptr, x_ptr, y_ptr, M, N)
 
     # Verify results
     if torch.allclose(
-        y_ctypes_torch, y_torch, rtol=1e-3, atol=1e-3, equal_nan=True
+        y_ctypes, y_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True
     ):
-        print("✅ Verification successful! Results match.")
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
     else:
-        print("❌ Verification failed! Results do not match.")
-        print("Expected (PyTorch):", y_torch.tolist())
-        print("Got (Kernel):", y_ctypes_torch.tolist())
-        exit(1)
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
-    # Clean up compiled library
-    subprocess.run(["rm", so_name], check=False)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="cu")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

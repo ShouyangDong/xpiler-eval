@@ -40,57 +40,55 @@ def avgpool_ref(
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled avgpool kernel."""
+    file_name = config["file"]
+    shape = config["args"][:4]
+    kernel_stride = config["args"][4:8]
+    kh, kw, sh, sw = kernel_stride
+    op_name = config["op_name"]
+    # Generate input
+    input_tensor = torch.randn(*shape, dtype=torch.float32, device="cpu")
+    ref_output = avgpool_ref(input_tensor, kernel_stride)
+
+    # Prepare output buffer
+    out_shape = [
+        shape[0],
+        (shape[1] - kh) // sh + 1,
+        (shape[2] - kw) // sw + 1,
+        shape[3],
+    ]
+    output_tensor = torch.zeros(out_shape, dtype=torch.float32)
+    input_ptr = input_tensor.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+    output_ptr = output_tensor.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+
+    # Load and call kernel
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[AvgPool] Function 'avgpool' not found in {so_path}",
+        )
+
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+    ]
+    func.restype = None
+    func(input_ptr, output_ptr)
+
     try:
-        file_name = config["file"]
-        shape = config["args"][:4]
-        kernel_stride = config["args"][4:8]
-        kh, kw, sh, sw = kernel_stride
-        op_name = config["op_name"]
-        # Generate input
-        input_tensor = torch.randn(*shape, dtype=torch.float32, device="cpu")
-        ref_output = avgpool_ref(input_tensor, kernel_stride)
-
-        # Prepare output buffer
-        out_shape = [
-            shape[0],
-            (shape[1] - kh) // sh + 1,
-            (shape[2] - kw) // sw + 1,
-            shape[3],
-        ]
-        output_tensor = torch.zeros(out_shape, dtype=torch.float32)
-        input_ptr = input_tensor.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        output_ptr = output_tensor.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-
-        # Load and call kernel
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return (
-                False,
-                f"[AvgPool] Function 'avgpool' not found in {so_path}",
-            )
-
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),
-            ctypes.POINTER(ctypes.c_float),
-        ]
-        func.restype = None
-        func(input_ptr, output_ptr)
-
         # Verify
-        if torch.allclose(
-            output_tensor, ref_output, rtol=1e-3, atol=1e-3, equal_nan=True
-        ):
-            return True, f"[AvgPool] PASSED✅: {file_name}"
-        else:
-            return False, f"[AvgPool] FAILED❌: {file_name} (mismatch)"
+        torch.allclose(
+            output_tensor, ref, rtol=1e-3, atol=1e-3, equal_nan=True
+        )
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
 
     except Exception as e:
-        return False, f"[AvgPool] Exception in test {config['file']}: {str(e)}"
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
 
 if __name__ == "__main__":

@@ -34,7 +34,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
     shape = config["args"]
     op_name = config["op_name"]
-    config["file"]
+
     # Generate random input tensors on CPU using PyTorch
     A = torch.rand(shape, dtype=torch.float32)
     B = torch.rand(shape, dtype=torch.float32)
@@ -78,9 +78,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     if torch.allclose(
         result_ctypes_torch, result_torch, rtol=1e-3, atol=1e-3, equal_nan=True
     ):
-        return True, f"[ADD] PASSED✅: {config['file']}"
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
     else:
-        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
 
 if __name__ == "__main__":

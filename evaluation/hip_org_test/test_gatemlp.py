@@ -90,17 +90,18 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # -------------------------------
     # 5. Verification
     # -------------------------------
-    if np.testing.assert_allclose(
-        O,
-        O_ref,
-        rtol=5e-3,
-        atol=5e-3,
-        equal_nan=True,
-        verbose=True,
-    ):
-        return True, f"[ADD] PASSED✅: {config['file']}"
-    else:
-        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+    try:
+        np.testing.assert_allclose(
+            O,
+            O_ref,
+            rtol=5e-3,
+            atol=5e-3,
+            equal_nan=True,
+            verbose=True,
+        )
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
+    except AssertionError:
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
 
 if __name__ == "__main__":

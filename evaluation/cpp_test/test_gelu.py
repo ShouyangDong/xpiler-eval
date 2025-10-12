@@ -42,7 +42,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         lib = ctypes.CDLL(so_path)
         func = getattr(lib, op_name, None)
         if not func:
-            return False, f"[GELU] Function 'gelu' not found in {so_path}"
+            return False, f"[{op_name}] Function 'gelu' not found in {so_path}"
 
         # Set function signature
         func.argtypes = [
@@ -73,17 +73,17 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if max_abs_err < 1e-3:
             return (
                 True,
-                f"[GELU] ✅ {file_name}| Max error: {max_abs_err:.2e}",
+                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
             )
         else:
             return False, (
-                f"[GELU] FAILED❌: {file_name} | Max abs error: {
+                f"[{op_name}] FAILED❌: {file_name} | Max abs error: {
                     max_abs_err:.2e}, "
                 f"Max rel error: {max_rel_err:.2e}"
             )
 
     except Exception as e:
-        return False, f"[GELU] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

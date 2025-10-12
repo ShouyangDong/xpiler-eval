@@ -66,7 +66,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if not func:
             return (
                 False,
-                f"[Conv2D-NCHW] Function 'conv2dnchw' not found in {so_path}",
+                f"[{op_name}] Function 'conv2dnchw' not found in {so_path}",
             )
 
         func.argtypes = [
@@ -83,16 +83,16 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if torch.allclose(
             result_ctypes, result_cpu, rtol=1e-3, atol=1e-3, equal_nan=True
         ):
-            return True, f"[Conv2D-NCHW] PASSED✅: {file_name}"
+            return True, f"[{op_name}] PASSED✅: {file_name}"
         else:
             max_error = torch.max(torch.abs(result_ctypes - result_cpu)).item()
             return (
                 False,
-                f"[Conv2D-NCHW] FAILED❌: {file_name} | Max error: {max_error:.2e}",
+                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
             )
 
     except Exception as e:
-        return False, f"[Conv2D-NCHW] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

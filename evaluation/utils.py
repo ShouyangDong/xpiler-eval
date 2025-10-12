@@ -452,8 +452,10 @@ def run_tests(
 
             for future in as_completed(futures):
                 result = future.result()
+                if not result[0]:
+                    print(f"❌ Test failed: {result[1]}")
                 failed_results.append(result)
-            print(failed_results)
+
         passed_count = sum(
             1 for r in failed_results[-len(test_configs) :] if r[0]
         )

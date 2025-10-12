@@ -78,7 +78,6 @@ if __name__ == "__main__":
     kernel_func.argtypes = [ctypes.POINTER(ctypes.c_float)] * 3
     kernel_func.restype = None
 
-
     kernel_func(input1_ptr, input2_ptr, output_ptr)
 
     result_reshaped = output_flat.reshape(expected.shape)

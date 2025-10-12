@@ -27,7 +27,7 @@ def verify_pooling(base_name, file, shape, kernel_stride):
     success, output = run_compilation(so_name, file_name)
     os.remove(file_name)
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    name = base_name.split("_")[0]
+    base_name.split("_")[0]
     function = getattr(lib, op_name + "_kernel")
     # Define the function's parameters and return types.
     function.argtypes = [

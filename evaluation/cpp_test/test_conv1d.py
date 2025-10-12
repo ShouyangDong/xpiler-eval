@@ -62,7 +62,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         lib = ctypes.CDLL(so_path)
         func = getattr(lib, op_name, None)
         if not func:
-            return False, f"[Conv1D] Function 'conv1d' not found in {so_path}"
+            return False, f"[{op_name}] Function 'conv1d' not found in {so_path}"
 
         func.argtypes = [
             ctypes.POINTER(ctypes.c_float),  # input
@@ -78,16 +78,16 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if np.allclose(
             output_ctypes, expected, rtol=1e-3, atol=1e-3, equal_nan=True
         ):
-            return True, f"[Conv1D] PASSED✅: {file_name}"
+            return True, f"[{op_name}] PASSED✅: {file_name}"
         else:
             max_error = np.max(np.abs(output_ctypes - expected))
             return (
                 False,
-                f"[Conv1D] FAILED❌: {file_name} | Max error: {max_error:.2e}",
+                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
             )
 
     except Exception as e:
-        return False, f"[Conv1D] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

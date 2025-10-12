@@ -57,7 +57,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         lib = ctypes.CDLL(so_path)
         func = getattr(lib, op_name, None)
         if not func:
-            return False, f"[GQA] Function 'gqa' not found in {so_path}"
+            return False, f"[{op_name}] Function 'gqa' not found in {so_path}"
 
         # Set function signature
         func.argtypes = [
@@ -102,18 +102,18 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
                 atol=5e-3,
                 check_dtype=True,
                 equal_nan=False,
-                msg=lambda msg: f"[GQA] {file_name} failed: {msg}",
+                msg=lambda msg: f"[{op_name}] {file_name} failed: {msg}",
             )
             max_abs_err = (O - O_ref).abs().max().item()
             return (
                 True,
-                f"[GQA] ✅ {file_name}| Max error: {max_abs_err:.2e}",
+                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
             )
         except Exception as e:
-            return False, f"[GQA] FAILED❌: {file_name} | {str(e)}"
+            return False, f"[{op_name}] FAILED❌: {file_name} | {str(e)}"
 
     except Exception as e:
-        return False, f"[GQA] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":
