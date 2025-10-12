@@ -56,7 +56,7 @@ if __name__ == "__main__":
     os.remove(file_name)
     lib = CDLL(os.path.join(os.getcwd(), so_name))
     # Obtain function handle
-    function = getattr(lib, name + "_kernel")
+    function = getattr(lib, op_name + "_kernel")
     # Define the function parameters and return types.
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),

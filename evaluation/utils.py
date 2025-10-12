@@ -8,10 +8,7 @@ from typing import Dict, List, Tuple
 import torch
 import torch.nn.functional as F
 
-from evaluation.macros import CPP_MACROS 
-from evaluation.macros import HIP_MACROS 
-from evaluation.macros import CUDA_MACROS 
-from evaluation.macros import MLU_MACROS 
+from evaluation.macros import CPP_MACROS, CUDA_MACROS, HIP_MACROS, MLU_MACROS
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -65,7 +62,6 @@ TEST_SCRIPT_MAP = {
     "gatemlp": "test_gatemlp.py",
     "gqa": "test_gqa.py",
 }
-
 
 
 def avgpool_np(input_tensor, kernel_stride):
@@ -301,6 +297,7 @@ MACRO_FUNCTIONS = {
     "mlu": MLU_MACROS,
 }
 
+
 def parse_op_json(json_path, op_name="None", file_type="cpp"):
     # Load config
     if os.path.isfile(json_path):
@@ -455,19 +452,20 @@ def run_tests(
 
             for future in as_completed(futures):
                 result = future.result()
-                failed_results.append(
-                    result
-                )
-
+                failed_results.append(result)
+            print(failed_results)
         passed_count = sum(
             1 for r in failed_results[-len(test_configs) :] if r[0]
         )
         logger.info(
-            f"[{op_name}] Testing: {passed_count} passed, {len(test_configs) - passed_count} failed."
+            f"[{op_name}] Testing: {passed_count} passed, {len(test_configs) -
+                                                           passed_count} failed."
         )
 
         # === PHASE 3: Clean up .so files ===
-        logger.debug(f"[{op_name}] Phase 3/3: Cleaning up generated .so files...")
+        logger.debug(
+            f"[{op_name}] Phase 3/3: Cleaning up generated .so files..."
+        )
         for _, so_path in test_configs:
             try:
                 if os.path.exists(so_path):

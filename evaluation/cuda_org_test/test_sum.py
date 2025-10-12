@@ -68,7 +68,8 @@ if __name__ == "__main__":
     config_shape, axes = parse_config(args.config)
 
     print(
-        f"🔍 Testing {name.upper()} with input shape {config_shape}, axes={axes}"
+        f"🔍 Testing {
+            name.upper()} with input shape {config_shape}, axes={axes}"
     )
 
     # ✅ 使用 config 中的 shape，而非文件名（更可靠）
@@ -116,7 +117,7 @@ if __name__ == "__main__":
 
     # load shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name + "_kernel")
+    kernel_func = getattr(lib, op_name + "_kernel")
 
     # ✅ Function  signature
     kernel_func.argtypes = [

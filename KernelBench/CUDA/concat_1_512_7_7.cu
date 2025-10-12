@@ -50,7 +50,7 @@ extern "C" void concat_kernel(const float *h_input1, const float *h_input2,
   cudaMemcpy(d_input1, h_input1, input_bytes, cudaMemcpyHostToDevice);
   cudaMemcpy(d_input2, h_input2, input_bytes, cudaMemcpyHostToDevice);
 
-  const int block_size = 256;
+  const int block_size = 1024;
   int total_threads = OUTPUT_TOTAL_ELEMENTS;
   int grid_size = (total_threads + block_size - 1) / block_size;
 

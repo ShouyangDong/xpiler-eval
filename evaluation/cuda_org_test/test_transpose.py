@@ -68,7 +68,8 @@ if __name__ == "__main__":
     output_shape = [input_shape[i] for i in perm]  # permuted shape
 
     print(
-        f"🔍 Testing {name.upper()} with input shape {input_shape} -> output shape {output_shape}, perm={perm}"
+        f"🔍 Testing {
+            name.upper()} with input shape {input_shape} -> output shape {output_shape}, perm={perm}"
     )
 
     # ✅ Generate input tensor
@@ -110,7 +111,7 @@ if __name__ == "__main__":
 
     # load shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name + "_kernel")
+    kernel_func = getattr(lib, op_name + "_kernel")
 
     rank = len(input_shape)
 
@@ -134,8 +135,7 @@ if __name__ == "__main__":
     # ✅ Construct input arguments
     args_list = [input_ptr, result_array] + input_shape + perm
 
-    # ✅ invoke kernel
-    print(f"🚀 Running {name.upper()} kernel with rank-{rank} permute...")
+
     kernel_func(*args_list)
 
     # ✅ Get output并 reshape

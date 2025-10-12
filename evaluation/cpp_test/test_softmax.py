@@ -9,7 +9,11 @@ from typing import Tuple
 import numpy as np
 import torch
 
-from evaluation.utils import parse_op_json, run_tests
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -137,4 +141,4 @@ if __name__ == "__main__":
     )
 
     # Log individual results
-    log_test_results_and_exit(result, op_name=args.name)
+    log_test_results_and_exit(results, op_name=args.name)

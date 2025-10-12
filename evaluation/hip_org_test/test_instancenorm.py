@@ -1,13 +1,29 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
 import torch
 import torch.nn.functional as F
 
-from evaluation.macros import HIP_MACROS as macro
-from evaluation.utils import run_hip_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 def instancenorm_inference(input, weight, bias, eps=1e-5):
@@ -27,38 +43,10 @@ def instancenorm_inference(input, weight, bias, eps=1e-5):
     )
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--file",
-        type=str,
-        required=True,
-        help="Path to the HIP source file (e.g., instancenorm_1_64_56_56.hip)",
-    )
-    parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform",
-    )
-    args = parser.parse_args()
-
-    base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]  # "instancenorm"
-    shapes_str = base_name.split(".")[0]
-    shape_parts = [int(x) for x in shapes_str.split("_")[1:]]
-
-    # Assume shape is NCHW
-    N, C, H, W = shape_parts
-    total_elements = N * C * H * W
-
-    print(
-        f"🔍 Testing {name.upper()} with shape [N,C,H,W] = [{N},{C},{H},{W}]"
-    )
-
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]  # "instancenorm"
+    N, C, H, W = config["args"]
     # Generate random input
     input_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
 
@@ -85,33 +73,9 @@ if __name__ == "__main__":
     output_ptr = result_ctypes.numpy().ctypes.data_as(
         ctypes.POINTER(ctypes.c_float)
     )
-
-    # Shared library name
-    so_name = args.file.replace(".hip", ".so")
-
-    # Read and patch C++ code
-    with open(args.file, "r") as f:
-        code = f.read()
-
-    code = macro + code
-
-    temp_file_name = args.file.replace(".hip", "_bak.hip")
-    with open(temp_file_name, "w") as f:
-        f.write(code)
-
-    # Compile
-    print(f"⚙️ Compiling {temp_file_name} -> {so_name}")
-    success, compile_output = run_compilation(so_name, temp_file_name)
-    if not success:
-        print("❌ Compilation failed:")
-        print(compile_output)
-        exit(1)
-
-    os.remove(temp_file_name)
-
     # Load library
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name + "_kernel")  # e.g., instancenorm
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    kernel_func = getattr(lib, op_name + "_kernel")  # e.g., instancenorm
 
     # Function signature
     kernel_func.argtypes = [
@@ -128,7 +92,7 @@ if __name__ == "__main__":
     kernel_func.restype = None
 
     # Call kernel
-    print(f"🚀 Running {name.upper()} kernel...")
+
     kernel_func(
         input_ptr,
         output_ptr,
@@ -150,14 +114,47 @@ if __name__ == "__main__":
     )
 
     if is_correct:
-        print("✅ Verification successful! C++ InstanceNorm matches PyTorch.")
+        return True, f"[ADD] PASSED✅: {config['file']}"
     else:
-        print("❌ Verification failed!")
-        diff = (result_reshaped - expected).abs()
-        print("Max error:", diff.max().item())
-        print("Mean error:", diff.mean().item())
-        print("Sample expected:\n", expected[0, 0, :3, :3])
-        print("Sample got:    :\n", result_reshaped[0, 0, :3, :3])
+        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
 
-    # Clean up
-    subprocess.run(["rm", so_name], check=False)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="hip")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

@@ -94,15 +94,13 @@ if __name__ == "__main__":
     indices = indices_expanded.expand(*output_shape)
     # === 3. Golden reference using PyTorch ===
     expected = element_wise_gather(params, indices, axis=AXIS)
-    print(f"✅ Expected output shape: {expected.shape}")
+
 
     # === 4. Prepare ctypes pointers ===
     def to_ptr(tensor, dtype):
         return tensor.numpy().ctypes.data_as(ctypes.POINTER(dtype))
 
-    print("params shape: ", params.shape)
-    print("index : ", indices.shape)
-    print("outptu: ", output_shape)
+
     params_ptr = to_ptr(params, ctypes.c_float)
     indices_ptr = to_ptr(indices, ctypes.c_int64)
     result_ctypes = torch.zeros_like(expected, dtype=torch.float32)

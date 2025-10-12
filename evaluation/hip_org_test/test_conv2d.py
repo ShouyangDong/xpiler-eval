@@ -1,40 +1,38 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
 import torch
 
-from evaluation.macros import HIP_MACROS as macro
-from evaluation.utils import conv2d_nhwc
-from evaluation.utils import run_hip_compilation as run_compilation
+from evaluation.utils import (
+    conv2d_nhwc,
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
-    parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform",
-    )
-    args = parser.parse_args()
-    base_name = os.path.basename(args.file)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
-    name = base_name.split("_")[0]
-    data_shape = base_name.split("_")[1:5]
 
-    data_shape = [int(intg) for intg in data_shape]
-
-    kernel_shape = base_name.split("_")[5:9]
-    kernel_shape = [int(intg) for intg in kernel_shape]
-    stride_h = stride_w = int(base_name.split("_")[9])
-    pad = int(base_name.split(".")[0].split("_")[10])
-    dtype = "float32"
-    wtype = "float32"
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]
+    data_shape = config["args"][:4]
+    kernel_shape = config["args"][4:8]
+    stride_h = stride_w = config["args"][8]
+    pad = config["args"][9]
 
     # generate data
     data_np = torch.rand(data_shape)
@@ -42,31 +40,15 @@ if __name__ == "__main__":
     # cpu compute
     result_cpu = conv2d_nhwc(
         data_np,
-        kernel_shape[1],
-        kernel_shape[0],
-        kernel_shape[2],
+        kernel_np,
         stride_h,
         pad,
     )
 
     # Load the shared library with the conv2d function
-    so_name = args.file.replace(".hip", ".so")
-    with open(args.file, "r") as f:
-        code = f.read()
 
-    code = macro + code
-
-    file_name = args.file.replace(
-        base_name.replace(".hip", ""), base_name + "_bak.hip"
-    )
-    with open(file_name, mode="w") as f:
-        f.write(code)
-
-    success, output = run_compilation(so_name, file_name)
-    os.remove(file_name)
-
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    function = getattr(lib, name + "_kernel")
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    function = getattr(lib, op_name + "_kernel")
     # Define the function's parameters and return types.
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),
@@ -102,12 +84,54 @@ if __name__ == "__main__":
         stride_h,
     )
     # Check if the results match
-    torch.allclose(
+    if torch.allclose(
         result_ctypes,
         result_cpu,
         rtol=1e-03,
         atol=1e-03,
         equal_nan=True,
+    ):
+        return True, f"[ADD] PASSED✅: {config['file']}"
+    else:
+        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
     )
-    print("Verification successful!")
-    result = subprocess.run(["rm", so_name])
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="hip")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

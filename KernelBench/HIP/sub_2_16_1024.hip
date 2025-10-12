@@ -1,7 +1,7 @@
 
 
 __global__ void __launch_bounds__(256)
-    sub_2x16x1024(const float *__restrict__ A, const float *__restrict__ B,
+    sub(const float *__restrict__ A, const float *__restrict__ B,
                   float *__restrict__ C) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < 32768) {
@@ -23,7 +23,7 @@ extern "C" void sub_kernel(float *h_A, float *h_B, float *h_C) {
   dim3 blockSize(256);
   dim3 numBlocks((total + 255) / 256);
 
-  sub_2x16x1024<<<numBlocks, blockSize>>>(d_A, d_B, d_C);
+  sub<<<numBlocks, blockSize>>>(d_A, d_B, d_C);
 
   hipError_t err = hipDeviceSynchronize();
   if (err != hipSuccess) {

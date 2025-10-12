@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     # Load the compiled shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    function = getattr(lib, name + "_kernel")
+    function = getattr(lib, op_name + "_kernel")
 
     # Define function signature
     function.argtypes = [
@@ -120,13 +120,16 @@ if __name__ == "__main__":
 
         # Debug: Print first row of input and outputs
         print(
-            f"Input (first row): {input_tensor.view(-1, hidden_size)[0].tolist()}"
+            f"Input (first row): {input_tensor.view(-1,
+                                                    hidden_size)[0].tolist()}"
         )
         print(
-            f"Expected (Ref):    {expected_output.view(-1, hidden_size)[0].tolist()}"
+            f"Expected (Ref):    {expected_output.view(-1,
+                                                       hidden_size)[0].tolist()}"
         )
         print(
-            f"Got (Kernel):      {output_tensor.view(-1, hidden_size)[0].tolist()}"
+            f"Got (Kernel):      {output_tensor.view(-1,
+                                                     hidden_size)[0].tolist()}"
         )
 
         # Additional check: sum of softmax should be ~1.0

@@ -74,11 +74,11 @@ if __name__ == "__main__":
     os.remove(temp_file)
 
     lib = ctypes.CDLL(so_name)
-    kernel_func = getattr(lib, name + "_kernel")
+    kernel_func = getattr(lib, op_name + "_kernel")
     kernel_func.argtypes = [ctypes.POINTER(ctypes.c_float)] * 3
     kernel_func.restype = None
 
-    print("Running static concat kernel...")
+
     kernel_func(input1_ptr, input2_ptr, output_ptr)
 
     result_reshaped = output_flat.reshape(expected.shape)

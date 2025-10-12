@@ -55,7 +55,7 @@ extern "C" void scatter_kernel(const float *h_input, const int *h_indices,
   // Initialize output with input values
   hipMemcpy(d_output, d_input, input_bytes, hipMemcpyDeviceToDevice);
 
-  const int block_size = 256;
+  const int block_size = 1024;
   int total_threads = TOTAL_ELEMENTS;
   int grid_size = (total_threads + block_size - 1) / block_size;
 

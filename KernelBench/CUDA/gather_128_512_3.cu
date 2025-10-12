@@ -40,7 +40,7 @@ extern "C" void gather_kernel(const float *h_params, const int64_t *h_indices,
   cudaMemcpy(d_params, h_params, params_bytes, cudaMemcpyHostToDevice);
   cudaMemcpy(d_indices, h_indices, indices_bytes, cudaMemcpyHostToDevice);
 
-  const int block_size = 256;
+  const int block_size = 1024;
   int total_elements = N * DIM1 * DIM2;
   int grid_size = (total_elements + block_size - 1) / block_size;
 

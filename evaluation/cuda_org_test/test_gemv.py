@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     # Load the compiled shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    function = getattr(lib, name + "_kernel")
+    function = getattr(lib, op_name + "_kernel")
 
     # Define function signature
     function.argtypes = [

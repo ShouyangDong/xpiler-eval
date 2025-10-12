@@ -39,7 +39,8 @@ if __name__ == "__main__":
         raise ValueError(f"Invalid filename format: {base_name}") from e
 
     print(
-        f"Testing {kernel_name.upper()} | Shape: [{N},{C},{H},{W}] | Dim: {dim}"
+        f"Testing {
+            kernel_name.upper()} | Shape: [{N},{C},{H},{W}] | Dim: {dim}"
     )
 
     # Create tensors
@@ -106,7 +107,7 @@ if __name__ == "__main__":
     ]
     kernel_func.restype = None
 
-    print("Running scatter kernel (torch.scatter_ semantics)...")
+
     kernel_func(self_ptr, indices_ptr, src_ptr, output_ptr)
 
     result_reshaped = output_flat.reshape(expected.shape)

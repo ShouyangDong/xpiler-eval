@@ -59,7 +59,8 @@ if __name__ == "__main__":
         )
 
     print(
-        f"🔍 Testing {name.upper()} with input shape {input_shape}, reduce_dim={reduce_dim}"
+        f"🔍 Testing {
+            name.upper()} with input shape {input_shape}, reduce_dim={reduce_dim}"
     )
 
     # 生成随机输入
@@ -100,7 +101,7 @@ if __name__ == "__main__":
 
     # load shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name + "_kernel")
+    kernel_func = getattr(lib, op_name + "_kernel")
 
     # 动态Construct argtypes：支持任意 rank 的 shape 和 reduce_dim
     rank = len(input_shape)

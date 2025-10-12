@@ -12,7 +12,11 @@ from typing import Tuple
 
 import torch
 
-from evaluation.utils import parse_op_json, run_tests
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
 
 # ------------------ Logging setup ------------------
 logger = logging.getLogger(__name__)
@@ -114,4 +118,4 @@ if __name__ == "__main__":
     results = run_tests(configs, args.source_dir, args.target, args.jobs)
 
     # Summarize results
-    log_test_results_and_exit(result, op_name=args.name)
+    log_test_results_and_exit(results, op_name=args.name)

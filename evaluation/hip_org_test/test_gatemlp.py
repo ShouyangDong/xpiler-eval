@@ -1,13 +1,29 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
 import numpy as np
 import torch
 
-from evaluation.macros import HIP_MACROS as macro
-from evaluation.utils import run_hip_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 def ref_program(X, A, B):
@@ -22,54 +38,15 @@ def ref_program(X, A, B):
     return O.cpu().numpy()
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
-    parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform",
-    )
-    args = parser.parse_args()
-
-    # Parse file name: gate_mlp_4_4096.hip -> [4, 4096]
-    base_name = os.path.basename(args.file)
-    name = "gatemlp"
-    shapes = base_name.split(".")[0]
-    shape_parts = [
-        int(intg) for intg in shapes.split("_")[1:]
-    ]  # skip "gate", "mlp"
-    batch, dim_k, dim_n = shape_parts
-    so_name = args.file.replace(".hip", ".so")
-
-    # -------------------------------
-    # 1. Add macro
-    # -------------------------------
-    with open(args.file, "r") as f:
-        code = f.read()
-    code = macro + code
-
-    file_name = args.file.replace(".hip", "_bak.hip")
-    with open(file_name, "w") as f:
-        f.write(code)
-
-    success, output = run_compilation(so_name, file_name)
-    if not success:
-        print("Compilation failed:")
-        print(output)
-        exit(1)
-
-    os.remove(file_name)
-
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]
+    batch, dim_k, dim_n = config["args"]
     # -------------------------------
     # 2. Load kernel
     # -------------------------------
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    function = getattr(lib, name + "_kernel")
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    function = getattr(lib, op_name + "_kernel")
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # X
         ctypes.POINTER(ctypes.c_float),  # A
@@ -113,16 +90,55 @@ if __name__ == "__main__":
     # -------------------------------
     # 5. Verification
     # -------------------------------
-    np.testing.assert_allclose(
+    if np.testing.assert_allclose(
         O,
         O_ref,
         rtol=5e-3,
         atol=5e-3,
         equal_nan=True,
         verbose=True,
+    ):
+        return True, f"[ADD] PASSED✅: {config['file']}"
+    else:
+        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
     )
 
-    print("Verification successful!")
+    args = parser.parse_args()
 
-    # clean .so file
-    subprocess.run(["rm", so_name], check=False)
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="hip")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

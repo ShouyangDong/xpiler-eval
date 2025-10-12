@@ -8,7 +8,11 @@ from typing import Tuple
 import torch
 import torch.nn.functional as F
 
-from evaluation.utils import parse_op_json, run_tests
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
 
 # ========== Logger ==========
 logger = logging.getLogger(__name__)
@@ -120,7 +124,5 @@ if __name__ == "__main__":
         logger.warning("No valid instancenorm kernels found.")
         exit(0)
 
-    results = run_tests(
-        configs, args.source_dir, args.target, jobs=args.jobs
-    )
-    log_test_results_and_exit(result, op_name=args.name)
+    results = run_tests(configs, args.source_dir, args.target, jobs=args.jobs)
+    log_test_results_and_exit(results, op_name=args.name)

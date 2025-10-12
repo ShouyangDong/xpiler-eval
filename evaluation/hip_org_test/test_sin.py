@@ -1,13 +1,29 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
 import numpy as np
 import torch
 
-from evaluation.macros import HIP_MACROS as macro
-from evaluation.utils import run_hip_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 # Define the sin function using torch
@@ -15,32 +31,10 @@ def sin(A):
     return torch.sin(A)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--file",
-        type=str,
-        required=True,
-        help="Path to the C++ source file (e.g., sin_64_64.hip)",
-    )
-    parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform",
-    )
-    args = parser.parse_args()
-
-    base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]
-    shapes_str = base_name.split(".")[0]  # e.g., "sin_64_64"
-    shape = [
-        int(x) for x in shapes_str.split("_")[1:]
-    ]  # Extract dim, e.g.,  [64, 64]
-    print(f"🧪 params shape: {shape}")
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]
+    shape = config["args"]
 
     # Generate random input matrix
     A = torch.rand(*shape, device="cpu", dtype=torch.float32) * 4 * torch.pi
@@ -57,35 +51,9 @@ if __name__ == "__main__":
         ctypes.POINTER(ctypes.c_float)
     )
 
-    # Shared library name
-    so_name = args.file.replace(".hip", ".so")
-
-    # Read original C++ code
-    with open(args.file, "r") as f:
-        code = f.read()
-
-    # Prepend macro to C++ code
-    code = macro + code
-
-    # Create a temporary modified C++ file
-    temp_file_name = args.file.replace(".hip", "_bak.hip")
-    with open(temp_file_name, "w") as f:
-        f.write(code)
-
-    # Compile to shared library
-    print(f"⚙️ Compiling {temp_file_name} -> {so_name}")
-    success, compile_output = run_compilation(so_name, temp_file_name)
-    if not success:
-        print("❌ Compilation failed:")
-        print(compile_output)
-        exit(1)
-
-    # Clean up temp C++ file
-    os.remove(temp_file_name)
-
     # Load the compiled shared library
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name + "_kernel")  # e.g., `sin`
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    kernel_func = getattr(lib, op_name + "_kernel")  # e.g., `sin`
 
     # Define function signature: void sin(float* input, float* output)
     kernel_func.argtypes = [
@@ -96,26 +64,56 @@ if __name__ == "__main__":
     kernel_func.restype = None
 
     # Call the C++ kernel
-    print(f"🚀 Running {name.upper()} kernel...")
+
     kernel_func(A_ptr, output_ptr, np.prod(shape))
 
     # Verify result
     is_correct = torch.allclose(
-        result_ctypes,
-        expected,
-        rtol=1e-3,
-        atol=1e-3,
-        equal_nan=True,
+        result_ctypes, expected, rtol=1e-3, atol=1e-3, equal_nan=True
     )
 
     if is_correct:
-        print("✅ Verification successful! C++ sin matches PyTorch.")
+        return True, f"[ADD] PASSED✅: {config['file']}"
     else:
-        print("❌ Verification failed!")
-        print("Expected (first 10):", expected.flatten()[:10])
-        print("Got (first 10):", result_ctypes.flatten()[:10])
-        diff = (result_ctypes - expected).abs()
-        print("Max error:", diff.max().item())
+        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
 
-    # Clean up .so file
-    subprocess.run(["rm", so_name], check=False)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="hip")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

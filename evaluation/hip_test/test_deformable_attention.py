@@ -92,7 +92,7 @@ def verify_deformable(name, file, shape):
     success, output = run_compilation(so_name, file_name)
     os.remove(file_name)
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    function = getattr(lib, name + "_kernel")
+    function = getattr(lib, op_name + "_kernel")
     # Define the function's parameters and return types.
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),

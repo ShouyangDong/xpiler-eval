@@ -1,12 +1,28 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
 import torch
 
-from evaluation.macros import HIP_MACROS as macro
-from evaluation.utils import run_hip_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 def batch_matmul(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
@@ -19,50 +35,21 @@ def batch_matmul(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
     return torch.matmul(A, B)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Validate batch GEMM HIP kernel output against PyTorch"
-    )
-    parser.add_argument(
-        "--file", type=str, help="Path to the source .hip file"
-    )
-    parser.add_argument(
-        "--config",
-        required=True,
-        help="JSON string or path to kernel configuration file",
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform for compilation",
-    )
-    args = parser.parse_args()
-
-    base_name = os.path.basename(args.file)
-    shapes = base_name.split(".")[0]
-    shape = [int(dim) for dim in shapes.split("_")[1:]]
-    name = base_name.split("_")[0]
-
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    shape = config["args"]
+    op_name = config["op_name"]
     batch_size, matrix_dim_i, matrix_dim_j, matrix_dim_k = shape
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if not torch.cuda.is_available():
-        print(
-            "[ERROR] ROCm not available. Please install PyTorch with ROCm support."
-        )
-        exit(1)
-
     # Create input tensors on AMD GPU
     A = torch.ones(
         (batch_size, matrix_dim_i, matrix_dim_j),
         dtype=torch.float32,
-        device=device,
+        device=torch.device("cuda"),
     )
     B = torch.ones(
         (batch_size, matrix_dim_j, matrix_dim_k),
         dtype=torch.float32,
-        device=device,
+        device=torch.device("cuda"),
     )
 
     # Perform batch matmul on GPU
@@ -86,35 +73,9 @@ if __name__ == "__main__":
     output_ptr = ctypes.cast(
         result_ctypes.data_ptr(), ctypes.POINTER(ctypes.c_float)
     )
-
-    # Shared library name
-    so_name = args.file.replace(".hip", ".so")
-
-    # Read and inject macros
-    with open(args.file, "r") as f:
-        code = f.read()
-
-    code = macro + code
-
-    # Write to temporary .hip file
-    file_name = args.file.replace(
-        base_name.replace(".hip", ""), base_name + "_bak.hip"
-    )
-    with open(file_name, "w") as f:
-        f.write(code)
-
-    # Compile kernel
-    success, output = run_compilation(so_name, file_name)
-    if not success:
-        print("[ERROR] Compilation failed:")
-        print(output)
-        exit(1)
-
-    os.remove(file_name)
-
     # Load and call kernel
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name + "_kernel")
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    kernel_func = getattr(lib, op_name + "_kernel")
 
     kernel_func.argtypes = [
         ctypes.POINTER(ctypes.c_float),
@@ -141,10 +102,47 @@ if __name__ == "__main__":
     if torch.allclose(
         result_ctypes, result_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True
     ):
-        print("✅ Verification successful! Results match.")
+        return True, f"[ADD] PASSED✅: {config['file']}"
     else:
-        print("❌ Verification failed! Results do not match.")
-        exit(1)
+        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
 
-    # Clean up
-    subprocess.run(["rm", so_name], check=False)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="hip")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

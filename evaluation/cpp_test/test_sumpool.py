@@ -129,7 +129,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             max_error = (output_torch - expected_output).abs().max().item()
             return (
                 True,
-                f"[SUMPOOL] ✅ {file_name}| In: {input_shape} → Out: {list(output_shape)} | Max error: {max_error:.2e}",
+                f"[SUMPOOL] ✅ {file_name}| In: {input_shape} → Out: {
+                    list(output_shape)} | Max error: {
+                    max_error:.2e}",
             )
         else:
             max_error = (output_torch - expected_output).abs().max().item()
@@ -185,4 +187,4 @@ if __name__ == "__main__":
     )
 
     # Log individual results
-    log_test_results_and_exit(result, op_name=args.name)
+    log_test_results_and_exit(results, op_name=args.name)

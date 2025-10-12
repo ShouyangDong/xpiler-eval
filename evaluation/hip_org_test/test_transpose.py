@@ -1,75 +1,36 @@
 import argparse
 import ctypes
-import json
+import logging
 import os
-import subprocess
+from typing import Tuple
 
 import torch
 
-from evaluation.macros import HIP_MACROS as macro
-from evaluation.utils import run_hip_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
 
-
-def parse_config(config_input):
-    """
-    Parse config: either a JSON string or a file path.
-    Expected format:
-    {
-        "op_name": "transpose",
-        "dtype": "float32",
-        "args": [36, 16, 48],
-        "perm": [0, 2, 1]
-    }
-    """
-    if os.path.isfile(config_input):
-        with open(config_input, "r") as f:
-            config = json.load(f)
-    else:
-        config = json.loads(config_input)
-
-    shape = config["args"]
-    perm = config["perm"]
-    return shape, perm
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--file",
-        type=str,
-        required=True,
-        help="Path to the C++ source file (e.g., transpose_36_16_48.hip)",
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
-    parser.add_argument(
-        "--config",
-        required=True,
-        help="JSON string or path to kernel config",
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform",
-    )
-    args = parser.parse_args()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
-    base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]  # e.g., "transpose"
-    shapes_str = base_name.replace(".hip", "")
 
-    # Attempt to parse shape from filename (for validation)
-    try:
-        shape_from_filename = [int(x) for x in shapes_str.split("_")[1:]]
-    except ValueError:
-        raise ValueError(f"Invalid filename format: {args.file}")
-
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
     # ✅ Get the actual shape and perm from config
-    input_shape, perm = parse_config(args.config)
+    input_shape, perm = config["args"], config["perm"]
+    op_name = config["op_name"]
     output_shape = [input_shape[i] for i in perm]  # permuted shape
-
-    print(
-        f"🔍 Testing {name.upper()} with input shape {input_shape} -> output shape {output_shape}, perm={perm}"
-    )
 
     # ✅ Generate input tensor
     input_tensor = torch.rand(
@@ -86,31 +47,9 @@ if __name__ == "__main__":
     output_numel = expected_flat.size
     result_array = (ctypes.c_float * output_numel)()  # 分配空间
 
-    # shared library
-    so_name = args.file.replace(".hip", ".so")
-
-    # Add macro
-    with open(args.file, "r") as f:
-        code = f.read()
-    code = macro + code
-
-    temp_file_name = args.file.replace(".hip", "_bak.hip")
-    with open(temp_file_name, "w") as f:
-        f.write(code)
-
-    # compile
-    print(f"⚙️ Compiling {temp_file_name} -> {so_name}")
-    success, compile_output = run_compilation(so_name, temp_file_name)
-    if not success:
-        print("❌ Compilation failed:")
-        print(compile_output)
-        exit(1)
-
-    os.remove(temp_file_name)
-
     # load shared library
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name + "_kernel")
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    kernel_func = getattr(lib, op_name + "_kernel")
 
     rank = len(input_shape)
 
@@ -134,8 +73,6 @@ if __name__ == "__main__":
     # ✅ Construct input arguments
     args_list = [input_ptr, result_array] + input_shape + perm
 
-    # ✅ invoke kernel
-    print(f"🚀 Running {name.upper()} kernel with rank-{rank} permute...")
     kernel_func(*args_list)
 
     # ✅ Get output并 reshape
@@ -150,25 +87,47 @@ if __name__ == "__main__":
     )
 
     if is_correct:
-        print("✅ Verification successful! C++ permute matches PyTorch.")
+        return True, f"[ADD] PASSED✅: {config['file']}"
     else:
-        print("❌ Verification failed!")
-        if computed_tensor.dim() >= 2:
-            print("Expected (top-left 3x3):")
-            print(
-                expected[
-                    : min(3, expected.shape[0]), : min(3, expected.shape[1])
-                ]
-            )
-            print("Got (top-left 3x3):")
-            print(
-                computed_tensor[
-                    : min(3, computed_tensor.shape[0]),
-                    : min(3, computed_tensor.shape[1]),
-                ]
-            )
-        diff = (computed_tensor - expected).abs()
-        print(f"Max error: {diff.max().item():.2e}")
+        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
 
-    # clean
-    subprocess.run(["rm", so_name], check=False)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="hip")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

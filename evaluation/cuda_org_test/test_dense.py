@@ -131,7 +131,7 @@ if __name__ == "__main__":
     # ✅ 8. Load shared library
     # -------------------------------------------------------
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name + "_kernel")
+    kernel_func = getattr(lib, op_name + "_kernel")
 
     # -------------------------------------------------------
     # ✅ 9. Define function signature

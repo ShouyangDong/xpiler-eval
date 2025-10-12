@@ -55,7 +55,8 @@ def run_test_for_config(config, source_dir, test_dir, target):
     args = config["args"]
 
     # Construct filename
-    file_name = f"{op_name}_{'_'.join(map(str, args))}.{'cu' if target != 'cpu' else 'cpp'}"
+    file_name = f"{op_name}_{'_'.join(map(str,
+                                          args))}.{'cu' if target != 'cpu' else 'cpp'}"
     file_path = os.path.join(source_dir, file_name)
 
     if not os.path.exists(file_path):

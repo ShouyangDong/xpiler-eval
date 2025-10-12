@@ -57,7 +57,8 @@ def main():
     dtype_str = config.get("dtype", "float32")
 
     print(
-        f"🔍 Testing {op_name.upper()} on CUDA with shape {shape}, dtype={dtype_str}"
+        f"🔍 Testing {
+            op_name.upper()} on CUDA with shape {shape}, dtype={dtype_str}"
     )
 
     # --- Device and dtype setup ---

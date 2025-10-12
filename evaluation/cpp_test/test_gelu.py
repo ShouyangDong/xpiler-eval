@@ -8,7 +8,11 @@ from typing import Tuple
 
 import numpy as np
 
-from evaluation.utils import parse_op_json, run_tests
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -73,7 +77,8 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             )
         else:
             return False, (
-                f"[GELU] FAILED❌: {file_name} | Max abs error: {max_abs_err:.2e}, "
+                f"[GELU] FAILED❌: {file_name} | Max abs error: {
+                    max_abs_err:.2e}, "
                 f"Max rel error: {max_rel_err:.2e}"
             )
 
@@ -119,4 +124,4 @@ if __name__ == "__main__":
     )
 
     # Log individual results
-    log_test_results_and_exit(result, op_name=args.name)
+    log_test_results_and_exit(results, op_name=args.name)
