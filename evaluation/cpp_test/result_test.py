@@ -76,17 +76,12 @@ def run_test_for_op(
                 target=target,
                 num_workers=job_workers,
             )
-            print("[INFO]*******result: ", result)
+
             # result: list of (success: bool, message: str)
             passed = sum(1 for r in result if r[0])
             return True, passed
-        elif hasattr(test_module, "test_all"):
-            # Fallback interface
-            result = test_module.test_all(configs, source_dir, target)
-            passed = sum(1 for r in result if r[0])
-            return True, passed
         else:
-            return False, f"No run_tests or test_all in {test_script}"
+            return False, f"No run_tests in {test_script}"
 
     except Exception as e:
         return False, f"Exception in {op_name}: {str(e)}"
