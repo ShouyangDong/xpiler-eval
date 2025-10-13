@@ -1,49 +1,29 @@
+#include <cmath>
 
-extern "C" void batchnorm(float *input, float *output) {
-  int N = 1, C = 32, H = 7, W = 7;
-  int spatial = H * W;
-  int size_per_channel = N * H * W;
-  float eps = 1e-5f;
-
-  float mean[512];
-  float var[512];
-
-  for (int c = 0; c < C; c++) {
-    float sum = 0.0f;
+extern "C" void batchnorm(
+    float* input,
+    float* output,
+    float* mean,      // [C]
+    float* var,       // [C]
+    float* weight,    // [C] gamma
+    float* bias,      // [C] beta
+    float eps
+) {
+    int N = 1, C = 32, H = 7, W = 7;
     for (int n = 0; n < N; n++) {
-      for (int h = 0; h < H; h++) {
-        for (int w = 0; w < W; w++) {
-          int idx = n * C * H * W + c * H * W + h * W + w;
-          sum += input[idx];
-        }
-      }
-    }
-    mean[c] = sum / (N * spatial);
-  }
+        for (int c = 0; c < C; c++) {
+            float inv_std = 1.0f / sqrtf(var[c] + eps);
+            float gamma = weight[c];
+            float beta = bias[c];
+            float m = mean[c];
 
-  for (int c = 0; c < C; c++) {
-    float sum_sq = 0.0f;
-    for (int n = 0; n < N; n++) {
-      for (int h = 0; h < H; h++) {
-        for (int w = 0; w < W; w++) {
-          int idx = n * C * H * W + c * H * W + h * W + w;
-          float diff = input[idx] - mean[c];
-          sum_sq += diff * diff;
+            for (int h = 0; h < H; h++) {
+                for (int w = 0; w < W; w++) {
+                    int idx = n * C * H * W + c * H * W + h * W + w;
+                    float normalized = (input[idx] - m) * inv_std;
+                    output[idx] = gamma * normalized + beta;
+                }
+            }
         }
-      }
     }
-    var[c] = sum_sq / (N * spatial);
-  }
-
-  for (int c = 0; c < C; c++) {
-    float inv_std = 1.0f / sqrtf(var[c] + eps);
-    for (int n = 0; n < N; n++) {
-      for (int h = 0; h < H; h++) {
-        for (int w = 0; w < W; w++) {
-          int idx = n * C * H * W + c * H * W + h * W + w;
-          output[idx] = (input[idx] - mean[c]) * inv_std;
-        }
-      }
-    }
-  }
 }

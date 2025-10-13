@@ -1,49 +1,269 @@
+"""Batch correctness tester for Reduction Sum kernels."""
+
 import argparse
 import ctypes
 import json
+import logging
 import os
-import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Tuple
 
+import numpy as np
 import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
 
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
-def parse_config(config_input):
-    """
-    Parse config: either a JSON string or a file path
-    Expected format:
-    {
-        "op_name": "sum",
-        "dtype": "float32",
-        "args": [3, 4, 5],        # input shape
-        "axes": [0] or 0          # reduction axes
-    }
-    """
+
+def ref_program(A: torch.Tensor, axes: List[int]) -> torch.Tensor:
+    """Golden reference: torch.sum(A, dim=axes)"""
+    return torch.sum(A, dim=axes)
+
+
+def parse_config(config_input: str) -> List[Dict]:
+    """Parse config: either JSON file or JSON string."""
     if os.path.isfile(config_input):
         with open(config_input, "r") as f:
-            config = json.load(f)
+            config_data = json.load(f)
     else:
-        config = json.loads(config_input)
+        try:
+            config_data = json.loads(config_input)
+        except Exception as e:
+            raise ValueError(f"Invalid JSON config: {e}")
 
-    shape = config["args"]
-    axes = config["axes"]
-    if isinstance(axes, int):
-        axes = [axes]
-    return shape, axes
+    if isinstance(config_data, dict):
+        config_data = [config_data]
+
+    parsed_configs = []
+    for idx, c in enumerate(config_data):
+        try:
+            shape = c.get("args")
+            if (
+                not isinstance(shape, list)
+                or len(shape) < 1
+                or not all(isinstance(d, int) for d in shape)
+            ):
+                raise ValueError(
+                    f"Invalid 'args' (must be list of int): {shape}"
+                )
+
+            axes = c.get("axis", 0)
+            if isinstance(axes, int):
+                axes = [axes]
+            if not isinstance(axes, list) or not all(
+                isinstance(a, int) for a in axes
+            ):
+                raise ValueError(f"Invalid 'axis': {axes}")
+
+            op_name =  c.get("op_name")
+            # Construct filename
+            file_name = f"{op_name}_{'_'.join(map(str, shape))}.cpp"
+            if not file_name or not file_name.endswith(".cpp"):
+                raise ValueError(f"Invalid or missing 'file': {file_name}")
+
+            dtype = c.get("dtype", "float32")
+            if dtype not in ["float32", "float16"]:
+                raise ValueError(f"Unsupported dtype: {dtype}")
+
+            if op_name not in ["sum"]:
+                logger.warning(f"[SUM] Expected op='sum', got {op_name}")
+
+            parsed_configs.append(
+                {
+                    "file": file_name,
+                    "shape": shape,
+                    "axis": axes,
+                    "dtype": dtype,
+                    "op": op_name,
+                }
+            )
+        except Exception as e:
+            logger.warning(f"[SUM] Skip invalid config #{idx}: {e}")
+
+    return parsed_configs
+
+
+def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
+    """Compile one sum kernel."""
+    file_name = config["file"]
+    file_path = os.path.join(source_dir, file_name)
+    so_path = os.path.join(source_dir, file_name.replace(".cpp", ".so"))
+
+    temp_file = os.path.join(
+        source_dir,
+        f"{file_name.replace('.cpp', '')}_patched_{os.getpid()}.cpp",
+    )
+
+    if not os.path.isfile(file_path):
+        return config, False, f"[SUM] File not found: {file_path}"
+
+    try:
+        with open(file_path, "r") as f:
+            code = f.read()
+        code = macro + code
+        with open(temp_file, "w") as f:
+            f.write(code)
+    except Exception as e:
+        return config, False, f"[SUM] Patch failed {file_name}: {e}"
+
+    success, msg = run_compilation(so_path, temp_file)
+    try:
+        os.remove(temp_file)
+    except BaseException:
+        pass
+
+    if success:
+        return config, True, so_path
+    else:
+        return config, False, f"[SUM] Compile failed {file_name}: {msg}"
+
+
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on compiled sum kernel."""
+    try:
+        file_name = config["file"]
+        shape = config["args"]
+        axes = config["axis"]
+        dtype_str = config["dtype"]
+        op_name = config["op_name"]
+
+        # Load shared library
+        lib = ctypes.CDLL(so_path)
+        func = getattr(lib, op_name, None)
+        if not func:
+            return False, f"[SUM] Function '{op_name}' not found in {so_path}"
+
+        # Determine C type and numpy dtype
+        ctype_float = (
+            ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+        )
+        np_dtype = np.float32 if dtype_str == "float32" else np.float16
+        torch_dtype = (
+            torch.float32 if dtype_str == "float32" else torch.float16
+        )
+
+        # Set function signature: void sum(float* input, float* output)
+        func.argtypes = [
+            ctypes.POINTER(ctype_float),  # input
+            ctypes.POINTER(ctype_float),  # output
+        ]
+        func.restype = None
+
+        # Generate input
+        input_np = np.random.rand(*shape).astype(np_dtype)
+        input_torch = torch.from_numpy(input_np).to(dtype=torch_dtype)
+        expected_output = ref_program(input_torch, axes)
+
+        # Compute output size
+        output_shape = expected_output.shape
+        output_size = expected_output.numel()
+        output_np = np.zeros(output_size, dtype=np_dtype)
+
+        # Get pointers
+        input_ptr = input_np.ctypes.data_as(ctypes.POINTER(ctype_float))
+        output_ptr = output_np.ctypes.data_as(ctypes.POINTER(ctype_float))
+
+        # Call kernel
+        func(input_ptr, output_ptr)
+
+        # Convert back to tensor
+        output_torch = (
+            torch.from_numpy(output_np)
+            .view(output_shape)
+            .to(dtype=torch_dtype)
+        )
+
+        # Compare
+        rtol, atol = (1e-3, 1e-3) if dtype_str == "float32" else (5e-2, 5e-2)
+        if torch.allclose(
+            output_torch, expected_output, rtol=rtol, atol=atol, equal_nan=True
+        ):
+            max_error = (output_torch - expected_output).abs().max().item()
+            return (
+                True,
+                f"[SUM] ✅ {file_name}| Shape: {shape} → {list(output_shape)} | Max error: {max_error:.2e}",
+            )
+        else:
+            max_error = (output_torch - expected_output).abs().max().item()
+            return (
+                False,
+                f"[SUM] FAILED❌: {file_name} | Max error: {max_error:.2e}",
+            )
+
+    except Exception as e:
+        return False, f"[SUM] Exception in test {file_name}: {str(e)}"
+
+
+def run_tests(
+    configs: List[dict], source_dir: str, target: str, num_workers: int = 4
+) -> List[Tuple[bool, str]]:
+    """Two-phase test: compile all → test all."""
+    logger.info(f"[SUM] Starting two-phase test for {len(configs)} kernels...")
+
+    compiled_map = {}
+    results = []
+
+    # === PHASE 1: Parallel Compilation ===
+    logger.info(f"[SUM] Phase 1/2: Compiling {len(configs)} kernels...")
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = [
+            executor.submit(compile_kernel, config, source_dir)
+            for config in configs
+        ]
+
+        for future in as_completed(futures):
+            config, success, msg = future.result()
+            if success:
+                compiled_map[config["file"]] = msg
+            else:
+                results.append((False, msg))
+
+    logger.info(
+        f"[SUM] Compilation: {len(compiled_map)} succeeded, {len([r for r in results if not r[0]])} failed."
+    )
+
+    # === PHASE 2: Parallel Testing ===
+    if compiled_map:
+        logger.info(
+            f"[SUM] Phase 2/2: Testing {len(compiled_map)} compiled kernels..."
+        )
+        test_configs = [
+            (config, compiled_map[config["file"]])
+            for config in configs
+            if config["file"] in compiled_map
+        ]
+
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = [
+                executor.submit(test_kernel, config, so_path)
+                for config, so_path in test_configs
+            ]
+
+            for future in as_completed(futures):
+                results.append(future.result())
+
+    return results
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Test Reduction Sum kernels")
     parser.add_argument(
-        "--file",
-        type=str,
-        required=True,
-        help="Path to the C++ source file (e.g., sum_3_4_5.cpp)",
+        "--config", required=True, help="JSON string or path to config file"
     )
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+        "--source_dir", default="./", help="Directory containing .cpp files"
     )
     parser.add_argument(
         "--target",
@@ -51,106 +271,42 @@ if __name__ == "__main__":
         choices=["cuda", "hip", "mlu", "cpu"],
         help="Target platform",
     )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
     args = parser.parse_args()
 
-    base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]  # e.g., "sum"
-    shapes_str = base_name.replace(".cpp", "")
-    # Dynamically extract shape: parse all numbers from filename
+    # Parse config
     try:
-        shape_from_filename = [int(x) for x in shapes_str.split("_")[1:]]
-    except ValueError:
-        raise ValueError(
-            f"Invalid filename format: {args.file}. Expected: op_M_N_K.cpp"
-        )
-
-    # Get the true shape and axes from config
-    config_shape, axes = parse_config(args.config)
-
-    print(
-        f"🔍 Testing {name.upper()} with input shape {config_shape}, axes={axes}"
-    )
-
-    # ✅ 使用 config 中的 shape，而非文件名（更可靠）
-    shape = config_shape
-
-    # ✅ Generate input tensor
-    A = torch.rand(shape, device="cpu", dtype=torch.float32)
-
-    # ✅ 黄金标准：沿指定 axes 求和，不保留dim（与大多数 kernel 一致）
-    expected_tensor = torch.sum(A, dim=axes)  # shape: reduced
-    expected_numpy = expected_tensor.numpy()
-    expected_flat = expected_numpy.flatten()
-
-    # ✅ 输入指针（展平输入）
-    A_flat = A.numpy()  # 自动展平为 C 顺序
-    A_ptr = A_flat.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-
-    # ✅ output大小
-    output_size = expected_flat.size  # int
-    result_array = (ctypes.c_float * output_size)()  # 分配空间
-
-    # shared library
-    so_name = args.file.replace(".cpp", ".so")
-
-    # Load原始代码
-    with open(args.file, "r") as f:
-        code = f.read()
-
-    code = macro + code
-
-    # Create tmp file
-    temp_file_name = args.file.replace(".cpp", "_bak.cpp")
-    with open(temp_file_name, "w") as f:
-        f.write(code)
-
-    # compile
-    print(f"⚙️ Compiling {temp_file_name} -> {so_name}")
-    success, compile_output = run_compilation(so_name, temp_file_name)
-    if not success:
-        print("❌ Compilation failed:")
-        print(compile_output)
+        configs = parse_config(args.config)
+    except Exception as e:
+        logger.error(f"❌ Config parsing failed: {e}")
         exit(1)
 
-    os.remove(temp_file_name)
+    if not configs:
+        logger.warning("⚠️ No valid 'sum' kernels found in config.")
+        exit(0)
 
-    # load shared library
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name)
-
-    # ✅ Function  signature
-    kernel_func.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # input
-        ctypes.POINTER(ctypes.c_float),  # output
-    ]
-    kernel_func.restype = None
-
-    # ✅ invoke kernel
-    print(f"🚀 Running {name.upper()} kernel...")
-    kernel_func(A_ptr, result_array)
-
-    # ✅ Get output
-    computed_array = [result_array[i] for i in range(output_size)]
-    computed_tensor = torch.tensor(computed_array).view_as(
-        torch.from_numpy(expected_numpy)
+    # Run tests
+    results = run_tests(
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
-    # ✅ verification
-    abs_diff = torch.abs(computed_tensor - expected_tensor)
-    max_error = abs_diff.max().item()
+    # Log individual results
+    passed = sum(1 for r in results if r[0])
+    total = len(results)
 
-    if max_error <= 1e-3:
-        print(f"✅ Verification successful! C++ sum matches PyTorch.")
-        print(f"   Output shape: {tuple(expected_tensor.shape)}")
-        # 可选：打印前几个值
-        if output_size <= 10:
-            for i, (exp, got) in enumerate(zip(expected_flat, computed_array)):
-                print(f"   Index {i}: Expected: {exp:.6f}, Got: {got:.6f}")
+    for success, msg in results:
+        if success:
+            logger.info(msg)
+        else:
+            logger.error(msg)
+
+    # Final summary
+    if passed == total:
+        logger.info(f"🎉 All {total} Sum tests passed!")
+        exit(0)
     else:
-        print(f"❌ Verification failed! Max error = {max_error:.2e}")
-        print(f"   Expected shape: {expected_tensor.shape}")
-        print(f"   Computed shape: {computed_tensor.shape}")
+        logger.error(f"❌ {total - passed}/{total} Sum tests failed.")
         exit(1)
-
-    # clean
-    subprocess.run(["rm", so_name], check=False)

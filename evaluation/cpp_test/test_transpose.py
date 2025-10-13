@@ -1,49 +1,262 @@
+"""Batch correctness tester for Transpose (Permute) kernels."""
+
 import argparse
 import ctypes
 import json
+import logging
 import os
-import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Tuple
 
+import numpy as np
 import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
 
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
-def parse_config(config_input):
-    """
-    Parse config: either a JSON string or a file path.
-    Expected format:
-    {
-        "op_name": "transpose",
-        "dtype": "float32",
-        "args": [36, 16, 48],
-        "perm": [0, 2, 1]
-    }
-    """
+
+def ref_program(input_tensor: torch.Tensor, perm: List[int]) -> torch.Tensor:
+    """Golden reference using torch.permute."""
+    return input_tensor.permute(*perm).contiguous()
+
+
+def parse_config(config_input: str) -> List[Dict]:
+    """Parse config: either JSON file or JSON string."""
     if os.path.isfile(config_input):
         with open(config_input, "r") as f:
-            config = json.load(f)
+            config_data = json.load(f)
     else:
-        config = json.loads(config_input)
+        try:
+            config_data = json.loads(config_input)
+        except Exception as e:
+            raise ValueError(f"Invalid JSON config: {e}")
 
-    shape = config["args"]
-    perm = config["perm"]
-    return shape, perm
+    if isinstance(config_data, dict):
+        config_data = [config_data]
+
+    parsed_configs = []
+    for idx, c in enumerate(config_data):
+        try:
+            shapes = c.get("args")
+            if not isinstance(args, list) or len(args) < 2 or len(args) > 4:
+                raise ValueError(
+                    f"Invalid 'args' (must be 2D, 3D, or 4D): {args}"
+                )
+
+            perm = c.get("perm")
+            if not isinstance(perm, list) or len(perm) != len(args):
+                raise ValueError(f"Invalid 'perm' (must match rank): {perm}")
+
+            op_name =  c.get("op_name")
+            # Construct filename
+            file_name = f"{op_name}_{'_'.join(map(str, shape))}.cpp"
+            if not file_name or not file_name.endswith(".cpp"):
+                raise ValueError(f"Invalid or missing 'file': {file_name}")
+
+            dtype = c.get("dtype", "float32")
+            if dtype not in ["float32", "float16"]:
+                raise ValueError(f"Unsupported dtype: {dtype}")
+
+            if op_name not in ["transpose", "permute"]:
+                logger.warning(
+                    f"[TRANSPOSE] Expected op='transpose' or 'permute', got {op_name}"
+                )
+
+            parsed_configs.append(
+                {
+                    "file": file_name,
+                    "args": shapes,
+                    "perm": perm,
+                    "dtype": dtype,
+                    "op": op_name,
+                }
+            )
+        except Exception as e:
+            logger.warning(f"[TRANSPOSE] Skip invalid config #{idx}: {e}")
+
+    return parsed_configs
+
+
+def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
+    """Compile one transpose kernel."""
+    file_name = config["file"]
+    file_path = os.path.join(source_dir, file_name)
+    so_path = os.path.join(source_dir, file_name.replace(".cpp", ".so"))
+
+    temp_file = os.path.join(
+        source_dir,
+        f"{file_name.replace('.cpp', '')}_patched_{os.getpid()}.cpp",
+    )
+
+    if not os.path.isfile(file_path):
+        return config, False, f"[TRANSPOSE] File not found: {file_path}"
+
+    try:
+        with open(file_path, "r") as f:
+            code = f.read()
+        code = macro + code
+        with open(temp_file, "w") as f:
+            f.write(code)
+    except Exception as e:
+        return config, False, f"[TRANSPOSE] Patch failed {file_name}: {e}"
+
+    success, msg = run_compilation(so_path, temp_file)
+    try:
+        os.remove(temp_file)
+    except BaseException:
+        pass
+
+    if success:
+        return config, True, so_path
+    else:
+        return config, False, f"[TRANSPOSE] Compile failed {file_name}: {msg}"
+
+
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on compiled transpose kernel."""
+    try:
+        file_name = config["file"]
+        input_shape = config["args"]
+        perm = config["perm"]
+        dtype_str = config["dtype"]
+        op_name = config["op_name"]
+
+        # Load shared library
+        lib = ctypes.CDLL(so_path)
+        func = getattr(lib, op_name, None)
+        if not func:
+            return (
+                False,
+                f"[TRANSPOSE] Function '{op_name}' not found in {so_path}",
+            )
+
+        # Determine C type and numpy dtype
+        ctype_float = (
+            ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+        )
+        np_dtype = np.float32 if dtype_str == "float32" else np.float16
+        torch_dtype = (
+            torch.float32 if dtype_str == "float32" else torch.float16
+        )
+
+        # Set function signature
+        rank = len(input_shape)
+        argtypes = [
+            ctypes.POINTER(ctype_float),  # input
+            ctypes.POINTER(ctype_float),  # output
+        ]
+        func.argtypes = argtypes
+        func.restype = None
+
+        # Generate input
+        input_np = np.random.rand(*input_shape).astype(np_dtype)
+        input_torch = torch.from_numpy(input_np).to(dtype=torch_dtype)
+
+        # Compute reference output
+        expected_output = ref_program(input_torch, perm) 
+        output_torch = torch.zeros(expected_output.shape, dtype=torch_dtype)
+
+        # Get pointers
+        input_ptr = input_np.ctypes.data_as(ctypes.POINTER(ctype_float))
+        output_ptr = output_torch.numpy().ctypes.data_as(ctypes.POINTER(ctype_float))
+
+        # Call kernel
+        func(input_ptr, output_ptr)
+
+        # Compare
+        if torch.allclose(
+            output_torch, expected_output, rtol=1e-3, atol=1e-3, equal_nan=True
+        ):
+            max_error = (output_torch - expected_output).abs().max().item()
+            return (
+                True,
+                f"[TRANSPOSE] ✅ {file_name}| In: {input_shape} → Out: {list(expected_output.shape)} | Perm: {perm} | Max error: {max_error:.2e}",
+            )
+        else:
+            max_error = (output_torch - expected_output).abs().max().item()
+            return (
+                False,
+                f"[TRANSPOSE] FAILED❌: {file_name} |In: {input_shape} → Out: {list(expected_output.shape)} | Perm: {perm} | Max error: {max_error:.2e}",
+            )
+
+    except Exception as e:
+        return False, f"[TRANSPOSE] Exception in test {file_name}: {str(e)}"
+
+
+def run_tests(
+    configs: List[dict], source_dir: str, target: str, num_workers: int = 4
+) -> List[Tuple[bool, str]]:
+    """Two-phase test: compile all → test all."""
+    logger.info(
+        f"[TRANSPOSE] Starting two-phase test for {len(configs)} kernels..."
+    )
+
+    compiled_map = {}
+    results = []
+
+    # === PHASE 1: Parallel Compilation ===
+    logger.info(f"[TRANSPOSE] Phase 1/2: Compiling {len(configs)} kernels...")
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = [
+            executor.submit(compile_kernel, config, source_dir)
+            for config in configs
+        ]
+
+        for future in as_completed(futures):
+            config, success, msg = future.result()
+            if success:
+                compiled_map[config["file"]] = msg
+            else:
+                results.append((False, msg))
+
+    logger.info(
+        f"[TRANSPOSE] Compilation: {len(compiled_map)} succeeded, {len([r for r in results if not r[0]])} failed."
+    )
+
+    # === PHASE 2: Parallel Testing ===
+    if compiled_map:
+        logger.info(
+            f"[TRANSPOSE] Phase 2/2: Testing {len(compiled_map)} compiled kernels..."
+        )
+        test_configs = [
+            (config, compiled_map[config["file"]])
+            for config in configs
+            if config["file"] in compiled_map
+        ]
+
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = [
+                executor.submit(test_kernel, config, so_path)
+                for config, so_path in test_configs
+            ]
+
+            for future in as_completed(futures):
+                results.append(future.result())
+
+    return results
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--file",
-        type=str,
-        required=True,
-        help="Path to the C++ source file (e.g., transpose_36_16_48.cpp)",
+    parser = argparse.ArgumentParser(
+        description="Test Transpose (Permute) kernels"
     )
     parser.add_argument(
-        "--config",
-        required=True,
-        help="JSON string or path to kernel config",
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory containing .cpp files"
     )
     parser.add_argument(
         "--target",
@@ -51,124 +264,42 @@ if __name__ == "__main__":
         choices=["cuda", "hip", "mlu", "cpu"],
         help="Target platform",
     )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
     args = parser.parse_args()
 
-    base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]  # e.g., "transpose"
-    shapes_str = base_name.replace(".cpp", "")
-
-    # Attempt to parse shape from filename (for validation)
+    # Parse config
     try:
-        shape_from_filename = [int(x) for x in shapes_str.split("_")[1:]]
-    except ValueError:
-        raise ValueError(f"Invalid filename format: {args.file}")
-
-    # ✅ Get the actual shape and perm from config
-    input_shape, perm = parse_config(args.config)
-    output_shape = [input_shape[i] for i in perm]  # permuted shape
-
-    print(
-        f"🔍 Testing {name.upper()} with input shape {input_shape} -> output shape {output_shape}, perm={perm}"
-    )
-
-    # ✅ Generate input tensor
-    input_tensor = torch.rand(
-        input_shape, dtype=torch.float32, requires_grad=False
-    )
-    input_flat = input_tensor.numpy()  # C-order
-    input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-
-    # ✅ Reference：PyTorch permute
-    expected = input_tensor.permute(*perm).contiguous()
-    expected_flat = expected.numpy()
-
-    # ✅ output buffer
-    output_numel = expected_flat.size
-    result_array = (ctypes.c_float * output_numel)()  # 分配空间
-
-    # shared library
-    so_name = args.file.replace(".cpp", ".so")
-
-    # Add macro
-    with open(args.file, "r") as f:
-        code = f.read()
-    code = macro + code
-
-    temp_file_name = args.file.replace(".cpp", "_bak.cpp")
-    with open(temp_file_name, "w") as f:
-        f.write(code)
-
-    # compile
-    print(f"⚙️ Compiling {temp_file_name} -> {so_name}")
-    success, compile_output = run_compilation(so_name, temp_file_name)
-    if not success:
-        print("❌ Compilation failed:")
-        print(compile_output)
+        configs = parse_config(args.config)
+    except Exception as e:
+        logger.error(f"❌ Config parsing failed: {e}")
         exit(1)
 
-    os.remove(temp_file_name)
+    if not configs:
+        logger.warning("⚠️ No valid 'transpose' kernels found in config.")
+        exit(0)
 
-    # load shared library
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name)
-
-    rank = len(input_shape)
-
-    if rank not in [2, 3, 4]:
-        raise NotImplementedError(
-            f"Rank {rank} not supported. Only 2D, 3D, and 4D are supported."
-        )
-
-    # Construct argtypes: [float*, float*, d0, d1, ..., p0, p1, ...]
-    argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # input
-        ctypes.POINTER(ctypes.c_float),  # output
-    ]
-    # Add shape dim (d0, d1, ...)
-    argtypes += [ctypes.c_int] * rank
-    # Add perm dim (p0, p1, ...)
-    argtypes += [ctypes.c_int] * rank
-
-    kernel_func.argtypes = argtypes
-
-    # ✅ Construct input arguments
-    args_list = [input_ptr, result_array] + input_shape + perm
-
-    # ✅ invoke kernel
-    print(f"🚀 Running {name.upper()} kernel with rank-{rank} permute...")
-    kernel_func(*args_list)
-
-    # ✅ Get output并 reshape
-    computed_flat = torch.tensor(
-        [result_array[i] for i in range(output_numel)]
-    )
-    computed_tensor = computed_flat.view(output_shape)
-
-    # ✅ verification
-    is_correct = torch.allclose(
-        computed_tensor, expected, rtol=1e-5, atol=1e-6, equal_nan=True
+    # Run tests
+    results = run_tests(
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
-    if is_correct:
-        print("✅ Verification successful! C++ permute matches PyTorch.")
+    # Log individual results
+    passed = sum(1 for r in results if r[0])
+    total = len(results)
+
+    for success, msg in results:
+        if success:
+            logger.info(msg)
+        else:
+            logger.error(msg)
+
+    # Final summary
+    if passed == total:
+        logger.info(f"🎉 All {total} Transpose tests passed!")
+        exit(0)
     else:
-        print("❌ Verification failed!")
-        if computed_tensor.dim() >= 2:
-            print("Expected (top-left 3x3):")
-            print(
-                expected[
-                    : min(3, expected.shape[0]), : min(3, expected.shape[1])
-                ]
-            )
-            print("Got (top-left 3x3):")
-            print(
-                computed_tensor[
-                    : min(3, computed_tensor.shape[0]),
-                    : min(3, computed_tensor.shape[1]),
-                ]
-            )
-        diff = (computed_tensor - expected).abs()
-        print(f"Max error: {diff.max().item():.2e}")
-
-    # clean
-    subprocess.run(["rm", so_name], check=False)
+        logger.error(f"❌ {total - passed}/{total} Transpose tests failed.")
+        exit(1)

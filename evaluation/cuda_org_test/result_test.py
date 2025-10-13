@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
 """Multi-platform correctness tester for compiled kernels (.so).
 
 Reads kernel configs from kernels.json, maps to test scripts, and runs tests.
 """
+
 import argparse
 import json
 import os

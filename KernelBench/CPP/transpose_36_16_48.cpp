@@ -1,15 +1,16 @@
-extern "C" void transpose(float *input, float *output) {
-  int s0_in = 36;
-  int s1_in = 16;
-  int s2_in = 48;
+extern "C" void transpose(float* input, float* output) {
+    const int D0 = 36; 
+    const int D1 = 16;
+    const int D2 = 48;
 
-  int s0_out = s2_in;
-  int s1_out = s0_in;
+    for (int d0 = 0; d0 < D0; d0++) {
+        for (int d1 = 0; d1 < D1; d1++) {
+            for (int d2 = 0; d2 < D2; d2++) {
+                int input_idx = d0 * (D1 * D2) + d1 * D2 + d2;
+                int output_idx = d0 * (D2 * D1) + d2 * D1 + d1;
 
-  for (int o0 = 0; o0 < s0_out; ++o0) {
-    for (int o1 = 0; o1 < s1_out; ++o1) {
-
-      output[o0 * s1_out + o1] = input[o1 * (s1_in * s2_in) + 0 * s2_in + o0];
+                output[output_idx] = input[input_idx];
+            }
+        }
     }
-  }
 }

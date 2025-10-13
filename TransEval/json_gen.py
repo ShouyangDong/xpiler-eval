@@ -54,7 +54,7 @@ def generate_kernel_json(kernel_dir, output_file="kernels.json", dtype="float32"
 
         # If it's a reduce op and axis is specified, add axes field
         if op_name in reduce_ops and axis is not None:
-            entry["axes"] = axis  # Can be extended to list for multi-axis, currently single-axis
+            entry["axis"] = axis  # Can be extended to list for multi-axis, currently single-axis
 
         result.append(entry)
 

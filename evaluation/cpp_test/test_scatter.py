@@ -1,120 +1,225 @@
+"""Batch correctness tester for scatter kernels with parallel compilation and testing."""
+
 import argparse
 import ctypes
 import json
+import logging
 import os
-import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Tuple
 
+import numpy as np
 import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
 
 
-def scatter_reference(self_tensor, indices_tensor, src_tensor, dim):
-    """Mimic torch.Tensor.scatter_ self.scatter_(dim, indices, src)"""
+# ----------------- Logger -----------------
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+
+# ----------------- Reference Implementation -----------------
+def reference_scatter(self_tensor: torch.Tensor, indices_tensor: torch.Tensor, src_tensor: torch.Tensor, dim: int):
+    """Mimic torch.Tensor.scatter_ semantics."""
     result = self_tensor.clone()
-    result.scatter_(dim, indices_tensor, src_tensor)
+    result.scatter_(dim=dim, index=indices_tensor, src=src_tensor)
     return result
 
 
+# ----------------- Utils -----------------
+def parse_filename(file_name: str) -> Dict:
+    """Parse filename: scatter_4_5_6.cpp -> {'shape': [4,5,6]}"""
+    try:
+        base = os.path.splitext(file_name)[0]
+        parts = base.split("_")
+        if len(parts) < 2 or parts[0] != "scatter":
+            raise ValueError(f"Invalid scatter filename: {file_name}")
+        shape = [int(p) for p in parts[1:]]
+        return {
+            "file": file_name,
+            "shape": shape,
+            "output_shape": shape,
+            "dtype": "float32",
+        }
+    except Exception as e:
+        raise ValueError(f"Failed to parse {file_name}: {e}")
+
+
+def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
+    """Compile one scatter kernel."""
+    file_name = config["file"]
+    file_path = os.path.join(source_dir, file_name)
+    so_path = os.path.join(source_dir, file_name.replace(".cpp", ".so"))
+    temp_file = os.path.join(source_dir, f"{file_name.replace('.cpp', '')}_patched_{os.getpid()}.cpp")
+
+    if not os.path.isfile(file_path):
+        return config, False, f"[SCATTER] File not found: {file_path}"
+
+    try:
+        with open(file_path, "r") as f:
+            code = f.read()
+        code = macro + code
+        with open(temp_file, "w") as f:
+            f.write(code)
+    except Exception as e:
+        return config, False, f"[SCATTER] Patch failed {file_name}: {e}"
+
+    success, msg = run_compilation(so_path, temp_file)
+    try:
+        os.remove(temp_file)
+    except BaseException:
+        pass
+
+    if success:
+        return config, True, so_path
+    else:
+        return config, False, f"[SCATTER] Compile failed {file_name}: {msg}"
+
+
+# ----------------- Core: Kernel Test -----------------
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on compiled scatter kernel."""
+    try:
+        dim = config["axis"]
+        shape = config["args"]
+        kernel_name = config["op_name"]
+        file_name = config["file"]
+
+        # ----------- Prepare tensors -----------
+        self_tensor = torch.rand(*shape, dtype=torch.float32)
+        src_tensor = torch.rand(*shape, dtype=torch.float32)
+        size_dim = shape[dim]
+        indices_tensor = torch.randint(0, size_dim, shape, dtype=torch.int64)
+
+        expected = reference_scatter(self_tensor, indices_tensor, src_tensor, dim)
+
+        # Convert to contiguous numpy arrays
+        self_np = self_tensor.contiguous().numpy().astype(np.float32, copy=False)
+        src_np = src_tensor.contiguous().numpy().astype(np.float32, copy=False)
+        indices_np = indices_tensor.contiguous().numpy().astype(np.int32, copy=False)
+        out_np = np.zeros_like(self_np, dtype=np.float32)
+
+        # ----------- Load shared lib -----------
+        lib = ctypes.CDLL(so_path)
+        kernel_func = getattr(lib, kernel_name)
+        kernel_func.argtypes = [
+            ctypes.POINTER(ctypes.c_float),   # self
+            ctypes.POINTER(ctypes.c_int32),   # indices
+            ctypes.POINTER(ctypes.c_float),   # src
+            ctypes.POINTER(ctypes.c_float),   # output
+        ]
+        kernel_func.restype = None
+
+        # ----------- Call kernel -----------
+        kernel_func(
+            self_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+            indices_np.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+            src_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+            out_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        )
+
+        # Compare
+        result_reshaped = torch.from_numpy(out_np).reshape(expected.shape)
+        try:
+            torch.allclose(result_reshaped, expected, rtol=1e-4, atol=1e-4)
+            return True, f"[SCATTER] PASSED✅: {file_name}"
+        except Exception as e:
+            return False, f"[SCATTER] FAILED❌: {file_name} | {str(e)}"
+
+    except Exception as e:
+        return False, f"[SCATTER] Exception in test {file_name}: {str(e)}"
+
+
+# ----------------- Run Batch -----------------
+def run_tests(configs: List[dict], source_dir: str, target: str, num_workers: int = 4) -> List[Tuple[bool, str]]:
+    logger.info(f"[SCATTER] Starting two-phase test for {len(configs)} kernels...")
+    compiled_map = {}
+    results = []
+
+    # === Phase 1: Compile ===
+    logger.info(f"[SCATTER] Phase 1/2: Compiling {len(configs)} kernels...")
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = [executor.submit(compile_kernel, cfg, source_dir) for cfg in configs]
+        for fut in as_completed(futures):
+            cfg, success, msg = fut.result()
+            if success:
+                compiled_map[cfg["file"]] = msg
+            else:
+                results.append((False, msg))
+
+    logger.info(f"[SCATTER] Compilation done: {len(compiled_map)} succeeded.")
+
+    # === Phase 2: Test ===
+    if compiled_map:
+        logger.info(f"[SCATTER] Phase 2/2: Testing {len(compiled_map)} kernels...")
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = [
+                executor.submit(test_kernel, cfg, compiled_map[cfg["file"]])
+                for cfg in configs if cfg["file"] in compiled_map
+            ]
+            for fut in as_completed(futures):
+                results.append(fut.result())
+
+    return results
+
+
+# ----------------- CLI -----------------
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--file", type=str, required=True, help="Path to C++ source file"
-    )
-    parser.add_argument("--config", required=True)
-    parser.add_argument(
-        "--target", choices=["cuda", "hip", "mlu", "cpu"], required=True
-    )
+    parser = argparse.ArgumentParser(description="Test Scatter kernels")
+    parser.add_argument("--config", required=True, help="JSON string or path to config file")
+    parser.add_argument("--source_dir", default="./", help="Directory containing .cpp files")
+    parser.add_argument("--target", required=True, choices=["cuda", "hip", "mlu", "cpu"])
+    parser.add_argument("--jobs", type=int, default=4, help="Parallel workers")
+
     args = parser.parse_args()
 
-    base_name = os.path.basename(args.file)
-    kernel_name = base_name.split("_")[0]
-
-    config = json.loads(args.config)
-    dim = config["axis"]
-    shape = config["args"]
-
-    print(f"Testing {kernel_name.upper()} | Shape: {shape} | Dim: {dim}")
-
-    # Create tensors
-    self_tensor = torch.rand(*shape, dtype=torch.float32)
-    src_tensor = torch.rand(*shape, dtype=torch.float32)
-    # indices must be within valid range for the target dimension
-    size_dim = shape[dim]
-    indices_tensor = torch.randint(0, size_dim, shape, dtype=torch.int64)
-
-    # Golden reference
-    expected = scatter_reference(self_tensor, indices_tensor, src_tensor, dim)
-
-    # Prepare pointers
-    self_ptr = (
-        self_tensor.flatten()
-        .numpy()
-        .ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    )
-    indices_ptr = (
-        indices_tensor.flatten()
-        .numpy()
-        .ctypes.data_as(ctypes.POINTER(ctypes.c_int))
-    )
-    src_ptr = (
-        src_tensor.flatten()
-        .numpy()
-        .ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    )
-    output_flat = torch.zeros_like(self_tensor).flatten()
-    output_ptr = output_flat.numpy().ctypes.data_as(
-        ctypes.POINTER(ctypes.c_float)
-    )
-
-    so_name = args.file.replace(".cpp", ".so")
-
-    # Inject macros and save temp file
-    with open(args.file, "r") as f:
-        code = f.read()
-    code = macro + code
-
-    temp_file = args.file.replace(".cpp", "_bak.cpp")
-    with open(temp_file, "w") as f:
-        f.write(code)
-
-    print(f"Compiling {temp_file} -> {so_name}")
-    success, log = run_compilation(so_name, temp_file)
-    if not success:
-        print("Compilation failed:")
-        print(log)
-        exit(1)
-
-    os.remove(temp_file)
-
-    # Load shared library
-    lib = ctypes.CDLL(so_name)
-    kernel_func = getattr(lib, kernel_name)
-    kernel_func.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # self
-        ctypes.POINTER(ctypes.c_int),  # indices
-        ctypes.POINTER(ctypes.c_float),  # src
-        ctypes.POINTER(ctypes.c_float),  # output
-    ]
-    kernel_func.restype = None
-
-    print("Running scatter kernel (torch.scatter_ semantics)...")
-    kernel_func(self_ptr, indices_ptr, src_ptr, output_ptr)
-
-    result_reshaped = output_flat.reshape(expected.shape)
-
-    # Verify
-    is_correct = torch.allclose(
-        result_reshaped, expected, rtol=1e-4, atol=1e-4
-    )
-
-    if is_correct:
-        print("Verification successful!")
+    # Parse config
+    if os.path.isfile(args.config):
+        with open(args.config, "r") as f:
+            configs = json.load(f)
     else:
-        print("Verification failed!")
-        diff = (result_reshaped - expected).abs()
-        print("Max error:", diff.max().item())
+        configs = json.loads(args.config)
 
-    # Cleanup
-    subprocess.run(["rm", so_name], check=False)
+    if isinstance(configs, dict):
+        configs = [configs]
+
+    # Filter scatter
+    scatter_configs = []
+    for c in configs:
+        if c.get("op_name") != "scatter":
+            continue
+        if not c.get("args") or c.get("axis") is None:
+            logger.warning(f"Skipping invalid scatter config: {c}")
+            continue
+        file_name = f"scatter_{'_'.join(map(str, c['args']))}.cpp"
+        parsed = parse_filename(file_name)
+        c.update(parsed)
+        scatter_configs.append(c)
+
+    if not scatter_configs:
+        logger.warning("No valid scatter kernels found.")
+        exit(0)
+
+    results = run_tests(scatter_configs, args.source_dir, args.target, num_workers=args.jobs)
+    passed = sum(1 for r in results if r[0])
+    total = len(results)
+
+    for ok, msg in results:
+        (logger.info if ok else logger.error)(msg)
+
+    if passed == total:
+        logger.info(f"🎉 All {total} SCATTER tests passed!")
+        exit(0)
+    else:
+        logger.error(f"❌ {total - passed}/{total} SCATTER tests failed.")
+        exit(1)
