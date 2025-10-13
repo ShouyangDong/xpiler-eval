@@ -141,35 +141,63 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
 
 # ----------------- Run Batch -----------------
-def run_tests(configs: List[dict], source_dir: str, target: str, num_workers: int = 4) -> List[Tuple[bool, str]]:
-    logger.info(f"[SCATTER] Starting two-phase test for {len(configs)} kernels...")
+def run_tests(
+    configs: List[dict], source_dir: str, target: str, num_workers: int = 4
+) -> List[Tuple[bool, str]]:
+    """Two-phase test: compile all → test all."""
+    logger.info(
+        f"[SCATTER] Starting two-phase test for {len(configs)} kernels..."
+    )
+
     compiled_map = {}
     results = []
 
-    # === Phase 1: Compile ===
+    # === PHASE 1: Parallel Compilation ===
     logger.info(f"[SCATTER] Phase 1/2: Compiling {len(configs)} kernels...")
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        futures = [executor.submit(compile_kernel, cfg, source_dir) for cfg in configs]
-        for fut in as_completed(futures):
-            cfg, success, msg = fut.result()
+        futures = [
+            executor.submit(compile_kernel, config, source_dir)
+            for config in configs
+        ]
+
+        for future in as_completed(futures):
+            config, success, msg = future.result()
             if success:
-                compiled_map[cfg["file"]] = msg
+                compiled_map[config["file"]] = msg
             else:
                 results.append((False, msg))
 
-    logger.info(f"[SCATTER] Compilation done: {len(compiled_map)} succeeded.")
+    logger.info(
+        f"[SCATTER] Compilation: {len(compiled_map)} succeeded, {len([r for r in results if not r[0]])} failed."
+    )
 
-    # === Phase 2: Test ===
+    # === PHASE 2: Parallel Testing ===
     if compiled_map:
-        logger.info(f"[SCATTER] Phase 2/2: Testing {len(compiled_map)} kernels...")
+        logger.info(
+            f"[SCATTER] Phase 2/2: Testing {len(compiled_map)} compiled kernels..."
+        )
+        test_configs = [
+            (config, compiled_map[config["file"]])
+            for config in configs
+            if config["file"] in compiled_map
+        ]
+
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             futures = [
-                executor.submit(test_kernel, cfg, compiled_map[cfg["file"]])
-                for cfg in configs if cfg["file"] in compiled_map
+                executor.submit(test_kernel, config, so_path)
+                for config, so_path in test_configs
             ]
-            for fut in as_completed(futures):
-                results.append(fut.result())
 
+            for future in as_completed(futures):
+                results.append(future.result())
+                
+        logger.debug("[SCATTER] Cleaning up generated .so files...")
+        for _, so_path in test_configs:
+            try:
+                if os.path.exists(so_path):
+                    os.remove(so_path)
+            except Exception as e:
+                logger.warning(f"[SCATTER] Failed to delete {so_path}: {e}")
     return results
 
 

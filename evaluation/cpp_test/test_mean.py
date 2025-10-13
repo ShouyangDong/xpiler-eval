@@ -258,6 +258,14 @@ def run_tests(
             for future in as_completed(futures):
                 results.append(future.result())
 
+                
+        logger.debug("[MEAN] Cleaning up generated .so files...")
+        for _, so_path in test_configs:
+            try:
+                if os.path.exists(so_path):
+                    os.remove(so_path)
+            except Exception as e:
+                logger.warning(f"[MEAN] Failed to delete {so_path}: {e}")
     return results
 
 

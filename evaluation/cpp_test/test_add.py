@@ -166,6 +166,13 @@ def run_tests(
                 result = future.result()
                 failed_results.append(result)
 
+        logger.debug("[ADD] Cleaning up generated .so files...")
+        for _, so_path in test_configs:
+            try:
+                if os.path.exists(so_path):
+                    os.remove(so_path)
+            except Exception as e:
+                logger.warning(f"[ADD] Failed to delete {so_path}: {e}")
     return failed_results
 
 
