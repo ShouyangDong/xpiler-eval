@@ -67,18 +67,12 @@ def minpool_np(input_tensor, kernel_stride):
     return output_tensor
 
 
-def conv2d_nchw(
-    input_tensor, kernels, stride, padding=0
-):
-    output = F.conv2d(
-        input_tensor, kernels, stride=stride, padding=padding
-    )
+def conv2d_nchw(input_tensor, kernels, stride, padding=0):
+    output = F.conv2d(input_tensor, kernels, stride=stride, padding=padding)
     return output
 
 
-def conv2d_nhwc(
-    input_nhwc, kernels, stride, padding
-):
+def conv2d_nhwc(input_nhwc, kernels, stride, padding):
     # Convert the input from NHWC to NCHW.
     input_nchw = input_nhwc.permute(0, 3, 1, 2)
 

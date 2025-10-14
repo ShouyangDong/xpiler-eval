@@ -28,7 +28,6 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-
 def parse_filename(file_name: str) -> Dict:
     """
     Parse filename: maxpool_N_C_H_W_kx_ky_sx_sy.cpp
@@ -230,7 +229,6 @@ def run_tests(
             for future in as_completed(futures):
                 results.append(future.result())
 
-                
         logger.debug("[MAXPOOL] Cleaning up generated .so files...")
         for _, so_path in test_configs:
             try:

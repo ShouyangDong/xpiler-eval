@@ -1,8 +1,6 @@
 // Auto-generated: instancenorm with args [1, 3, 224, 224]
 // TODO: Implement kernel for instancenorm_1_3_224_224.mlu
 
-
-
 void instancenorm_1_3_224_224.mlu() {
   std::cout << "Running instancenorm_1_3_224_224.mlu..." << std::endl;
 }

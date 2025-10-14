@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -67,7 +67,11 @@ def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
     if success:
         return config, True, so_path
     else:
-        return config, False, f"[INSTANCENORM] Compile failed {file_name}: {msg}"
+        return (
+            config,
+            False,
+            f"[INSTANCENORM] Compile failed {file_name}: {msg}",
+        )
 
 
 # ========== Test One Kernel ==========
@@ -85,11 +89,17 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         expected = reference_instancenorm(input_tensor, weight, bias, eps)
 
         input_flat = input_tensor.flatten()
-        input_ptr = input_flat.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        weight_ptr = weight.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        input_ptr = input_flat.numpy().ctypes.data_as(
+            ctypes.POINTER(ctypes.c_float)
+        )
+        weight_ptr = weight.numpy().ctypes.data_as(
+            ctypes.POINTER(ctypes.c_float)
+        )
         bias_ptr = bias.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         result_ctypes = torch.zeros_like(input_flat)
-        output_ptr = result_ctypes.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        output_ptr = result_ctypes.numpy().ctypes.data_as(
+            ctypes.POINTER(ctypes.c_float)
+        )
 
         # local load for safety
         lib = ctypes.CDLL(so_path, mode=ctypes.RTLD_LOCAL)
@@ -99,16 +109,25 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             ctypes.POINTER(ctypes.c_float),
             ctypes.POINTER(ctypes.c_float),
             ctypes.POINTER(ctypes.c_float),
-            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_float,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_float,
         ]
         kernel_func.restype = None
 
-        kernel_func(input_ptr, output_ptr, weight_ptr, bias_ptr, N, C, H, W, eps)
+        kernel_func(
+            input_ptr, output_ptr, weight_ptr, bias_ptr, N, C, H, W, eps
+        )
         result_reshaped = result_ctypes.reshape(N, C, H, W)
 
         torch.allclose(result_reshaped, expected, rtol=1e-3, atol=1e-3)
         max_err = (result_reshaped - expected).abs().max().item()
-        return True, f"[INSTANCENORM] ✅ {file_name} PASSED | max_err={max_err:.2e}"
+        return (
+            True,
+            f"[INSTANCENORM] ✅ {file_name} PASSED | max_err={max_err:.2e}",
+        )
 
     except Exception as e:
         return False, f"[INSTANCENORM] ❌ {file_name} FAILED | {str(e)}"
@@ -127,7 +146,9 @@ def run_tests(
     results = []
 
     # === PHASE 1: Parallel Compilation ===
-    logger.info(f"[INSTANCENORM] Phase 1/2: Compiling {len(configs)} kernels...")
+    logger.info(
+        f"[INSTANCENORM] Phase 1/2: Compiling {len(configs)} kernels..."
+    )
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
         futures = [
             executor.submit(compile_kernel, config, source_dir)
@@ -165,14 +186,15 @@ def run_tests(
             for future in as_completed(futures):
                 results.append(future.result())
 
-                
         logger.debug("[INSTANCENORM] Cleaning up generated .so files...")
         for _, so_path in test_configs:
             try:
                 if os.path.exists(so_path):
                     os.remove(so_path)
             except Exception as e:
-                logger.warning(f"[INSTANCENORM] Failed to delete {so_path}: {e}")
+                logger.warning(
+                    f"[INSTANCENORM] Failed to delete {so_path}: {e}"
+                )
     return results
 
 
@@ -181,7 +203,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True, help="Path or JSON string")
     parser.add_argument("--source_dir", required=True)
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "mlu", "cpu"])
+    parser.add_argument(
+        "--target", required=True, choices=["cuda", "hip", "mlu", "cpu"]
+    )
     parser.add_argument("--jobs", type=int, default=4)
     args = parser.parse_args()
 
@@ -208,7 +232,9 @@ if __name__ == "__main__":
         logger.warning("No valid instancenorm kernels found.")
         exit(0)
 
-    results = run_tests(instancenorm_cfgs, args.source_dir, args.target, jobs=args.jobs)
+    results = run_tests(
+        instancenorm_cfgs, args.source_dir, args.target, jobs=args.jobs
+    )
     passed = sum(1 for r, _ in results if r)
     total = len(results)
 

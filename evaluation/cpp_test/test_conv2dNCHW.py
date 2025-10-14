@@ -42,12 +42,9 @@ def parse_filename(file_name: str) -> Dict:
         # Skip "conv2d_nchw"
         N, C, H, W = map(int, parts[1:5])
         KH, KW, CI, CO = map(int, parts[5:9])
-        stride = int(parts[9])
-        pad = int(parts[10])
-        return {
-            "file": file_name,
-            "args": map(int, parts[1:])
-        }
+        int(parts[9])
+        int(parts[10])
+        return {"file": file_name, "args": map(int, parts[1:])}
     except Exception as e:
         raise ValueError(f"Failed to parse {file_name}: {e}")
 
@@ -94,8 +91,6 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         data_shape = config["args"][:4]
         kernel_shape = config["args"][4:8]
         stride, pad = config["args"][8], config["args"][9]
-        dtype = "float32"
-        wtype = "float32"
 
         # generate data
         data_np = torch.rand(data_shape)
@@ -258,10 +253,12 @@ if __name__ == "__main__":
     # Filter only 'conv2d_nchw' kernels
     configs = [c for c in configs if c.get("op_name") == "conv2dnchw"]
     conv2d_nchw_configs = [
-        {**config, "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp"}
+        {
+            **config,
+            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
+        }
         for config in configs
     ]
-
 
     if not conv2d_nchw_configs:
         logger.warning("No valid 'conv2d_nchw' kernels found in config.")

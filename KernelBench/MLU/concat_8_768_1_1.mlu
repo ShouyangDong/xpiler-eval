@@ -1,8 +1,6 @@
 // Auto-generated: concat with args [8, 768, 1, 1]
 // TODO: Implement kernel for concat_8_768_1_1.mlu
 
-
-
 void concat_8_768_1_1.mlu() {
   std::cout << "Running concat_8_768_1_1.mlu..." << std::endl;
 }

@@ -148,7 +148,10 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if max_diff <= 1:
             return True, f"[Dense] ✅ {file_name}| Max diff: {max_diff}"
         else:
-            return False, f"[Dense] FAILED❌: {file_name} | Max diff: {max_diff}"
+            return (
+                False,
+                f"[Dense] FAILED❌: {file_name} | Max diff: {max_diff}",
+            )
 
     except Exception as e:
         return False, f"[Dense] Exception in test {file_name}: {str(e)}"
@@ -257,7 +260,10 @@ if __name__ == "__main__":
     # Filter and parse dense kernels
     configs = [c for c in configs if c.get("op_name") == "dense"]
     dense_configs = [
-        {**config, "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp"}
+        {
+            **config,
+            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
+        }
         for config in configs
     ]
 

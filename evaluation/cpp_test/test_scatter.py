@@ -1,4 +1,5 @@
-"""Batch correctness tester for scatter kernels with parallel compilation and testing."""
+"""Batch correctness tester for scatter kernels with parallel compilation and
+testing."""
 
 import argparse
 import ctypes
@@ -14,7 +15,6 @@ import torch
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
 
-
 # ----------------- Logger -----------------
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -29,7 +29,12 @@ if not logger.handlers:
 
 
 # ----------------- Reference Implementation -----------------
-def reference_scatter(self_tensor: torch.Tensor, indices_tensor: torch.Tensor, src_tensor: torch.Tensor, dim: int):
+def reference_scatter(
+    self_tensor: torch.Tensor,
+    indices_tensor: torch.Tensor,
+    src_tensor: torch.Tensor,
+    dim: int,
+):
     """Mimic torch.Tensor.scatter_ semantics."""
     result = self_tensor.clone()
     result.scatter_(dim=dim, index=indices_tensor, src=src_tensor)
@@ -60,7 +65,10 @@ def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
     file_name = config["file"]
     file_path = os.path.join(source_dir, file_name)
     so_path = os.path.join(source_dir, file_name.replace(".cpp", ".so"))
-    temp_file = os.path.join(source_dir, f"{file_name.replace('.cpp', '')}_patched_{os.getpid()}.cpp")
+    temp_file = os.path.join(
+        source_dir,
+        f"{file_name.replace('.cpp', '')}_patched_{os.getpid()}.cpp",
+    )
 
     if not os.path.isfile(file_path):
         return config, False, f"[SCATTER] File not found: {file_path}"
@@ -101,22 +109,28 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         size_dim = shape[dim]
         indices_tensor = torch.randint(0, size_dim, shape, dtype=torch.int64)
 
-        expected = reference_scatter(self_tensor, indices_tensor, src_tensor, dim)
+        expected = reference_scatter(
+            self_tensor, indices_tensor, src_tensor, dim
+        )
 
         # Convert to contiguous numpy arrays
-        self_np = self_tensor.contiguous().numpy().astype(np.float32, copy=False)
+        self_np = (
+            self_tensor.contiguous().numpy().astype(np.float32, copy=False)
+        )
         src_np = src_tensor.contiguous().numpy().astype(np.float32, copy=False)
-        indices_np = indices_tensor.contiguous().numpy().astype(np.int32, copy=False)
+        indices_np = (
+            indices_tensor.contiguous().numpy().astype(np.int32, copy=False)
+        )
         out_np = np.zeros_like(self_np, dtype=np.float32)
 
         # ----------- Load shared lib -----------
         lib = ctypes.CDLL(so_path)
         kernel_func = getattr(lib, kernel_name)
         kernel_func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),   # self
-            ctypes.POINTER(ctypes.c_int32),   # indices
-            ctypes.POINTER(ctypes.c_float),   # src
-            ctypes.POINTER(ctypes.c_float),   # output
+            ctypes.POINTER(ctypes.c_float),  # self
+            ctypes.POINTER(ctypes.c_int32),  # indices
+            ctypes.POINTER(ctypes.c_float),  # src
+            ctypes.POINTER(ctypes.c_float),  # output
         ]
         kernel_func.restype = None
 
@@ -190,7 +204,7 @@ def run_tests(
 
             for future in as_completed(futures):
                 results.append(future.result())
-                
+
         logger.debug("[SCATTER] Cleaning up generated .so files...")
         for _, so_path in test_configs:
             try:
@@ -204,9 +218,15 @@ def run_tests(
 # ----------------- CLI -----------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test Scatter kernels")
-    parser.add_argument("--config", required=True, help="JSON string or path to config file")
-    parser.add_argument("--source_dir", default="./", help="Directory containing .cpp files")
-    parser.add_argument("--target", required=True, choices=["cuda", "hip", "mlu", "cpu"])
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory containing .cpp files"
+    )
+    parser.add_argument(
+        "--target", required=True, choices=["cuda", "hip", "mlu", "cpu"]
+    )
     parser.add_argument("--jobs", type=int, default=4, help="Parallel workers")
 
     args = parser.parse_args()
@@ -238,7 +258,9 @@ if __name__ == "__main__":
         logger.warning("No valid scatter kernels found.")
         exit(0)
 
-    results = run_tests(scatter_configs, args.source_dir, args.target, num_workers=args.jobs)
+    results = run_tests(
+        scatter_configs, args.source_dir, args.target, num_workers=args.jobs
+    )
     passed = sum(1 for r in results if r[0])
     total = len(results)
 

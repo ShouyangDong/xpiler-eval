@@ -1,6 +1,5 @@
 
 
-
 constexpr int D0 = 32;
 constexpr int D1 = 128;
 constexpr int D2 = 32;

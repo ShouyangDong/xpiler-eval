@@ -59,7 +59,7 @@ def parse_config(config_input: str) -> List[Dict]:
             if not isinstance(perm, list) or len(perm) != len(args):
                 raise ValueError(f"Invalid 'perm' (must match rank): {perm}")
 
-            op_name =  c.get("op_name")
+            op_name = c.get("op_name")
             # Construct filename
             file_name = f"{op_name}_{'_'.join(map(str, shape))}.cpp"
             if not file_name or not file_name.endswith(".cpp"):
@@ -152,7 +152,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         )
 
         # Set function signature
-        rank = len(input_shape)
+        len(input_shape)
         argtypes = [
             ctypes.POINTER(ctype_float),  # input
             ctypes.POINTER(ctype_float),  # output
@@ -165,12 +165,14 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         input_torch = torch.from_numpy(input_np).to(dtype=torch_dtype)
 
         # Compute reference output
-        expected_output = ref_program(input_torch, perm) 
+        expected_output = ref_program(input_torch, perm)
         output_torch = torch.zeros(expected_output.shape, dtype=torch_dtype)
 
         # Get pointers
         input_ptr = input_np.ctypes.data_as(ctypes.POINTER(ctype_float))
-        output_ptr = output_torch.numpy().ctypes.data_as(ctypes.POINTER(ctype_float))
+        output_ptr = output_torch.numpy().ctypes.data_as(
+            ctypes.POINTER(ctype_float)
+        )
 
         # Call kernel
         func(input_ptr, output_ptr)
@@ -245,7 +247,6 @@ def run_tests(
             for future in as_completed(futures):
                 results.append(future.result())
 
-                
         logger.debug("[TRANSPOSE] Cleaning up generated .so files...")
         for _, so_path in test_configs:
             try:

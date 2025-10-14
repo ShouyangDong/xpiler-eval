@@ -9,7 +9,6 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Tuple
 
-import numpy as np
 import torch
 
 from evaluation.macros import CPP_MACROS as macro
@@ -88,8 +87,8 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled sin kernel (fp32 only)."""
     try:
         file_name = config["file"]
-        shape = config["args"]     
-        op_name = config["op_name"]        
+        shape = config["args"]
+        op_name = config["op_name"]
 
         # Load shared library
         lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
@@ -105,14 +104,20 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         func.restype = None
 
         # Generate input: fp32, contiguous, in range [0, 4π]
-        A_torch = torch.rand(*shape, device="cpu", dtype=torch.float32) * 4 * torch.pi
+        A_torch = (
+            torch.rand(*shape, device="cpu", dtype=torch.float32)
+            * 4
+            * torch.pi
+        )
         expected_output = torch.sin(A_torch)  # Golden reference
 
         # Output tensor
         result_ctypes = torch.zeros(shape, dtype=torch.float32)
 
         # Get ctypes pointers (ensure contiguous)
-        input_ptr = A_torch.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        input_ptr = A_torch.numpy().ctypes.data_as(
+            ctypes.POINTER(ctypes.c_float)
+        )
         output_ptr = result_ctypes.numpy().ctypes.data_as(
             ctypes.POINTER(ctypes.c_float)
         )
@@ -121,11 +126,20 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         func(input_ptr, output_ptr)
 
         # Compare with tolerance
-        if torch.allclose(result_ctypes, expected_output, rtol=1e-3, atol=1e-3, equal_nan=True):
+        if torch.allclose(
+            result_ctypes,
+            expected_output,
+            rtol=1e-3,
+            atol=1e-3,
+            equal_nan=True,
+        ):
             return True, f"[SIN] PASSED✅: {file_name}"
         else:
             max_error = (result_ctypes - expected_output).abs().max().item()
-            return False, f"[SIN] FAILED❌: {file_name} | Max error: {max_error:.2e}"
+            return (
+                False,
+                f"[SIN] FAILED❌: {file_name} | Max error: {max_error:.2e}",
+            )
 
     except Exception as e:
         return False, f"[SIN] Exception in test {file_name}: {str(e)}"
@@ -179,7 +193,6 @@ def run_tests(
             for future in as_completed(futures):
                 results.append(future.result())
 
-                
         logger.debug("[SIN] Cleaning up generated .so files...")
         for _, so_path in test_configs:
             try:
@@ -216,7 +229,10 @@ if __name__ == "__main__":
     configs = [c for c in configs if c.get("op_name") == "sin"]
 
     configs = [
-        {**config, "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp"}
+        {
+            **config,
+            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
+        }
         for config in configs
     ]
 

@@ -128,9 +128,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         input_tensor = np.random.rand(
             input_height, input_height, input_channels
         ).astype(np.float32)
-        kernel = np.random.rand(kernel_size, kernel_size, input_channels).astype(
-            np.float32
-        )
+        kernel = np.random.rand(
+            kernel_size, kernel_size, input_channels
+        ).astype(np.float32)
 
         # Calculate the output tensor shape
         output_height = input_height - kernel_size + 1
@@ -144,7 +144,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         # Convert the arrays to contiguous memory for ctypes
         input_ptr = input_tensor.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         kernel_ptr = kernel.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        output_ptr = output_ctypes.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        output_ptr = output_ctypes.ctypes.data_as(
+            ctypes.POINTER(ctypes.c_float)
+        )
         # Calculate the result using numpy for comparison
         output_np = depthwise_conv2d(input_tensor, kernel).astype("float32")
 
@@ -152,7 +154,10 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         lib = ctypes.CDLL(so_path)
         func = getattr(lib, "depthwiseconv", None)
         if not func:
-            return False, f"[DWConv] Function 'depthwiseconv' not found in {so_path}"
+            return (
+                False,
+                f"[DWConv] Function 'depthwiseconv' not found in {so_path}",
+            )
 
         func.argtypes = [
             ctypes.POINTER(ctypes.c_float),
@@ -165,11 +170,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         func(input_ptr, kernel_ptr, output_ptr)
 
         if np.allclose(
-            output_ctypes,
-            output_np,
-            rtol=1e-03,
-            atol=1e-03,
-            equal_nan=True
+            output_ctypes, output_np, rtol=1e-03, atol=1e-03, equal_nan=True
         ):
             return (True, f"[DWConv] ✅ {file_name}")
         else:
@@ -287,7 +288,10 @@ if __name__ == "__main__":
     # Filter and parse dwconv kernels
     configs = [c for c in configs if c.get("op_name") == "depthwiseconv"]
     dwconv_configs = [
-        {**config, "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp"}
+        {
+            **config,
+            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
+        }
         for config in configs
     ]
 

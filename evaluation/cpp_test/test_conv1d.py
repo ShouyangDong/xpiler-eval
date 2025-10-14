@@ -98,7 +98,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         output_size, input_length = config["args"]
 
         # Generate random input
-        input_array = np.random.uniform(size=input_length).astype(np.float32)  # shape: (input_length,)
+        input_array = np.random.uniform(size=input_length).astype(
+            np.float32
+        )  # shape: (input_length,)
 
         # Fixed kernel [0.5, 1.0, 0.5]
         kernel = np.array([0.5, 1.0, 0.5], dtype=np.float32)
@@ -248,10 +250,12 @@ if __name__ == "__main__":
     # Filter only 'conv1d' kernels
     configs = [c for c in configs if c.get("op_name") == "conv1d"]
     conv1d_configs = [
-        {**config, "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp"}
+        {
+            **config,
+            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
+        }
         for config in configs
     ]
-
 
     if not conv1d_configs:
         logger.warning("No valid 'conv1d' kernels found in config.")

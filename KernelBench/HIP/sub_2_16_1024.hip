@@ -1,6 +1,5 @@
 
 
-
 __global__ void __launch_bounds__(256)
     sub_2x16x1024(const float *__restrict__ A, const float *__restrict__ B,
                   float *__restrict__ C) {
