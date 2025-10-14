@@ -6,8 +6,8 @@ import subprocess
 import numpy as np
 import torch
 
-from evaluation.macros import CUDA_MACROS as macro
-from evaluation.utils import run_cuda_compilation as run_compilation
+from evaluation.macros import HIP_MACROS as macro
+from evaluation.utils import run_hip_compilation as run_compilation
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -21,9 +21,6 @@ if __name__ == "__main__":
         choices=["cuda", "hip", "mlu", "cpu"],
         help="Target platform",
     )
-    parser.add_argument(
-        "--batch", type=int, default=1, help="Batch size for test"
-    )
     args = parser.parse_args()
 
     # ---------------------------------------------
@@ -32,9 +29,9 @@ if __name__ == "__main__":
     base_name = os.path.basename(args.file)
     shapes = base_name.split(".")[0]
     parts = [int(x) for x in shapes.split("_")[1:]]
-    batch, seq_q, seq_kv, head_dim = parts
+    batch, seq_q, seq_M, seq_K, seq_N = parts
 
-    so_name = args.file.replace(".cpp", ".so")
+    so_name = args.file.replace(".hip", ".so")
 
     # ---------------------------------------------
     # 2. Add macro
@@ -43,7 +40,7 @@ if __name__ == "__main__":
         code = f.read()
     code = macro + code
 
-    file_name = args.file.replace(".cpp", "_bak.cpp")
+    file_name = args.file.replace(".hip", "_bak.hip")
     with open(file_name, "w") as f:
         f.write(code)
 
@@ -59,7 +56,7 @@ if __name__ == "__main__":
     # 3. Load shared library
     # ---------------------------------------------
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    gqa_func = getattr(lib, args.name + "_kernel")
+    gqa_func = getattr(lib, "gqa_kernel")
     gqa_func.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # Q
         ctypes.POINTER(ctypes.c_float),  # K
@@ -79,9 +76,9 @@ if __name__ == "__main__":
     torch.manual_seed(1234)
 
     # Generate Q, K, V
-    Q = torch.rand([batch, 2, seq_q, 64], dtype=torch.float32, device="cuda")
-    K = torch.rand([batch, 2, 64, seq_kv], dtype=torch.float32, device="cuda")
-    V = torch.rand([batch, 2, seq_kv, 64], dtype=torch.float32, device="cuda")
+    Q = torch.rand([batch, seq_q, seq_M, seq_K], dtype=torch.float32, device="cuda")
+    K = torch.rand([batch, seq_q, seq_K, seq_N], dtype=torch.float32, device="cuda")
+    V = torch.rand([batch, seq_q, seq_N, seq_K], dtype=torch.float32, device="cuda")
 
     # ✅ Get the referenced ouput
     with torch.no_grad():
@@ -101,12 +98,12 @@ if __name__ == "__main__":
     Q_ptr = Q_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     K_ptr = K_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     V_ptr = V_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    O_ptr = O.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    O_ptr = O.cpu().numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
     # ---------------------------------------------
     # 6. invoke C++/CUDA kernel
     # ---------------------------------------------
-    gqa_func(Q_ptr, K_ptr, V_ptr, O_ptr, batch, 2, seq_q, seq_kv, 64)
+    gqa_func(Q_ptr, K_ptr, V_ptr, O_ptr, batch, seq_q, seq_M, seq_K, seq_N)
 
     # ---------------------------------------------
     # 7. Verification
