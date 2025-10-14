@@ -100,9 +100,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     try:
         dim = config["axis"]
         shape = config["args"]
-        kernel_name = config["op_name"]
+        config["op_name"]
         file_name = config["file"]
-
+        op_name = config["op_name"]
         # ----------- Prepare tensors -----------
         self_tensor = torch.rand(*shape, dtype=torch.float32)
         src_tensor = torch.rand(*shape, dtype=torch.float32)
@@ -125,7 +125,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # ----------- Load shared lib -----------
         lib = ctypes.CDLL(so_path)
-        kernel_func = getattr(lib, kernel_name)
+        getattr(lib, op_name, None)
         kernel_func.argtypes = [
             ctypes.POINTER(ctypes.c_float),  # self
             ctypes.POINTER(ctypes.c_int32),  # indices

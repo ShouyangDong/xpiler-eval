@@ -107,7 +107,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     try:
         file_name = config["file"]
         N, C, H, W = config["args"]
-
+        op_name = config["op_name"]
         # Generate input and parameters
         input_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
         running_mean = torch.rand(C, dtype=torch.float32)
@@ -142,7 +142,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "batchnorm", None)
+        func = getattr(lib, op_name, None)
         if not func:
             return (
                 False,

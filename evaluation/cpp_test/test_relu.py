@@ -101,11 +101,10 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         shape = config["args"]
         file_name = config["file"]
         dtype_str = config.get("dtype", "float32")
-
+        op_name = config["op_name"]
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func_name = "relu"
-        func = getattr(lib, func_name, None)
+        func = getattr(lib, op_name, None)
         if not func:
             return (
                 False,

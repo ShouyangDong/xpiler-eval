@@ -100,7 +100,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     try:
         M, N, K = config["args"]
         file_name = config["file"]
-
+        op_name = config["op_name"]
         # Generate inputs
         A = torch.randint(-10, 10, (M, K), dtype=torch.int16)
         B = torch.randint(-10, 10, (K, N), dtype=torch.int16)
@@ -126,7 +126,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "dense", None)
+        func = getattr(lib, op_name, None)
         if not func:
             return False, f"[Dense] Function 'dense' not found in {so_path}"
 

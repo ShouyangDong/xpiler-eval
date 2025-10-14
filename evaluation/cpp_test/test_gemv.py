@@ -96,10 +96,10 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     try:
         M, K = config["args"]
         file_name = config["file"]
-
+        op_name = config["op_name"]
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "gemv", None)
+        func = getattr(lib, op_name, None)
         if not func:
             return False, f"[GEMV] Function 'gemv' not found in {so_path}"
 

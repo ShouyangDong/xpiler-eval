@@ -118,8 +118,8 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func_name = "maxpool"  # assume function name is 'maxpool'
-        func = getattr(lib, func_name, None)
+        op_name = config["op_name"]
+        func = getattr(lib, op_name, None)
         if not func:
             return (
                 False,

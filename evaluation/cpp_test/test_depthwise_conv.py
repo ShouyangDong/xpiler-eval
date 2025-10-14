@@ -123,7 +123,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     try:
         input_height, kernel_size, input_channels = config["args"][:3]
         file_name = config["file"]
-
+        op_name = config["op_name"]
         # Define the input tensor, kernel, and parameters
         input_tensor = np.random.rand(
             input_height, input_height, input_channels
@@ -152,7 +152,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "depthwiseconv", None)
+        func = getattr(lib, op_name, None)
         if not func:
             return (
                 False,

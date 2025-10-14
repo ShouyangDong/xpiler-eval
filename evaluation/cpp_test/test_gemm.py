@@ -94,7 +94,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     try:
         M, K, N = config["args"]
         file_name = config["file"]
-        name = config["op_name"]
+        op_name = config["op_name"]
 
         # Generate input
         A = torch.randn(M, K, dtype=torch.float32)
@@ -111,7 +111,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # Load library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, name)
+        func = getattr(lib, op_name, None)
         func.argtypes = [
             ctypes.POINTER(ctypes.c_float),  # A
             ctypes.POINTER(ctypes.c_float),  # B

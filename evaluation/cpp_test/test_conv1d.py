@@ -96,7 +96,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     try:
         file_name = config["file"]
         output_size, input_length = config["args"]
-
+        op_name = config["op_name"]
         # Generate random input
         input_array = np.random.uniform(size=input_length).astype(
             np.float32
@@ -120,7 +120,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "conv1d", None)
+        func = getattr(lib, op_name, None)
         if not func:
             return False, f"[Conv1D] Function 'conv1d' not found in {so_path}"
 
