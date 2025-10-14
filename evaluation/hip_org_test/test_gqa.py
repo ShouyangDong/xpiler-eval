@@ -10,7 +10,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
-    verify_numpy_tensor,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -54,9 +54,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     torch.manual_seed(1234)
 
     # Generate Q, K, V
-    Q = torch.rand([batch, 2, seq_q, 64], dtype=torch.float32, device="cuda")
-    K = torch.rand([batch, 2, 64, seq_kv], dtype=torch.float32, device="cuda")
-    V = torch.rand([batch, 2, seq_kv, 64], dtype=torch.float32, device="cuda")
+    Q = torch.rand([batch, seq_q, seq_M, seq_K], dtype=torch.float32, device="cuda")
+    K = torch.rand([batch, seq_q, seq_K, seq_N], dtype=torch.float32, device="cuda")
+    V = torch.rand([batch, seq_q, seq_N, seq_K], dtype=torch.float32, device="cuda")
 
     # ✅ Get the referenced ouput
     with torch.no_grad():
@@ -76,13 +76,13 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     Q_ptr = Q_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     K_ptr = K_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     V_ptr = V_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    O_ptr = O.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    O_ptr = O.cpu().numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
     # ---------------------------------------------
     # 6. invoke C++/CUDA kernel
     # ---------------------------------------------
     gqa_func(Q_ptr, K_ptr, V_ptr, O_ptr, batch, 2, seq_q, seq_kv, 64)
-    return verify_numpy_tensor(O, O_ref.cpu().numpy(), op_name)
+    return verify_torch_tensor(O, O_ref, op_name)
 
 
 if __name__ == "__main__":
