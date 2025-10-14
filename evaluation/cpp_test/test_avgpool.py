@@ -101,7 +101,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         shape = config["args"][:4]
         kernel_stride = config["args"][4:8]
         kh, kw, sh, sw = kernel_stride
-
+        op_name = config["op_name"]
         # Generate input
         input_tensor = torch.randn(*shape, dtype=torch.float32, device="cpu")
         ref_output = avgpool_ref(input_tensor, kernel_stride)
@@ -123,7 +123,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # Load and call kernel
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "avgpool", None)
+        func = getattr(lib, op_name, None)
         if not func:
             return (
                 False,

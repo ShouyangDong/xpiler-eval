@@ -77,11 +77,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
     try:
         shape = config["args"]
-        if isinstance(shape, int):
-            shape = [shape]
-        else:
-            shape = [int(s) for s in shape]
-
+        op_name = config["op_name"]
         A = torch.rand(*shape, device="cpu")
         B = torch.rand(*shape, device="cpu")
         ref = add_ref(A, B)
@@ -95,7 +91,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # Load and call kernel
         lib = ctypes.CDLL(so_path)
-        func = lib.add
+        func = getattr(lib, op_name, None)
         func.argtypes = [ctypes.POINTER(ctypes.c_float)] * 3
         func.restype = None
         func(A_ptr, B_ptr, out_ptr)

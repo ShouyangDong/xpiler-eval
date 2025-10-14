@@ -78,7 +78,7 @@ def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Test compiled kernel correctness (run in subprocess)."""
     file_name = config["file"]
-    name = config["op_name"]
+    op_name = config["op_name"]
     N, C, H, W = config["args"]
     eps = 1e-5
 
@@ -103,7 +103,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # local load for safety
         lib = ctypes.CDLL(so_path, mode=ctypes.RTLD_LOCAL)
-        kernel_func = getattr(lib, name)
+        getattr(lib, op_name, None)
         kernel_func.argtypes = [
             ctypes.POINTER(ctypes.c_float),
             ctypes.POINTER(ctypes.c_float),

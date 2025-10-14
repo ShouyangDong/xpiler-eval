@@ -116,7 +116,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     try:
         B, K, N = config["args"]
         file_name = config["file"]
-
+        op_name = config["op_name"]
         # Generate inputs in int16 range [-10, 10]
         torch.manual_seed(1234)
         X_np = torch.randint(
@@ -149,7 +149,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "gatemlp", None)
+        func = getattr(lib, op_name, None)
         if not func:
             return (
                 False,

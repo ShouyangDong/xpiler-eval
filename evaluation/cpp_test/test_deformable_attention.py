@@ -147,7 +147,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     try:
         file_name = config["file"]
         N, M, D, Lq, L, P = config["args"]
-
+        op_name = config["op_name"]
         # Hardcoded spatial shapes (same as your example)
         # You can make this configurable via JSON if needed
         shapes = torch.tensor(
@@ -194,7 +194,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "deformable", None)
+        func = getattr(lib, op_name, None)
         if not func:
             return (
                 False,

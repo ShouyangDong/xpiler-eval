@@ -122,10 +122,10 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     try:
         shape = config["args"]
         file_name = config["file"]
-
+        op_name = config["op_name"]
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "layernorm", None)
+        func = getattr(lib, op_name, None)
         if not func:
             return (
                 False,

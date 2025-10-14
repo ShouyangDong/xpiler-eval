@@ -110,7 +110,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     try:
         B, L, I = config["args"]
         file_name = config["file"]
-
+        op_name = config["op_name"]
         # Generate inputs
         torch.manual_seed(1234)
         params = torch.randn(B, L, dtype=torch.float32)
@@ -139,7 +139,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "gather", None)
+        func = getattr(lib, op_name, None)
         if not func:
             return False, f"[Gather] Function 'gather' not found in {so_path}"
 

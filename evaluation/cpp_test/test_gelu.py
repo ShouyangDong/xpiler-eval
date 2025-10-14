@@ -95,10 +95,10 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     try:
         N = np.prod(config["args"])
         file_name = config["file"]
-
+        op_name = config["op_name"]
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "gelu", None)
+        func = getattr(lib, op_name, None)
         if not func:
             return False, f"[GELU] Function 'gelu' not found in {so_path}"
 

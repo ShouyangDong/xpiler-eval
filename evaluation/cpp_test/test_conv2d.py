@@ -107,7 +107,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         data_shape = config["args"][:4]
         kernel_shape = config["args"][4:8]
         stride, pad = config["args"][8], config["args"][9]
-
+        op_name = config["op_name"]
         # generate data
         data_np = torch.rand(data_shape)
         kernel_np = torch.rand(kernel_shape)
@@ -135,7 +135,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "conv2d", None)
+        func = getattr(lib, op_name, None)
         if not func:
             return False, f"[Conv2D] Function 'conv2d' not found in {so_path}"
 

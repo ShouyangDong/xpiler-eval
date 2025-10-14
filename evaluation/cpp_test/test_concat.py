@@ -88,7 +88,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         file_name = config["file"]
         shape = config["args"]
         axis = config["axis"]
-
+        op_name = config["op_name"]
         # Create input tensors
         input1 = torch.randn(*shape, dtype=torch.float32)
         input2 = torch.randn(*shape, dtype=torch.float32)
@@ -110,7 +110,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # Load library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "concat", None)
+        func = getattr(lib, op_name, None)
         if not func:
             return False, f"[Concat] Function 'concat' not found in {so_path}"
 

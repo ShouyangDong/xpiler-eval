@@ -122,12 +122,13 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         axis = config["axis"]
         file_name = config["file"]
         dtype_str = config.get("dtype", "float32")
+        op_name = config["op_name"]
         output_shape = [
             1 if i == axis else size for i, size in enumerate(shape)
         ]
         # Load shared library
         lib = ctypes.CDLL(so_path)
-        func = getattr(lib, "min", None)  # expect function named 'min'
+        func = getattr(lib, op_name, None)
         if not func:
             return False, f"[MIN] Function 'min' not found in {so_path}"
 
