@@ -104,7 +104,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled conv2d kernel."""
     try:
         file_name = config["file"]
-        data_shape= config["args"][:4]
+        data_shape = config["args"][:4]
         kernel_shape = config["args"][4:8]
         stride, pad = config["args"][8], config["args"][9]
 
@@ -265,10 +265,12 @@ if __name__ == "__main__":
     # Filter only 'conv2d' kernels
     configs = [c for c in configs if c.get("op_name") == "conv2d"]
     conv2d_configs = [
-        {**config, "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp"}
+        {
+            **config,
+            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
+        }
         for config in configs
     ]
-
 
     if not conv2d_configs:
         logger.warning("No valid 'conv2d' kernels found in config.")

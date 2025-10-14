@@ -1,5 +1,5 @@
-"""
-Parallel tester for BatchMatMul (BMM) kernels on CPU/GPU/MLU.
+"""Parallel tester for BatchMatMul (BMM) kernels on CPU/GPU/MLU.
+
 Supports two-phase pipeline:
 1. Parallel compilation
 2. Parallel correctness testing
@@ -14,9 +14,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Tuple
 
 import torch
+
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
-
 
 # ------------------ Logging setup ------------------
 logger = logging.getLogger(__name__)
@@ -24,7 +24,8 @@ logger.setLevel(logging.INFO)
 if not logger.handlers:
     handler = logging.StreamHandler()
     formatter = logging.Formatter(
-        fmt="[%(asctime)s] %(levelname)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -54,11 +55,14 @@ def parse_bmm_filename(file_name: str) -> Dict:
 
 # ------------------ Compilation ------------------
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
-    """Compile one BMM kernel and return (config, success, so_path or error msg)."""
+    """Compile one BMM kernel and return (config, success, so_path or error
+    msg)."""
     file_name = config["file"]
     file_path = os.path.join(source_dir, file_name)
     so_path = os.path.join(source_dir, file_name.replace(".cpp", ".so"))
-    tmp_path = os.path.join(source_dir, file_name.replace(".cpp", "_patched.cpp"))
+    tmp_path = os.path.join(
+        source_dir, file_name.replace(".cpp", "_patched.cpp")
+    )
 
     if not os.path.isfile(file_path):
         return config, False, f"[BMM] File not found: {file_path}"
@@ -145,9 +149,7 @@ def run_tests(
     Phase 1: Compile all kernels in parallel.
     Phase 2: Test only successfully compiled ones.
     """
-    logger.info(
-        f"[BMM] Starting two-phase test for {len(configs)} kernels..."
-    )
+    logger.info(f"[BMM] Starting two-phase test for {len(configs)} kernels...")
 
     compiled_map = {}
     results = []
@@ -203,8 +205,12 @@ def run_tests(
 
 # ------------------ Main ------------------
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Parallel BatchMatMul kernel tester")
-    parser.add_argument("--config", required=True, help="JSON string or path to config")
+    parser = argparse.ArgumentParser(
+        description="Parallel BatchMatMul kernel tester"
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config"
+    )
     parser.add_argument(
         "--source_dir", default="./", help="Directory containing .cpp files"
     )
@@ -214,7 +220,9 @@ if __name__ == "__main__":
         choices=["cuda", "hip", "mlu", "cpu"],
         help="Target platform",
     )
-    parser.add_argument("--jobs", type=int, default=4, help="Number of parallel jobs")
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel jobs"
+    )
     args = parser.parse_args()
 
     # Load config

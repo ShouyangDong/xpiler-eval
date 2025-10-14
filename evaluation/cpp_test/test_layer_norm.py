@@ -10,7 +10,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Tuple
 
 import torch
-import torch.nn.functional as F
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
@@ -242,7 +241,6 @@ def run_tests(
             for future in as_completed(futures):
                 results.append(future.result())
 
-                
         logger.debug("[LAYERNORM] Cleaning up generated .so files...")
         for _, so_path in test_configs:
             try:
@@ -290,10 +288,12 @@ if __name__ == "__main__":
     # Filter and parse LayerNorm kernels
     configs = [c for c in configs if c.get("op_name") == "layernorm"]
     norm_configs = [
-        {**config, "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp"}
+        {
+            **config,
+            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
+        }
         for config in configs
     ]
-
 
     if not norm_configs:
         logger.warning("No valid 'layernorm' kernels found in config.")

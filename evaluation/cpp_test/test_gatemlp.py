@@ -290,7 +290,10 @@ if __name__ == "__main__":
     # Filter and parse gatemlp kernels
     configs = [c for c in configs if c.get("op_name") == "gatemlp"]
     gatemlp_configs = [
-        {**config, "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp"}
+        {
+            **config,
+            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
+        }
         for config in configs
     ]
 

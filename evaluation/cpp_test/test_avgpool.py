@@ -250,7 +250,10 @@ if __name__ == "__main__":
     avgpool_configs = [c for c in configs if c.get("op_name") == "avgpool"]
 
     avgpool_configs = [
-        {**config, "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp"}
+        {
+            **config,
+            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
+        }
         for config in avgpool_configs
     ]
 

@@ -229,7 +229,6 @@ def run_tests(
             for future in as_completed(futures):
                 results.append(future.result())
 
-                
         logger.debug("[MAX] Cleaning up generated .so files...")
         for _, so_path in test_configs:
             try:
@@ -277,7 +276,10 @@ if __name__ == "__main__":
     # Filter and parse max kernels
     configs = [c for c in configs if c.get("op_name") == "max"]
     max_configs = [
-        {**config, "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp"}
+        {
+            **config,
+            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
+        }
         for config in configs
     ]
 

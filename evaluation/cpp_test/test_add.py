@@ -214,7 +214,10 @@ if __name__ == "__main__":
     add_configs = [c for c in configs if c.get("op_name") == "add"]
 
     add_configs = [
-        {**config, "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp"}
+        {
+            **config,
+            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
+        }
         for config in add_configs
     ]
 

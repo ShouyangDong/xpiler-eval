@@ -151,9 +151,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         # Flatten and get pointers
         input_flat = input_tensor.flatten().numpy()
         output_flat = (
-            torch.zeros(output_shape, dtype=torch_dtype)
-            .flatten()
-            .numpy()
+            torch.zeros(output_shape, dtype=torch_dtype).flatten().numpy()
         )
 
         input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctype))
@@ -238,7 +236,6 @@ def run_tests(
             for future in as_completed(futures):
                 results.append(future.result())
 
-                
         logger.debug("[MIN] Cleaning up generated .so files...")
         for _, so_path in test_configs:
             try:
@@ -286,7 +283,10 @@ if __name__ == "__main__":
     # Filter and parse min kernels
     configs = [c for c in configs if c.get("op_name") == "min"]
     min_configs = [
-        {**config, "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp"}
+        {
+            **config,
+            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
+        }
         for config in configs
     ]
 

@@ -1,8 +1,6 @@
 // Auto-generated: gqa with args [4, 128, 1024, 16]
 // TODO: Implement kernel for gqa_4_128_1024_16.mlu
 
-
-
 void gqa_4_128_1024_16.mlu() {
   std::cout << "Running gqa_4_128_1024_16.mlu..." << std::endl;
 }

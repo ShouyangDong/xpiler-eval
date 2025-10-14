@@ -13,15 +13,14 @@ extern "C" void gatemlp(int16_t *A, int16_t *B, int16_t *C, float *D) {
       for (int k = 0; k < K; k += 32) {
         __m512i a_vec = _mm512_loadu_si512((__m512i *)&A[i * K + k]);
         for (int t = 0; t < 32; ++t)
-          b_tmp[t] = B[(k + t) * N + j]; 
+          b_tmp[t] = B[(k + t) * N + j];
         for (int tc = 0; tc < 32; ++tc)
-          c_tmp[tc] = C[(k + tc) * N + j]; 
+          c_tmp[tc] = C[(k + tc) * N + j];
         __m512i b_vec = _mm512_load_si512((__m512i *)b_tmp);
         __m512i c_vec = _mm512_load_si512((__m512i *)c_tmp);
         abcc = _mm512_dpwssds_epi32(abcc, a_vec, b_vec);
         accc = _mm512_dpwssds_epi32(accc, a_vec, c_vec);
       }
-
 
       int32_t tmp_b[16];
       int32_t tmp_c[16];

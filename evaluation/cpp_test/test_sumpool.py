@@ -45,7 +45,7 @@ def parse_config(config_input: str) -> List[Dict]:
     parsed_configs = []
     for idx, c in enumerate(config_data):
         try:
-            shapes = c.get("args")
+            c.get("args")
             if not isinstance(args, list) or len(args) < 2:
                 raise ValueError(
                     f"Invalid 'args' (must be at least 2D): {args}"
@@ -60,7 +60,7 @@ def parse_config(config_input: str) -> List[Dict]:
                     f"Invalid 'axis' (must be [kH,kW] or [kH,kW,sH,sW]): {ksize_stride}"
                 )
 
-            op_name =  c.get("op_name")
+            op_name = c.get("op_name")
             # Construct filename
             file_name = f"{op_name}_{'_'.join(map(str, shape))}.cpp"
             if not file_name or not file_name.endswith(".cpp"):
@@ -265,7 +265,6 @@ def run_tests(
             for future in as_completed(futures):
                 results.append(future.result())
 
-                
         logger.debug("[SUMPOOL] Cleaning up generated .so files...")
         for _, so_path in test_configs:
             try:

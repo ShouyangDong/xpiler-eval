@@ -59,7 +59,7 @@ def parse_config(config_input: str) -> List[Dict]:
                     f"Invalid 'args' (must be list of int): {shape}"
                 )
 
-            op_name =  c.get("op_name")
+            op_name = c.get("op_name")
             # Construct filename
             file_name = f"{op_name}_{'_'.join(map(str, shape))}.cpp"
             if not file_name or not file_name.endswith(".cpp"):
@@ -68,7 +68,6 @@ def parse_config(config_input: str) -> List[Dict]:
             dtype = c.get("dtype", "float32")
             if dtype not in ["float32", "float16"]:
                 raise ValueError(f"Unsupported dtype: {dtype}")
-
 
             if op_name not in ["sigmoid"]:
                 logger.warning(
@@ -237,7 +236,6 @@ def run_tests(
             for future in as_completed(futures):
                 results.append(future.result())
 
-                
         logger.debug("[SIGMOID] Cleaning up generated .so files...")
         for _, so_path in test_configs:
             try:
