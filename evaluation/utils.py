@@ -22,6 +22,7 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
+
 # --- Mapping from operators to test scripts ---
 TEST_SCRIPT_MAP = {
     "deformable": "test_deformable_attention.py",
@@ -54,14 +55,13 @@ TEST_SCRIPT_MAP = {
     "batchnorm": "test_batchnorm.py",
     "sub": "test_sub.py",
     "sin": "test_sin.py",
-    "scatter": "test_scatter.py",
     "instancenorm": "test_instancenorm.py",
     "concat": "test_concat.py",
+    "scatter": "test_scatter.py",
     "dense": "test_dense.py",
     "gatemlp": "test_gatemlp.py",
     "gqa": "test_gqa.py",
 }
-
 
 def avgpool_np(input_tensor, kernel_stride):
     input_tensor = input_tensor.permute(0, 3, 1, 2)

@@ -1,17 +1,17 @@
 """
-Unified kernel compiler for multiple backends:
+Unified kernel compiler for multiple targets:
   - cuda   : .cu  → NVCC
   - hip    : .hip → HIPCC / clang++
   - cpp: .cpp → g++ / clang++
   - mlu    : .mlu → cncc (Cambricon)
 
-Each backend uses its own macros and compiler function.
+Each target uses its own macros and compiler function.
 
 Usage:
-  python compile_kernels.py --backend cuda ./kernels/cuda/
-  python compile_kernels.py --backend hip ./kernels/hip/
-  python compile_kernels.py --backend cpp ./kernels/cpp/
-  python compile_kernels.py --backend mlu ./kernels/mlu/
+  python compile_kernels.py --target cuda ./kernels/cuda/
+  python compile_kernels.py --target hip ./kernels/hip/
+  python compile_kernels.py --target cpp ./kernels/cpp/
+  python compile_kernels.py --target mlu ./kernels/mlu/
 """
 
 import argparse
@@ -21,7 +21,7 @@ import sys
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from tqdm import tqdm
 
-# Import backend-specific macros and compilation functions
+# Import target-specific macros and compilation functions
 # Ensure these are defined in the respective modules.
 from evaluation.macros import (
     CUDA_MACROS,
@@ -37,7 +37,7 @@ from evaluation.utils import (
 )
 
 
-# Supported file extensions for each backend.
+# Supported file extensions for each target.
 # Each entry defines the primary extension and allowed variants.
 EXTENSION_MAPPING = {
     ".cpp": [".cpp"],
@@ -49,37 +49,37 @@ EXTENSION_MAPPING = {
 
 def get_extensions(primary_ext):
     """
-    Get all allowed extensions that map to the same backend.
+    Get all allowed extensions that map to the same target.
 
     Args:
         primary_ext (str): The primary extension (e.g., '.cu', '.mlu').
 
     Returns:
-        list: List of valid extensions for this backend.
+        list: List of valid extensions for this target.
     """
     return EXTENSION_MAPPING.get(primary_ext, [primary_ext])
 
 
-def compile_file(file_path, backend):
+def compile_file(file_path, target):
     """
     Compile a single kernel source file with macros injected.
 
     Steps:
       1. Read original source
-      2. Prepend backend-specific macros
+      2. Prepend target-specific macros
       3. Write to _bak.<ext> file
-      4. Compile to .so using backend compiler
+      4. Compile to .so using target compiler
       5. Clean up _bak file and .so (if compilation succeeded)
       6. Return success status
 
     Args:
         file_path (str): Path to the source file.
-        backend (str): Backend name ('cuda', 'hip', 'cpp', 'mlu').
+        target (str): Backend name ('cuda', 'hip', 'cpp', 'mlu').
 
     Returns:
         bool: True if compilation succeeded, False otherwise.
     """
-    config = BACKEND_CONFIG[backend]
+    config = BACKEND_CONFIG[target]
     dir_name, base_name = os.path.split(file_path)
     name_no_ext, _ = os.path.splitext(base_name)
 
@@ -122,7 +122,7 @@ def compile_file(file_path, backend):
     return success
 
 
-# Backend configuration: maps backend name to its settings
+# Backend configuration: maps target name to its settings
 BACKEND_CONFIG = {
     "cuda": {
         "ext": ".cu",
@@ -157,17 +157,17 @@ BACKEND_CONFIG = {
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Batch compile kernel files for various backends."
+        description="Batch compile kernel files for various targets."
     )
     parser.add_argument(
-        "src_dir",
+        "--src_dir",
         help="Directory containing source files to compile"
     )
     parser.add_argument(
-        "--backend",
+        "--target",
         choices=BACKEND_CONFIG.keys(),
         required=True,
-        help="Target backend: cuda | hip | cpp | mlu"
+        help="Target target: cuda | hip | cpp | mlu"
     )
     parser.add_argument(
         "--jobs",
@@ -178,12 +178,12 @@ def main():
 
     args = parser.parse_args()
 
-    # Validate backend
-    if args.backend not in BACKEND_CONFIG:
-        print(f"[ERROR] Unknown backend: {args.backend}", file=sys.stderr)
+    # Validate target
+    if args.target not in BACKEND_CONFIG:
+        print(f"[ERROR] Unknown target: {args.target}", file=sys.stderr)
         sys.exit(1)
 
-    config = BACKEND_CONFIG[args.backend]
+    config = BACKEND_CONFIG[args.target]
     exts = get_extensions(config["ext"])
 
     # Find all source files with allowed extensions
@@ -196,15 +196,15 @@ def main():
         print(f"[WARN] No files found in {args.src_dir} with extensions {exts}", file=sys.stderr)
         sys.exit(0)
 
-    print(f"🚀 Compiling {len(files)} file(s) for {config['desc']} ({args.backend.upper()})...")
+    print(f"🚀 Compiling {len(files)} file(s) for {config['desc']} ({args.target.upper()})...")
 
     # Use appropriate executor (thread or process)
     ExecutorClass = config["executor"]
     with ExecutorClass(max_workers=args.jobs) as executor:
         results = list(tqdm(
-            executor.map(lambda f: compile_file(f, args.backend), files),
+            executor.map(lambda f: compile_file(f, args.target), files),
             total=len(files),
-            desc=f"[{args.backend.upper()}]",
+            desc=f"[{args.target.upper()}]",
             unit="file"
         ))
 
@@ -212,7 +212,7 @@ def main():
     total = len(files)
     success_count = sum(results)
     success_rate = success_count / total
-    print(f"[INFO] {args.backend.upper()} success rate: {success_count}/{total} = {success_rate:.2%}")
+    print(f"[INFO] {args.target.upper()} success rate: {success_count}/{total} = {success_rate:.2%}")
 
     # Exit with error code if any compilation failed
     if success_count < total:
