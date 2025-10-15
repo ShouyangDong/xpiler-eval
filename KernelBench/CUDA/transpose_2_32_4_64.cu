@@ -8,11 +8,11 @@ __global__ void transpose(const float *__restrict__ input,
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int total = N * C * H * W;
   if (idx < total) {
-    int n = idx / (C * H * W); 
-    int c = (idx / (H * W)) % C; 
-    int h = (idx / W) % H; 
-    int w = idx % W; 
-    int out_idx = ((n * H + h) * W + w) * C + c; 
+    int n = idx / (C * H * W);
+    int c = (idx / (H * W)) % C;
+    int h = (idx / W) % H;
+    int w = idx % W;
+    int out_idx = ((n * H + h) * W + w) * C + c;
     output[out_idx] = input[idx];
   }
 }

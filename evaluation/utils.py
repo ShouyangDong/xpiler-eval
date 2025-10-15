@@ -420,6 +420,7 @@ def run_tests(
                 compiled_so_map[config["file"]] = msg  # msg == so_path
             else:
                 failed_results.append((False, msg))
+                print(f"❌ Compilation failed: {msg}")
 
     compiled_count = len(compiled_so_map)
     logger.info(

@@ -1,5 +1,5 @@
 __global__ void transpose(const float *__restrict__ input,
-                              float *__restrict__ output) {
+                          float *__restrict__ output) {
 
   const int N = 2;
   const int C = 32;
@@ -27,9 +27,7 @@ extern "C" void transpose_kernel(float *input, float *output, int N, int C,
 
   hipMemcpy(d_input, input, total * sizeof(float), hipMemcpyHostToDevice);
   dim3 block(16, 4);
-  dim3 grid((W + 16 - 1) / 16,
-            (H + 4 - 1) / 4,
-             N * C);
+  dim3 grid((W + 16 - 1) / 16, (H + 4 - 1) / 4, N * C);
   transpose<<<grid, block>>>(d_input, d_output);
 
   hipMemcpy(output, d_output, total * sizeof(float), hipMemcpyDeviceToHost);

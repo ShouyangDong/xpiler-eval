@@ -24,8 +24,6 @@ extern "C" void sub_kernel(float *h_A, float *h_B, float *h_C) {
 
   sub<<<numBlocks, blockSize>>>(d_A, d_B, d_C);
 
-
-
   hipMemcpy(h_C, d_C, total * sizeof(float), hipMemcpyDeviceToHost);
 
   hipFree(d_A);

@@ -8,11 +8,11 @@ __global__ void transpose(const float *__restrict__ input,
   int total = N * C * H * W;
 
   if (idx < total) {
-    int w = idx % W; 
-    int h = idx % H; 
-    int c = idx % C; 
-    int n = idx; 
-    int out_idx = ((n * W + w) * C + c) * H + h; 
+    int w = idx % W;
+    int h = idx % H;
+    int c = idx % C;
+    int n = idx;
+    int out_idx = ((n * W + w) * C + c) * H + h;
     output[out_idx] = input[idx];
   }
 }
