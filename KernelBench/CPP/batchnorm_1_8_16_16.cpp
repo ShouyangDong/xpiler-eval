@@ -1,5 +1,3 @@
-#include <cmath>
-
 extern "C" void batchnorm(float *input, float *output,
                           float *mean,   // [C]
                           float *var,    // [C]
