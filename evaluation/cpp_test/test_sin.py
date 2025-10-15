@@ -13,6 +13,7 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -31,21 +32,6 @@ def ref_program(x: torch.Tensor) -> torch.Tensor:
     """Golden reference: sin(x) using PyTorch."""
     return torch.sin(x)
 
-
-def parse_config(config_input: str) -> List[Dict]:
-    """Parse config: either JSON file or JSON string."""
-    if os.path.isfile(config_input):
-        with open(config_input, "r") as f:
-            config_data = json.load(f)
-    else:
-        try:
-            config_data = json.loads(config_input)
-        except Exception as e:
-            raise ValueError(f"Invalid JSON config: {e}")
-
-    if isinstance(config_data, dict):
-        config_data = [config_data]
-    return config_data
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -204,9 +190,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test Sin kernels")
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory containing .cpp files"
@@ -224,17 +215,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    configs = parse_config(args.config)
-
-    configs = [c for c in configs if c.get("op_name") == "sin"]
-
-    configs = [
-        {
-            **config,
-            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
-        }
-        for config in configs
-    ]
+    configs = parse_op_json(args.config, args.name)
 
     # Run tests
     results = run_tests(

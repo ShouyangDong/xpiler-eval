@@ -28,49 +28,6 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-def parse_filename(file_name: str) -> Dict:
-    """
-    Parse filename: maxpool_N_C_H_W_kx_ky_sx_sy.cpp
-    Example: maxpool_1_3_224_224_2_2_2_2.cpp
-    Returns dict with shape, kernel, stride.
-    """
-    try:
-        base = os.path.splitext(file_name)[0]
-        parts = base.split("_")
-        if len(parts) < 6 or parts[0] != "maxpool":
-            raise ValueError(f"Invalid maxpool filename: {file_name}")
-
-        # Format: maxpool_N_C_H_W_[kx_ky...]_[sx_sy...]
-        dims = [int(p) for p in parts[1:]]
-
-        if len(dims) < 4:
-            raise ValueError("Too few dimensions in filename")
-
-        # Assume at least 4: NCHW
-        spatial_dims = (len(dims) - 4) // 2
-        if 4 + 2 * spatial_dims != len(dims):
-            raise ValueError(f"Invalid maxpool dims count: {len(dims)}")
-
-        shape = dims[:4]  # N, C, H, W
-        kernel = dims[4 : 4 + spatial_dims]  # kx, ky, ...
-        stride = dims[4 + spatial_dims :]  # sx, sy, ...
-
-        output_np = maxpool_np(torch.randn(*shape), kernel + stride)
-        output_shape = list(output_np.shape)
-
-        return {
-            "file": file_name,
-            "shape": shape,
-            "kernel": kernel,
-            "stride": stride,
-            "output_shape": output_shape,
-            "dtype": "float32",  # default
-            "ndim": 2 + spatial_dims,  # 2D pool, 3D pool, etc.
-        }
-    except Exception as e:
-        raise ValueError(f"Failed to parse {file_name}: {e}")
-
-
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
     """Compile one maxpool kernel."""
     file_name = config["file"]
@@ -240,9 +197,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test MinPool kernels")
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory containing .cpp files"
@@ -260,46 +222,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        try:
-            configs = json.loads(args.config)
-        except Exception as e:
-            logger.error(f"Invalid config JSON: {e}")
-            exit(1)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Filter and parse maxpool kernels
-    maxpool_configs = []
-    for c in configs:
-        shapes = c.get("args")
-        op_name = c.get("op_name")
-        # Construct filename
-        file_name = f"{op_name}_{'_'.join(map(str, shapes))}.cpp"
-
-        if file_name.startswith("maxpool"):
-            try:
-                parsed = parse_filename(file_name)
-                c.update(parsed)
-                if "dtype" in c:
-                    parsed["dtype"] = c["dtype"]
-                maxpool_configs.append(parsed)
-            except Exception as e:
-                logger.warning(
-                    f"Skipping invalid MAXPOOL config {file_name}: {e}"
-                )
-
-    if not maxpool_configs:
+    if not configs:
         logger.warning("No valid 'maxpool' kernels found in config.")
         exit(0)
 
     # Run tests
     results = run_tests(
-        maxpool_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Log individual results

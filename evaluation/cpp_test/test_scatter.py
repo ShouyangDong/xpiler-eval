@@ -14,6 +14,7 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # ----------------- Logger -----------------
 logger = logging.getLogger(__name__)
@@ -40,24 +41,6 @@ def reference_scatter(
     result.scatter_(dim=dim, index=indices_tensor, src=src_tensor)
     return result
 
-
-# ----------------- Utils -----------------
-def parse_filename(file_name: str) -> Dict:
-    """Parse filename: scatter_4_5_6.cpp -> {'shape': [4,5,6]}"""
-    try:
-        base = os.path.splitext(file_name)[0]
-        parts = base.split("_")
-        if len(parts) < 2 or parts[0] != "scatter":
-            raise ValueError(f"Invalid scatter filename: {file_name}")
-        shape = [int(p) for p in parts[1:]]
-        return {
-            "file": file_name,
-            "shape": shape,
-            "output_shape": shape,
-            "dtype": "float32",
-        }
-    except Exception as e:
-        raise ValueError(f"Failed to parse {file_name}: {e}")
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -125,7 +108,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # ----------- Load shared lib -----------
         lib = ctypes.CDLL(so_path)
-        getattr(lib, op_name, None)
+        kernel_func = getattr(lib, op_name, None)
         kernel_func.argtypes = [
             ctypes.POINTER(ctypes.c_float),  # self
             ctypes.POINTER(ctypes.c_int32),  # indices
@@ -217,9 +200,14 @@ def run_tests(
 
 # ----------------- CLI -----------------
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test Scatter kernels")
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory containing .cpp files"
@@ -232,34 +220,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        configs = json.loads(args.config)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Filter scatter
-    scatter_configs = []
-    for c in configs:
-        if c.get("op_name") != "scatter":
-            continue
-        if not c.get("args") or c.get("axis") is None:
-            logger.warning(f"Skipping invalid scatter config: {c}")
-            continue
-        file_name = f"scatter_{'_'.join(map(str, c['args']))}.cpp"
-        parsed = parse_filename(file_name)
-        c.update(parsed)
-        scatter_configs.append(c)
-
-    if not scatter_configs:
+    if not configs:
         logger.warning("No valid scatter kernels found.")
         exit(0)
 
     results = run_tests(
-        scatter_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
     passed = sum(1 for r in results if r[0])
     total = len(results)

@@ -13,6 +13,7 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -36,32 +37,6 @@ def reference_dense_int16(
     Returns: [M, N] int32
     """
     return torch.matmul(A, B).to(torch.int32) + bias.unsqueeze(0)
-
-
-def parse_filename(file_name: str) -> Dict:
-    """
-    Parse filename: dense_16_512_512.cpp
-    Format: dense_M_N_K.cpp
-    Returns: M, N, K, input_shape
-    """
-    try:
-        base = os.path.splitext(file_name)[0]
-        parts = base.split("_")
-        if len(parts) != 4 or parts[0] != "dense":
-            raise ValueError(f"Invalid dense kernel filename: {file_name}")
-
-        M, N, K = map(int, parts[1:4])
-        return {
-            "file": file_name,
-            "M": M,
-            "N": N,
-            "K": K,
-            "input_shape": [M, K],
-            "weight_shape": [K, N],
-            "bias_shape": [N],
-        }
-    except Exception as e:
-        raise ValueError(f"Failed to parse {file_name}: {e}")
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -222,11 +197,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Test dense_int16_bias_int32 kernels"
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
+    parser.add_argument(
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
     )
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory containing .cpp files"
@@ -244,36 +222,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        try:
-            configs = json.loads(args.config)
-        except Exception as e:
-            logger.error(f"Invalid config JSON: {e}")
-            exit(1)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Filter and parse dense kernels
-    configs = [c for c in configs if c.get("op_name") == "dense"]
-    dense_configs = [
-        {
-            **config,
-            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
-        }
-        for config in configs
-    ]
-
-    if not dense_configs:
+    if not configs:
         logger.warning("No valid 'dense' kernels found in config.")
         exit(0)
 
     # Run tests
     results = run_tests(
-        dense_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Log individual results

@@ -13,6 +13,7 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 from evaluation.utils import sumpool_np
 
 # Configure logger
@@ -27,77 +28,6 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-
-def parse_config(config_input: str) -> List[Dict]:
-    """Parse config: either JSON file or JSON string."""
-    if os.path.isfile(config_input):
-        with open(config_input, "r") as f:
-            config_data = json.load(f)
-    else:
-        try:
-            config_data = json.loads(config_input)
-        except Exception as e:
-            raise ValueError(f"Invalid JSON config: {e}")
-
-    if isinstance(config_data, dict):
-        config_data = [config_data]
-
-    parsed_configs = []
-    for idx, c in enumerate(config_data):
-        try:
-            c.get("args")
-            if not isinstance(args, list) or len(args) < 2:
-                raise ValueError(
-                    f"Invalid 'args' (must be at least 2D): {args}"
-                )
-
-            ksize_stride = c.get("axis")  # reuse axes field
-            if not isinstance(ksize_stride, list) or len(ksize_stride) not in [
-                2,
-                4,
-            ]:
-                raise ValueError(
-                    f"Invalid 'axis' (must be [kH,kW] or [kH,kW,sH,sW]): {ksize_stride}"
-                )
-
-            op_name = c.get("op_name")
-            # Construct filename
-            file_name = f"{op_name}_{'_'.join(map(str, shape))}.cpp"
-            if not file_name or not file_name.endswith(".cpp"):
-                raise ValueError(f"Invalid or missing 'file': {file_name}")
-
-            dtype = c.get("dtype", "float32")
-            if dtype not in ["float32", "float16"]:
-                raise ValueError(f"Unsupported dtype: {dtype}")
-
-            if op_name not in ["sumpool", "sum_pool"]:
-                logger.warning(
-                    f"[SUMPOOL] Expected op='sumpool', got {op_name}"
-                )
-
-            # Expand ksize_stride to 4 values
-            if len(ksize_stride) == 2:
-                # [kH, kW] → [kH, kW, kH, kW]
-                ksize_stride = ksize_stride + ksize_stride
-
-            input_shape = args
-            kernel_size = ksize_stride[:2]
-            stride = ksize_stride[2:]
-
-            parsed_configs.append(
-                {
-                    "file": file_name,
-                    "input_shape": input_shape,
-                    "kernel_size": kernel_size,
-                    "stride": stride,
-                    "dtype": dtype,
-                    "op": "sumpool",
-                }
-            )
-        except Exception as e:
-            logger.warning(f"[SUMPOOL] Skip invalid config #{idx}: {e}")
-
-    return parsed_configs
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -276,9 +206,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test Sum Pooling kernels")
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory containing .cpp files"
@@ -296,11 +231,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    try:
-        configs = parse_config(args.config)
-    except Exception as e:
-        logger.error(f"❌ Config parsing failed: {e}")
-        exit(1)
+    configs = parse_op_json(args.config, args.name)
 
     if not configs:
         logger.warning("⚠️ No valid 'sumpool' kernels found in config.")
