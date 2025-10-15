@@ -12,6 +12,7 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -40,32 +41,6 @@ def reference_gather(
     if out_of_bound.any():
         result[out_of_bound] = 0.0
     return result
-
-
-def parse_filename(file_name: str) -> Dict:
-    """
-    Parse filename: gather_100_32_16.cpp
-    Format: gather_params_batch_params_len_indices_len.cpp
-    Returns: dict with shapes and metadata.
-    """
-    try:
-        base = os.path.splitext(file_name)[0]
-        parts = base.split("_")
-        if len(parts) != 4 or parts[0] != "gather":
-            raise ValueError(f"Invalid Gather filename: {file_name}")
-
-        params_batch, params_len, indices_len = map(int, parts[1:4])
-        return {
-            "file": file_name,
-            "params_batch": params_batch,
-            "params_len": params_len,
-            "indices_len": indices_len,
-            "params_shape": [params_batch, params_len],
-            "indices_shape": [indices_len],
-            "output_shape": [indices_len, params_len],
-        }
-    except Exception as e:
-        raise ValueError(f"Failed to parse {file_name}: {e}")
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -240,9 +215,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test GATHER kernels (CPU)")
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory containing .cpp files"
@@ -260,36 +240,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        try:
-            configs = json.loads(args.config)
-        except Exception as e:
-            logger.error(f"Invalid config JSON: {e}")
-            exit(1)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Filter and parse gather kernels
-    configs = [c for c in configs if c.get("op_name") == "gather"]
-    gather_configs = [
-        {
-            **config,
-            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
-        }
-        for config in configs
-    ]
-
-    if not gather_configs:
+    if not configs:
         logger.warning("No valid 'gather' kernels found in config.")
         exit(0)
 
     # Run tests
     results = run_tests(
-        gather_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Log individual results

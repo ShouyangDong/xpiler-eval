@@ -13,6 +13,7 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -41,32 +42,6 @@ def reference_gqa(
         S = torch.softmax(S, dim=-1)
         O = torch.matmul(S, V)  # [B, H, Sq, D]
     return O
-
-
-def parse_filename(file_name: str) -> Dict:
-    """
-    Parse filename: gqa_1_128_128_64.cpp
-    Format: gqa_B_Sq_Skv_Hd.cpp
-    Returns: dict with shape and metadata.
-    """
-    try:
-        base = os.path.splitext(file_name)[0]
-        parts = base.split("_")
-        if len(parts) != 5 or parts[0] != "gqa":
-            raise ValueError(f"Invalid GQA filename: {file_name}")
-        B, Sq, Skv, Hd = map(int, parts[1:5])
-        H = 2  # Assume fixed num_heads=2 (or infer from macro/config)
-        return {
-            "file": file_name,
-            "shape": [B, Sq, Skv, Hd],
-            "batch": B,
-            "seq_q": Sq,
-            "seq_kv": Skv,
-            "head_dim": Hd,
-            "num_heads": H,
-        }
-    except Exception as e:
-        raise ValueError(f"Failed to parse {file_name}: {e}")
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -242,9 +217,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test GQA kernels")
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory containing .cpp files"
@@ -262,36 +242,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        try:
-            configs = json.loads(args.config)
-        except Exception as e:
-            logger.error(f"Invalid config JSON: {e}")
-            exit(1)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Filter and parse GQA kernels
-    configs = [c for c in configs if c.get("op_name") == "gqa"]
-    gqa_configs = [
-        {
-            **config,
-            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
-        }
-        for config in configs
-    ]
-
-    if not gqa_configs:
+    if not configs:
         logger.warning("No valid 'gqa' kernels found in config.")
         exit(0)
 
     # Run tests
     results = run_tests(
-        gqa_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Log individual results

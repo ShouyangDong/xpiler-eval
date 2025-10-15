@@ -14,6 +14,7 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -46,32 +47,6 @@ def reference_gatemlp(
     O1 = torch.nn.functional.silu(C)
     O_fp32 = O1 * O2.float()
     return O_fp32.cpu().numpy()
-
-
-def parse_filename(file_name: str) -> Dict:
-    """
-    Parse filename: gatemlp_4_4096.cpp
-    Format: gatemlp_batch_dim_k_dim_n.cpp
-    Returns: batch, dim_k, dim_n, input_shapes, etc.
-    """
-    try:
-        base = os.path.splitext(file_name)[0]
-        parts = base.split("_")
-        if len(parts) != 3 or parts[0] != "gatemlp":
-            raise ValueError(f"Invalid GateMLP filename: {file_name}")
-
-        batch, dim_k, dim_n = map(int, parts[1:4])
-        return {
-            "file": file_name,
-            "batch": batch,
-            "dim_k": dim_k,
-            "dim_n": dim_n,
-            "input_shape": [batch, dim_k],
-            "weight_shape": [dim_k, dim_n],
-            "output_shape": [batch, dim_n],
-        }
-    except Exception as e:
-        raise ValueError(f"Failed to parse {file_name}: {e}")
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -252,11 +227,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Test GateMLP kernels (int16 → int32)"
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
+    parser.add_argument(
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
     )
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory containing .cpp files"
@@ -274,36 +252,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        try:
-            configs = json.loads(args.config)
-        except Exception as e:
-            logger.error(f"Invalid config JSON: {e}")
-            exit(1)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Filter and parse gatemlp kernels
-    configs = [c for c in configs if c.get("op_name") == "gatemlp"]
-    gatemlp_configs = [
-        {
-            **config,
-            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
-        }
-        for config in configs
-    ]
-
-    if not gatemlp_configs:
+    if not configs:
         logger.warning("No valid 'gatemlp' kernels found in config.")
         exit(0)
 
     # Run tests
     results = run_tests(
-        gatemlp_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Log individual results

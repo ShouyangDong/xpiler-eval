@@ -14,6 +14,7 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -32,32 +33,6 @@ def reference_relu(input_array: np.ndarray) -> np.ndarray:
     """Reference ReLU using PyTorch."""
     x = torch.from_numpy(input_array)
     return torch.nn.functional.relu(x).numpy()
-
-
-def parse_filename(file_name: str) -> Dict:
-    """
-    Parse filename: relu_dim1_dim2_...dimN.cpp
-    Example: relu_32_64.cpp → shape=[32, 64]
-    Returns config dict.
-    """
-    try:
-        base = os.path.splitext(file_name)[0]
-        parts = base.split("_")
-        if len(parts) < 1 or parts[0] != "relu":
-            raise ValueError(f"Invalid ReLU filename: {file_name}")
-
-        shape = [int(p) for p in parts[1:]]
-        if not shape:
-            raise ValueError("Empty shape in ReLU filename")
-
-        return {
-            "file": file_name,
-            "shape": shape,
-            "dtype": "float32",  # default
-            "ndim": len(shape),
-        }
-    except Exception as e:
-        raise ValueError(f"Failed to parse {file_name}: {e}")
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -228,9 +203,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test ReLU kernels")
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory containing .cpp files"
@@ -248,46 +228,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        try:
-            configs = json.loads(args.config)
-        except Exception as e:
-            logger.error(f"Invalid config JSON: {e}")
-            exit(1)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Filter and parse relu kernels
-    relu_configs = []
-    for c in configs:
-        shapes = c.get("args")
-        op_name = c.get("op_name")
-        # Construct filename
-        file_name = f"{op_name}_{'_'.join(map(str, shapes))}.cpp"
-
-        if file_name.startswith("relu"):
-            try:
-                parsed = parse_filename(file_name)
-                c.update(parsed)
-                if "dtype" in c:
-                    parsed["dtype"] = c["dtype"]
-                relu_configs.append(parsed)
-            except Exception as e:
-                logger.warning(
-                    f"Skipping invalid RELU config {file_name}: {e}"
-                )
-
-    if not relu_configs:
+    if not configs:
         logger.warning("No valid 'relu' kernels found in config.")
         exit(0)
 
     # Run tests
     results = run_tests(
-        relu_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Log individual results

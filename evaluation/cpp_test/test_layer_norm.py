@@ -13,6 +13,7 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -39,46 +40,6 @@ def ref_program(x, gamma, beta, eps=1e-5):
     out = gamma * x_normalized + beta
     # Return the output in numpy format to maintain interface consistency.
     return out
-
-
-def parse_filename(file_name: str) -> Dict:
-    """
-    Parse filename: layernorm_2_128_768.cpp
-    Format: layernorm_B_L_H.cpp  (Batch, Length, Hidden)
-    or:     layernorm_N_D.cpp     (N, D)
-    Returns: dict with shape and metadata.
-    """
-    try:
-        base = os.path.splitext(file_name)[0]
-        parts = base.split("_")
-        if len(parts) < 3 or parts[0] != "layernorm":
-            raise ValueError(f"Invalid LayerNorm filename: {file_name}")
-
-        dims = [int(p) for p in parts[1:]]
-        if len(dims) == 3:
-            B, L, H = dims
-            shape = [B, L, H]
-        elif len(dims) == 2:
-            N, D = dims
-            shape = [N, D]
-        else:
-            raise ValueError(f"Unsupported LayerNorm shape: {dims}")
-
-        total = 1
-        for d in shape:
-            total *= d
-
-        return {
-            "file": file_name,
-            "shape": shape,
-            "B": dims[0],
-            "H": dims[-1],
-            "normalized_dim": dims[-1],
-            "total_elements": total,
-            "ndim": len(shape),
-        }
-    except Exception as e:
-        raise ValueError(f"Failed to parse {file_name}: {e}")
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -252,9 +213,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test LayerNorm kernels")
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory containing .cpp files"
@@ -272,36 +238,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        try:
-            configs = json.loads(args.config)
-        except Exception as e:
-            logger.error(f"Invalid config JSON: {e}")
-            exit(1)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Filter and parse LayerNorm kernels
-    configs = [c for c in configs if c.get("op_name") == "layernorm"]
-    norm_configs = [
-        {
-            **config,
-            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
-        }
-        for config in configs
-    ]
-
-    if not norm_configs:
+    if not configs:
         logger.warning("No valid 'layernorm' kernels found in config.")
         exit(0)
 
     # Run tests
     results = run_tests(
-        norm_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Log individual results

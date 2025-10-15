@@ -14,6 +14,7 @@ import torch.nn.functional as F
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -46,27 +47,6 @@ def batchnorm_ref(
         training=False,
         eps=eps,
     )
-
-
-def parse_config(file_name: str) -> Dict:
-    """
-    Parse filename: batchnorm_N_C_H_W.cpp
-    Returns shape and metadata.
-    """
-    # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        try:
-            configs = json.loads(args.config)
-        except Exception as e:
-            logger.error(f"Invalid config: {e}")
-            exit(1)
-
-    if isinstance(configs, dict):
-        configs = [configs]
-    return configs
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -259,9 +239,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory with .cpp files"
@@ -277,24 +262,15 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    configs = parse_config(args.config)
-    # Filter only 'batchnorm' kernels
-    configs = [c for c in configs if c.get("op_name") == "batchnorm"]
-    batchnorm_configs = [
-        {
-            **config,
-            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
-        }
-        for config in configs
-    ]
+    configs = parse_op_json(args.config, args.name)
 
-    if not batchnorm_configs:
+    if not configs:
         logger.warning("No valid 'batchnorm' kernels found in config.")
         exit(0)
 
     # Run two-phase test
     results = run_tests(
-        batchnorm_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Log results

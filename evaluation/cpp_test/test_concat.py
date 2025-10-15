@@ -13,6 +13,7 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -31,24 +32,6 @@ def concat_ref(tensors: List[torch.Tensor], axis: int) -> torch.Tensor:
     """Reference implementation using PyTorch."""
     return torch.cat(tensors, dim=axis)
 
-
-def parse_config(config: dict, file_name: str) -> Dict:
-    """Validate and enrich concat config."""
-    if "args" not in config or "axis" not in config:
-        raise ValueError(f"Missing 'args' or 'axis' in config for {file_name}")
-    shape = config["args"]
-    axis = config["axis"]
-    if not isinstance(shape, list) or not all(
-        isinstance(d, int) for d in shape
-    ):
-        raise ValueError(f"Invalid shape in config: {shape}")
-    if not isinstance(axis, int):
-        raise ValueError(f"Invalid axis: {axis}")
-    return {
-        "file": file_name,
-        "shape": shape,
-        "axis": axis,
-    }
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -198,9 +181,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory with .cpp files"
@@ -218,36 +206,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            raw_configs = json.load(f)
-    else:
-        try:
-            raw_configs = json.loads(args.config)
-        except Exception as e:
-            logger.error(f"Invalid config JSON: {e}")
-            sys.exit(1)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(raw_configs, dict):
-        raw_configs = [raw_configs]
-
-    # Filter and parse concat kernels
-    configs = [c for c in raw_configs if c.get("op_name") == "concat"]
-    concat_configs = [
-        {
-            **config,
-            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
-        }
-        for config in configs
-    ]
-
-    if not concat_configs:
+    if not configs:
         logger.warning("No valid 'concat' kernels found in config.")
         sys.exit(0)
 
     # Run two-phase test
     results = run_tests(
-        concat_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Log all results

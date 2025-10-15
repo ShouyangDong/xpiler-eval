@@ -12,6 +12,7 @@ import numpy as np
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -30,34 +31,6 @@ def conv1d_ref(input_array: np.ndarray, kernel: np.ndarray) -> np.ndarray:
     """Reference implementation using NumPy."""
     return np.convolve(input_array, kernel, mode="valid")
 
-
-def parse_filename(file_name: str) -> Dict:
-    """
-    Parse filename: conv1d_OUTPUT_SIZE_INPUT_LENGTH.cpp
-    Example: conv1d_64_100.cpp → output_size=64, input_length=100
-    Returns shape and metadata.
-    """
-    try:
-        base = os.path.splitext(file_name)[0]
-        parts = base.split("_")
-        if len(parts) < 3 or parts[0] != "conv1d":
-            raise ValueError(f"Invalid conv1d filename: {file_name}")
-        output_size, input_length = map(int, parts[1:3])
-        # We assume a fixed kernel [0.5, 1.0, 0.5] of length 3
-        input_length_from_kernel = output_size + 2  # because kernel size = 3
-        if input_length != input_length_from_kernel:
-            logger.warning(
-                f"[Conv1D] Inconsistent shape in {file_name}: "
-                f"input_length={input_length}, but should be {input_length_from_kernel} for output_size={output_size}"
-            )
-        return {
-            "file": file_name,
-            "output_size": output_size,
-            "input_length": input_length,
-            "kernel_size": 3,
-        }
-    except Exception as e:
-        raise ValueError(f"Failed to parse {file_name}: {e}")
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -214,9 +187,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory with .cpp files"
@@ -234,36 +212,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        try:
-            configs = json.loads(args.config)
-        except Exception as e:
-            logger.error(f"Invalid config: {e}")
-            exit(1)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Filter only 'conv1d' kernels
-    configs = [c for c in configs if c.get("op_name") == "conv1d"]
-    conv1d_configs = [
-        {
-            **config,
-            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
-        }
-        for config in configs
-    ]
-
-    if not conv1d_configs:
+    if not configs:
         logger.warning("No valid 'conv1d' kernels found in config.")
         exit(0)
 
     # Run two-phase test
     results = run_tests(
-        conv1d_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Log results

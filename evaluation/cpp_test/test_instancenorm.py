@@ -13,6 +13,7 @@ import torch.nn.functional as F
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # ========== Logger ==========
 logger = logging.getLogger(__name__)
@@ -103,7 +104,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
         # local load for safety
         lib = ctypes.CDLL(so_path, mode=ctypes.RTLD_LOCAL)
-        getattr(lib, op_name, None)
+        kernel_func = getattr(lib, op_name, None)
         kernel_func.argtypes = [
             ctypes.POINTER(ctypes.c_float),
             ctypes.POINTER(ctypes.c_float),
@@ -200,8 +201,15 @@ def run_tests(
 
 # ========== CLI ==========
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", required=True, help="Path or JSON string")
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
+    parser.add_argument(
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
+    )
     parser.add_argument("--source_dir", required=True)
     parser.add_argument(
         "--target", required=True, choices=["cuda", "hip", "mlu", "cpu"]
@@ -210,30 +218,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        configs = json.load(open(args.config))
-    else:
-        configs = json.loads(args.config)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Only test InstanceNorm
-    instancenorm_cfgs = [
-        {
-            **cfg,
-            "file": f"{cfg['op_name']}_{'_'.join(map(str, cfg['args']))}.cpp",
-        }
-        for cfg in configs
-        if cfg.get("op_name") == "instancenorm"
-    ]
-
-    if not instancenorm_cfgs:
+    if not configs:
         logger.warning("No valid instancenorm kernels found.")
         exit(0)
 
     results = run_tests(
-        instancenorm_cfgs, args.source_dir, args.target, jobs=args.jobs
+        configs, args.source_dir, args.target, jobs=args.jobs
     )
     passed = sum(1 for r, _ in results if r)
     total = len(results)

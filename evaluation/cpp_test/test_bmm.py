@@ -17,6 +17,7 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # ------------------ Logging setup ------------------
 logger = logging.getLogger(__name__)
@@ -30,27 +31,6 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-
-# ------------------ Utility ------------------
-def parse_bmm_filename(file_name: str) -> Dict:
-    """
-    Parse filename like: bmm_8_64_128_256.cpp
-    Return {"file": ..., "B":8, "M":64, "K":128, "N":256}
-    """
-    base = os.path.splitext(file_name)[0]
-    parts = base.split("_")
-    if len(parts) < 5 or parts[0] != "bmm":
-        raise ValueError(f"Invalid bmm filename: {file_name}")
-    B, M, K, N = map(int, parts[1:5])
-    return {
-        "file": file_name,
-        "op_name": parts[0],
-        "shape": [B, M, K, N],
-        "B": B,
-        "M": M,
-        "K": K,
-        "N": N,
-    }
 
 
 # ------------------ Compilation ------------------
@@ -205,11 +185,14 @@ def run_tests(
 
 # ------------------ Main ------------------
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Parallel BatchMatMul kernel tester"
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
+    parser.add_argument(
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
     )
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config"
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory containing .cpp files"
@@ -226,28 +209,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Load config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        configs = json.loads(args.config)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Filter bmm configs
-    configs = [c for c in configs if c.get("op_name") == "bmm"]
-    bmm_configs = []
-    for c in configs:
-        file_name = f"{c['op_name']}_{'_'.join(map(str, c['args']))}.cpp"
-        bmm_configs.append({**c, "file": file_name})
-
-    if not bmm_configs:
+    if not configs:
         logger.warning("No valid 'bmm' kernels found.")
         exit(0)
 
     # Run test pipeline
-    results = run_tests(bmm_configs, args.source_dir, args.target, args.jobs)
+    results = run_tests(configs, args.source_dir, args.target, args.jobs)
 
     # Summarize results
     passed = sum(1 for r in results if r[0])

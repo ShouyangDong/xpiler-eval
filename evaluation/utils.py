@@ -1,9 +1,9 @@
 import json
 import subprocess
-
+import json
 import torch
 import torch.nn.functional as F
-
+import os
 
 def avgpool_np(input_tensor, kernel_stride):
     input_tensor = input_tensor.permute(0, 3, 1, 2)
@@ -219,3 +219,23 @@ def run_test(file_path, test_script, kernel_config, target):
         return success, output
     except Exception as e:
         return False, str(e)
+
+
+def parse_op_json(json_path, op_name="None", file_type="cpp"):
+    # Load config
+    if os.path.isfile(json_path):
+        with open(json_path, "r") as f:
+            configs = json.load(f)
+    else:
+        configs = json.loads(json_path)
+
+    if isinstance(configs, dict):
+        configs = [configs]
+
+    # Filter bmm configs
+    configs = [c for c in configs if c.get("op_name") == op_name]
+    op_configs = []
+    for c in configs:
+        file_name = f"{c['op_name']}_{'_'.join(map(str, c['args']))}.{file_type}"
+        op_configs.append({**c, "file": file_name})
+    return op_configs

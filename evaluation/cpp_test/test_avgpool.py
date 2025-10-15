@@ -13,6 +13,7 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -37,28 +38,6 @@ def avgpool_ref(
     output_tensor = pool(input_nhwc)
     return output_tensor.permute(0, 2, 3, 1)  # back to NHWC
 
-
-def parse_filename(file_name: str) -> Dict:
-    """
-    Parse filename like: avgpool_N_H_W_C_kh_kw_sh_sw.cpp
-    Returns shape and kernel_stride.
-    """
-    try:
-        base = os.path.splitext(file_name)[0]
-        parts = base.split("_")
-        if len(parts) < 6:
-            raise ValueError(f"Invalid filename format: {file_name}")
-
-        N, H, W, C = map(int, parts[1:5])
-        kh, kw, sh, sw = map(int, parts[5:9])
-
-        return {
-            "shape": [N, H, W, C],
-            "kernel_stride": [kh, kw, sh, sw],
-            "file": file_name,
-        }
-    except Exception as e:
-        raise ValueError(f"Failed to parse {file_name}: {e}")
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -213,9 +192,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory with .cpp files"
@@ -233,37 +217,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        try:
-            configs = json.loads(args.config)
-        except Exception as e:
-            logger.error(f"Invalid config: {e}")
-            exit(1)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Filter only 'avgpool' kernels
-    avgpool_configs = [c for c in configs if c.get("op_name") == "avgpool"]
-
-    avgpool_configs = [
-        {
-            **config,
-            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
-        }
-        for config in avgpool_configs
-    ]
-
-    if not avgpool_configs:
+    if not configs:
         logger.warning("No valid 'avgpool' kernels found in config.")
         exit(0)
 
     # Run two-phase test
     results = run_tests(
-        avgpool_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Log results

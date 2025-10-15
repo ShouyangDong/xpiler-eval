@@ -13,6 +13,7 @@ import torch
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import conv2d_nhwc
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -25,48 +26,6 @@ if not logger.handlers:
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-
-
-def parse_filename(file_name: str) -> Dict:
-    """
-    Parse filename: conv2d_N_H_W_C_KH_KW_CI_CO_SH_PW.cpp
-    Example: conv2d_1_224_224_3_3_3_3_64_1_1.cpp
-    Returns: N, H, W, C, KH, KW, CI, CO, stride, pad
-    Note: CI should equal C, but we keep both for clarity.
-    """
-    try:
-        base = os.path.splitext(file_name)[0]
-        parts = base.split("_")
-        if len(parts) < 10 or parts[0] != "conv2d":
-            raise ValueError(f"Invalid conv2d filename: {file_name}")
-
-        # Parse shape components
-        N, H, W, C = map(int, parts[1:5])
-        KH, KW, CI, CO = map(int, parts[5:9])
-        stride = int(parts[9])
-        pad = int(parts[10]) if len(parts) > 10 else 0
-
-        if CI != C:
-            logger.warning(
-                f"[Conv2D] Input channel mismatch: CI={CI} vs C={C} in {file_name}"
-            )
-
-        return {
-            "file": file_name,
-            "N": N,
-            "H": H,
-            "W": W,
-            "C": C,
-            "KH": KH,
-            "KW": KW,
-            "CO": CO,
-            "stride": stride,
-            "pad": pad,
-            "input_shape": [N, H, W, C],
-            "kernel_shape": [KH, KW, C, CO],  # NHWC kernel layout
-        }
-    except Exception as e:
-        raise ValueError(f"Failed to parse {file_name}: {e}")
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -229,9 +188,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory with .cpp files"
@@ -249,36 +213,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        try:
-            configs = json.loads(args.config)
-        except Exception as e:
-            logger.error(f"Invalid config: {e}")
-            exit(1)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Filter only 'conv2d' kernels
-    configs = [c for c in configs if c.get("op_name") == "conv2d"]
-    conv2d_configs = [
-        {
-            **config,
-            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
-        }
-        for config in configs
-    ]
-
-    if not conv2d_configs:
+    if not configs:
         logger.warning("No valid 'conv2d' kernels found in config.")
         exit(0)
 
     # Run two-phase test
     results = run_tests(
-        conv2d_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Log results

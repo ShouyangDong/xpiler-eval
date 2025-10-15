@@ -13,6 +13,7 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
+from evaluation.utils import parse_op_json
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -30,53 +31,6 @@ if not logger.handlers:
 def reference_min(input: torch.Tensor, axis: int) -> torch.Tensor:
     """Reference min reduction using PyTorch."""
     return torch.min(input, dim=axis)[0]  # [0] = values, [1] = indices
-
-
-def parse_filename(file_name: str) -> Dict:
-    """
-    Parse filename: min_64_64.cpp → shape=[64,64], axis=1
-    Format: min_M_N.cpp → reduce along axis=1 (last dim)
-    or:     min_B_L_D.cpp → reduce along axis=2
-    Returns: dict with shape, axis, and metadata.
-    """
-    try:
-        base = os.path.splitext(file_name)[0]
-        parts = base.split("_")
-        if len(parts) < 3 or parts[0] != "min":
-            raise ValueError(f"Invalid min filename: {file_name}")
-
-        dims = [int(p) for p in parts[1:]]
-        if len(dims) == 2:
-            M, N = dims
-            shape = [M, N]
-            axis = 1  # reduce along N
-        elif len(dims) == 3:
-            B, L, D = dims
-            shape = [B, L, D]
-            axis = 2  # reduce along D
-        else:
-            raise ValueError(f"Unsupported min shape: {dims}")
-
-        output_shape = shape[:axis] + shape[axis + 1 :]
-        total_input = 1
-        for d in shape:
-            total_input *= d
-        total_output = 1
-        for d in output_shape:
-            total_output *= d
-
-        return {
-            "file": file_name,
-            "shape": shape,
-            "axis": axis,
-            "output_shape": output_shape,
-            "total_input": total_input,
-            "total_output": total_output,
-            "ndim": len(shape),
-            "dtype": "float32",  # default
-        }
-    except Exception as e:
-        raise ValueError(f"Failed to parse {file_name}: {e}")
 
 
 def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
@@ -248,9 +202,14 @@ def run_tests(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test Min reduction kernels")
+    parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to config file"
+        "--name", required=True, 
+        help="Name of the operator to test (used to filter configs)."
+    )
+    parser.add_argument(
+        "--config", required=True, 
+        help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory containing .cpp files"
@@ -268,36 +227,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    if os.path.isfile(args.config):
-        with open(args.config, "r") as f:
-            configs = json.load(f)
-    else:
-        try:
-            configs = json.loads(args.config)
-        except Exception as e:
-            logger.error(f"Invalid config JSON: {e}")
-            exit(1)
+    configs = parse_op_json(args.config, args.name)
 
-    if isinstance(configs, dict):
-        configs = [configs]
-
-    # Filter and parse min kernels
-    configs = [c for c in configs if c.get("op_name") == "min"]
-    min_configs = [
-        {
-            **config,
-            "file": f"{config['op_name']}_{'_'.join(map(str, config['args']))}.cpp",
-        }
-        for config in configs
-    ]
-
-    if not min_configs:
+    if not configs:
         logger.warning("No valid 'min' kernels found in config.")
         exit(0)
 
     # Run tests
     results = run_tests(
-        min_configs, args.source_dir, args.target, num_workers=args.jobs
+        configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Log individual results
