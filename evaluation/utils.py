@@ -1,9 +1,67 @@
 import json
+import logging
+import os
 import subprocess
-import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Tuple
+
 import torch
 import torch.nn.functional as F
-import os
+
+from evaluation.macros import CPP_MACROS as macro
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+# --- Mapping from operators to test scripts ---
+TEST_SCRIPT_MAP = {
+    "deformable": "test_deformable_attention.py",
+    "layernorm": "test_layer_norm.py",
+    "mha": "test_mha.py",
+    "rmsnorm": "test_rms_norm.py",
+    "gemm": "test_gemm.py",
+    "gemv": "test_gemv.py",
+    "bmm": "test_bmm.py",
+    "conv1d": "test_conv1d.py",
+    "conv2d": "test_conv2d.py",
+    "conv2dnchw": "test_conv2dNCHW.py",
+    "depthwiseconv": "test_depthwise_conv.py",
+    "add": "test_add.py",
+    "sign": "test_sign.py",
+    "avgpool": "test_avgpool.py",
+    "maxpool": "test_maxpool.py",
+    "minpool": "test_minpool.py",
+    "sumpool": "test_sumpool.py",
+    "relu": "test_relu.py",
+    "sigmoid": "test_sigmoid.py",
+    "gelu": "test_gelu.py",
+    "softmax": "test_softmax.py",
+    "gather": "test_gather.py",
+    "transpose": "test_transpose.py",
+    "max": "test_max.py",
+    "min": "test_min.py",
+    "sum": "test_sum.py",
+    "mean": "test_mean.py",
+    "batchnorm": "test_batchnorm.py",
+    "sub": "test_sub.py",
+    "sin": "test_sin.py",
+    "scatter": "test_scatter.py",
+    "instancenorm": "test_instancenorm.py",
+    "concat": "test_concat.py",
+    "dense": "test_dense.py",
+    "gatemlp": "test_gatemlp.py",
+    "gqa": "test_gqa.py",
+}
+
 
 def avgpool_np(input_tensor, kernel_stride):
     input_tensor = input_tensor.permute(0, 3, 1, 2)
@@ -236,6 +294,131 @@ def parse_op_json(json_path, op_name="None", file_type="cpp"):
     configs = [c for c in configs if c.get("op_name") == op_name]
     op_configs = []
     for c in configs:
-        file_name = f"{c['op_name']}_{'_'.join(map(str, c['args']))}.{file_type}"
+        file_name = (
+            f"{c['op_name']}_{'_'.join(map(str, c['args']))}.{file_type}"
+        )
         op_configs.append({**c, "file": file_name})
     return op_configs
+
+
+def patch_source(src_path: str, dst_path: str) -> bool:
+    """Insert macros and save patched source."""
+    try:
+        with open(src_path, "r") as f:
+            code = f.read()
+        code = macro + code
+        with open(dst_path, "w") as f:
+            f.write(code)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to patch {src_path}: {e}")
+        return False
+
+
+def compile_kernel(
+    op_name: str, config: dict, source_dir: str
+) -> Tuple[dict, bool, str]:
+    """Compile one kernel.
+
+    Returns: (config, success, message)
+    """
+    file_name = config["file"]
+    file_path = os.path.join(source_dir, file_name)
+    so_path = file_path.replace(".cpp", ".so")
+    temp_file = file_path.replace(".cpp", "_patched.cpp")
+
+    if not os.path.isfile(file_path):
+        return config, False, f"[{op_name}] Source not found: {file_path}"
+
+    # Patch source
+    if not patch_source(file_path, temp_file):
+        return config, False, f"[{op_name}] Patch failed: {file_path}"
+
+    # Compile
+    success, msg = run_cpp_compilation(so_path, temp_file)
+    if success:
+        # Cleanup temp file only on success
+        os.remove(temp_file)
+        return config, True, so_path  # Return path to .so for next phase
+    else:
+        os.remove(temp_file)
+        return config, False, f"[{op_name}] Compile failed: {msg}"
+
+
+def run_tests(
+    op_name: str,
+    configs: List[dict],
+    source_dir: str,
+    test_script: str,
+    target: str,
+    num_workers: int = 4,
+) -> List[Tuple[bool, str]]:
+    """
+    Phase 1: Compile all in parallel.
+    Phase 2: Test only successful ones in parallel.
+    """
+    logger.info(
+        f"[{op_name}] Starting two-phase test for {len(configs)} kernels..."
+    )
+
+    compiled_so_map: Dict[str, str] = {}  # file -> so_path
+    failed_results = []
+
+    # === PHASE 1: Parallel Compilation ===
+    logger.info(
+        f"[{op_name}] Phase 1/2: Compiling {len(configs)} kernels with {num_workers} workers..."
+    )
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = [
+            executor.submit(compile_kernel, op_name, config, source_dir)
+            for config in configs
+        ]
+
+        for future in as_completed(futures):
+            config, success, msg = future.result()
+            if success:
+                compiled_so_map[config["file"]] = msg  # msg == so_path
+            else:
+                failed_results.append((False, msg))
+
+    logger.info(
+        f"[{op_name}] Compilation: {len(compiled_so_map)} succeeded, {len(failed_results)} failed."
+    )
+
+    # === PHASE 2: Parallel Testing (only for compiled kernels) ===
+    if compiled_so_map:
+        logger.info(
+            f"[{op_name}] Phase 2/2: Testing {len(compiled_so_map)} compiled kernels..."
+        )
+        test_configs = [
+            (config, compiled_so_map[config["file"]])
+            for config in configs
+            if config["file"] in compiled_so_map
+        ]
+
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            f"test_{op_name}", test_script
+        )
+        test_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(test_module)
+
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = [
+                executor.submit(test_module.test_kernel, config, so_path)
+                for config, so_path in test_configs
+            ]
+
+            for future in as_completed(futures):
+                result = future.result()
+                failed_results.append(result)
+
+        logger.debug("[{op_name}] Cleaning up generated .so files...")
+        for _, so_path in test_configs:
+            try:
+                if os.path.exists(so_path):
+                    os.remove(so_path)
+            except Exception as e:
+                logger.warning(f"[{op_name}] Failed to delete {so_path}: {e}")
+    return failed_results
