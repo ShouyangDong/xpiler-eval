@@ -6,8 +6,6 @@ import subprocess
 import torch
 import torch.nn.functional as F
 
-<< << << < HEAD
-== == == =
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -60,7 +58,6 @@ TEST_SCRIPT_MAP = {
     "gatemlp": "test_gatemlp.py",
     "gqa": "test_gqa.py",
 }
->>>>>> > c51aad8(unify operator test process)
 
 
 def avgpool_np(input_tensor, kernel_stride):
