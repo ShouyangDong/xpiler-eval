@@ -2,10 +2,13 @@ import json
 import logging
 import os
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Tuple
 
 import torch
 import torch.nn.functional as F
 
+from evaluation.macros import CPP_MACROS as macro
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -291,7 +294,9 @@ def parse_op_json(json_path, op_name="None", file_type="cpp"):
     configs = [c for c in configs if c.get("op_name") == op_name]
     op_configs = []
     for c in configs:
-        file_name = f"{c['op_name']}_{'_'.join(map(str, c['args']))}.{file_type}"
+        file_name = (
+            f"{c['op_name']}_{'_'.join(map(str, c['args']))}.{file_type}"
+        )
         op_configs.append({**c, "file": file_name})
     return op_configs
 
@@ -310,8 +315,9 @@ def patch_source(src_path: str, dst_path: str) -> bool:
         return False
 
 
-def compile_kernel(op_name: str, config: dict,
-                   source_dir: str) -> Tuple[dict, bool, str]:
+def compile_kernel(
+    op_name: str, config: dict, source_dir: str
+) -> Tuple[dict, bool, str]:
     """Compile one kernel.
 
     Returns: (config, success, message)
@@ -340,14 +346,20 @@ def compile_kernel(op_name: str, config: dict,
 
 
 def run_tests(
-    op_name: str, configs: List[dict], source_dir: str, target: str, num_workers: int = 4
+    op_name: str,
+    configs: List[dict],
+    source_dir: str,
+    test_script: str,
+    target: str,
+    num_workers: int = 4,
 ) -> List[Tuple[bool, str]]:
     """
     Phase 1: Compile all in parallel.
     Phase 2: Test only successful ones in parallel.
     """
     logger.info(
-        f"[{op_name}] Starting two-phase test for {len(configs)} kernels...")
+        f"[{op_name}] Starting two-phase test for {len(configs)} kernels..."
+    )
 
     compiled_so_map: Dict[str, str] = {}  # file -> so_path
     failed_results = []
@@ -385,8 +397,7 @@ def run_tests(
         ]
 
         import importlib.util
-        script_name = TEST_SCRIPT_MAP.get(op_name)
-        test_script = os.path.join(source_dir, script_name)
+
         spec = importlib.util.spec_from_file_location(
             f"test_{op_name}", test_script
         )
@@ -395,7 +406,7 @@ def run_tests(
 
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             futures = [
-                executor.submit(test_module.run_tests, config, so_path)
+                executor.submit(test_module.test_kernel, config, so_path)
                 for config, so_path in test_configs
             ]
 

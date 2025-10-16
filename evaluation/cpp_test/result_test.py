@@ -13,7 +13,7 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
-from evaluation.utils import TEST_SCRIPT_MAP
+from evaluation.utils import TEST_SCRIPT_MAP, run_tests
 
 
 def run_test_for_op(
@@ -22,29 +22,18 @@ def run_test_for_op(
     """Run all configs of one op in a single process (shared import)."""
     try:
         # Dynamically import the test script
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location(
-            f"test_{op_name}", test_script
+        result = run_tests(
+            op_name=op_name,
+            configs=configs,
+            source_dir=source_dir,
+            test_script=test_script,
+            target=target,
+            num_workers=job_workers,
         )
-        test_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(test_module)
 
-        # Expect: test_module.run_tests(configs, source_dir, target, num_workers=...)
-        if hasattr(test_module, "run_tests"):
-            result = test_module.run_tests(
-                name=op_name,
-                configs=configs,
-                source_dir=source_dir,
-                target=target,
-                num_workers=job_workers,
-            )
-
-            # result: list of (success: bool, message: str)
-            passed = sum(1 for r in result if r[0])
-            return True, passed
-        else:
-            return False, f"No run_tests in {test_script}"
+        # result: list of (success: bool, message: str)
+        passed = sum(1 for r in result if r[0])
+        return True, passed
 
     except Exception as e:
         return False, f"Exception in {op_name}: {str(e)}"
@@ -54,12 +43,12 @@ def main():
     parser = argparse.ArgumentParser(
         description="Run correctness tests on compiled kernels using kernels.json"
     )
-    parser.add_argument("json_path", help="Path to kernels.json config file")
+    parser.add_argument("--json_path", help="Path to kernels.json config file")
     parser.add_argument(
-        "source_dir", help="Directory containing compiled .cu/.cpp files"
+        "--source_dir", help="Directory containing compiled .cu/.cpp files"
     )
     parser.add_argument(
-        "test_dir",
+        "--test_dir",
         help="Directory containing test scripts (e.g., test_add.py)",
     )
     parser.add_argument(

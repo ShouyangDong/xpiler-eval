@@ -7,7 +7,6 @@ from typing import Tuple
 
 import torch
 
-from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import parse_op_json, run_tests
 
 # Configure logger
