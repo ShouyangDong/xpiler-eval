@@ -12,7 +12,6 @@ import torch
 
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import run_cpp_compilation as run_compilation
-from evaluation.utils import parse_op_json
 
 
 # --- Golden Reference Function ---

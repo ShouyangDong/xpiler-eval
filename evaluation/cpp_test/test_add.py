@@ -2,17 +2,13 @@
 
 import argparse
 import ctypes
-import json
 import logging
-import os
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, List, Tuple
+from typing import Tuple
 
 import torch
 
 from evaluation.macros import CPP_MACROS as macro
-from evaluation.utils import run_cpp_compilation as run_compilation
-from evaluation.utils import parse_op_json
+from evaluation.utils import parse_op_json, run_tests
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -30,48 +26,6 @@ if not logger.handlers:
 def add_ref(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
     """Reference implementation using PyTorch."""
     return torch.add(A, B)
-
-
-def patch_source(src_path: str, dst_path: str) -> bool:
-    """Insert macros and save patched source."""
-    try:
-        with open(src_path, "r") as f:
-            code = f.read()
-        code = macro + code
-        with open(dst_path, "w") as f:
-            f.write(code)
-        return True
-    except Exception as e:
-        logger.error(f"Failed to patch {src_path}: {e}")
-        return False
-
-
-def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
-    """Compile one kernel.
-
-    Returns: (config, success, message)
-    """
-    file_name = config["file"]
-    file_path = os.path.join(source_dir, file_name)
-    so_path = file_path.replace(".cpp", ".so")
-    temp_file = file_path.replace(".cpp", "_patched.cpp")
-
-    if not os.path.isfile(file_path):
-        return config, False, f"[ADD] Source not found: {file_path}"
-
-    # Patch source
-    if not patch_source(file_path, temp_file):
-        return config, False, f"[ADD] Patch failed: {file_path}"
-
-    # Compile
-    success, msg = run_compilation(so_path, temp_file)
-    if success:
-        # Cleanup temp file only on success
-        os.remove(temp_file)
-        return config, True, so_path  # Return path to .so for next phase
-    else:
-        os.remove(temp_file)
-        return config, False, f"[ADD] Compile failed: {msg}"
 
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
@@ -109,79 +63,15 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         return False, f"[ADD] Test error {config['file']}: {str(e)}"
 
 
-def run_tests(
-    configs: List[dict], source_dir: str, target: str, num_workers: int = 4
-) -> List[Tuple[bool, str]]:
-    """
-    Phase 1: Compile all in parallel.
-    Phase 2: Test only successful ones in parallel.
-    """
-    logger.info(f"[ADD] Starting two-phase test for {len(configs)} kernels...")
-
-    compiled_so_map: Dict[str, str] = {}  # file -> so_path
-    failed_results = []
-
-    # === PHASE 1: Parallel Compilation ===
-    logger.info(
-        f"[ADD] Phase 1/2: Compiling {len(configs)} kernels with {num_workers} workers..."
-    )
-    with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        futures = [
-            executor.submit(compile_kernel, config, source_dir)
-            for config in configs
-        ]
-
-        for future in as_completed(futures):
-            config, success, msg = future.result()
-            if success:
-                compiled_so_map[config["file"]] = msg  # msg == so_path
-            else:
-                failed_results.append((False, msg))
-
-    logger.info(
-        f"[ADD] Compilation: {len(compiled_so_map)} succeeded, {len(failed_results)} failed."
-    )
-
-    # === PHASE 2: Parallel Testing (only for compiled kernels) ===
-    if compiled_so_map:
-        logger.info(
-            f"[ADD] Phase 2/2: Testing {len(compiled_so_map)} compiled kernels..."
-        )
-        test_configs = [
-            (config, compiled_so_map[config["file"]])
-            for config in configs
-            if config["file"] in compiled_so_map
-        ]
-
-        with ThreadPoolExecutor(max_workers=num_workers) as executor:
-            futures = [
-                executor.submit(test_kernel, config, so_path)
-                for config, so_path in test_configs
-            ]
-
-            for future in as_completed(futures):
-                result = future.result()
-                failed_results.append(result)
-
-        logger.debug("[ADD] Cleaning up generated .so files...")
-        for _, so_path in test_configs:
-            try:
-                if os.path.exists(so_path):
-                    os.remove(so_path)
-            except Exception as e:
-                logger.warning(f"[ADD] Failed to delete {so_path}: {e}")
-    return failed_results
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--name", required=True, 
-        help="Name of the operator to test (used to filter configs)."
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
     )
     parser.add_argument(
-        "--config", required=True, 
-        help="JSON string or path to config file"
+        "--config", required=True, help="JSON string or path to config file"
     )
     parser.add_argument(
         "--source_dir", default="./", help="Directory with .cpp files"
@@ -207,7 +97,7 @@ if __name__ == "__main__":
 
     # Run two-phase test
     results = run_tests(
-        configs, args.source_dir, args.target, num_workers=args.jobs
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
     # Summary

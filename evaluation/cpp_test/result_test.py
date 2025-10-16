@@ -13,45 +13,7 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
-# --- Mapping from operators to test scripts ---
-TEST_SCRIPT_MAP = {
-    "deformable": "test_deformable_attention.py",
-    "layernorm": "test_layer_norm.py",
-    "mha": "test_mha.py",
-    "rmsnorm": "test_rms_norm.py",
-    "gemm": "test_gemm.py",
-    "gemv": "test_gemv.py",
-    "bmm": "test_bmm.py",
-    "conv1d": "test_conv1d.py",
-    "conv2d": "test_conv2d.py",
-    "conv2dnchw": "test_conv2dNCHW.py",
-    "depthwiseconv": "test_depthwise_conv.py",
-    "add": "test_add.py",
-    "sign": "test_sign.py",
-    "avgpool": "test_avgpool.py",
-    "maxpool": "test_maxpool.py",
-    "minpool": "test_minpool.py",
-    "sumpool": "test_sumpool.py",
-    "relu": "test_relu.py",
-    "sigmoid": "test_sigmoid.py",
-    "gelu": "test_gelu.py",
-    "softmax": "test_softmax.py",
-    "gather": "test_gather.py",
-    "transpose": "test_transpose.py",
-    "max": "test_max.py",
-    "min": "test_min.py",
-    "sum": "test_sum.py",
-    "mean": "test_mean.py",
-    "batchnorm": "test_batchnorm.py",
-    "sub": "test_sub.py",
-    "sin": "test_sin.py",
-    "scatter": "test_scatter.py",
-    "instancenorm": "test_instancenorm.py",
-    "concat": "test_concat.py",
-    "dense": "test_dense.py",
-    "gatemlp": "test_gatemlp.py",
-    "gqa": "test_gqa.py",
-}
+from evaluation.utils import TEST_SCRIPT_MAP
 
 
 def run_test_for_op(
@@ -71,6 +33,7 @@ def run_test_for_op(
         # Expect: test_module.run_tests(configs, source_dir, target, num_workers=...)
         if hasattr(test_module, "run_tests"):
             result = test_module.run_tests(
+                name=op_name,
                 configs=configs,
                 source_dir=source_dir,
                 target=target,

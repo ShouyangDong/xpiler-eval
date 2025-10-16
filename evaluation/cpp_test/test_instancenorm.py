@@ -2,18 +2,13 @@
 
 import argparse
 import ctypes
-import json
 import logging
-import os
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Tuple
+from typing import Tuple
 
 import torch
 import torch.nn.functional as F
 
-from evaluation.macros import CPP_MACROS as macro
-from evaluation.utils import run_cpp_compilation as run_compilation
-from evaluation.utils import parse_op_json
+from evaluation.utils import parse_op_json, run_tests
 
 # ========== Logger ==========
 logger = logging.getLogger(__name__)
@@ -39,40 +34,6 @@ def reference_instancenorm(input, weight, bias, eps=1e-5):
         momentum=0,
         eps=eps,
     )
-
-
-# ========== Compilation ==========
-def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
-    """Compile one kernel to .so."""
-    file_name = config["file"]
-    file_path = os.path.join(source_dir, file_name)
-    so_path = os.path.join(source_dir, file_name.replace(".cpp", ".so"))
-    temp_file = os.path.join(source_dir, file_name.replace(".cpp", "_tmp.cpp"))
-
-    if not os.path.isfile(file_path):
-        return config, False, f"[INSTANCENORM] File not found: {file_path}"
-
-    try:
-        code = macro + open(file_path, "r").read()
-        with open(temp_file, "w") as f:
-            f.write(code)
-    except Exception as e:
-        return config, False, f"[INSTANCENORM] Patch failed {file_name}: {e}"
-
-    success, msg = run_compilation(so_path, temp_file)
-    try:
-        os.remove(temp_file)
-    except BaseException:
-        pass
-
-    if success:
-        return config, True, so_path
-    else:
-        return (
-            config,
-            False,
-            f"[INSTANCENORM] Compile failed {file_name}: {msg}",
-        )
 
 
 # ========== Test One Kernel ==========
@@ -134,81 +95,16 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         return False, f"[INSTANCENORM] ❌ {file_name} FAILED | {str(e)}"
 
 
-# ========== Runner ==========
-def run_tests(
-    configs: List[dict], source_dir: str, target: str, num_workers: int = 4
-) -> List[Tuple[bool, str]]:
-    """Two-phase test: compile all → test all."""
-    logger.info(
-        f"[INSTANCENORM] Starting two-phase test for {len(configs)} kernels..."
-    )
-
-    compiled_map = {}
-    results = []
-
-    # === PHASE 1: Parallel Compilation ===
-    logger.info(
-        f"[INSTANCENORM] Phase 1/2: Compiling {len(configs)} kernels..."
-    )
-    with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        futures = [
-            executor.submit(compile_kernel, config, source_dir)
-            for config in configs
-        ]
-
-        for future in as_completed(futures):
-            config, success, msg = future.result()
-            if success:
-                compiled_map[config["file"]] = msg
-            else:
-                results.append((False, msg))
-
-    logger.info(
-        f"[INSTANCENORM] Compilation: {len(compiled_map)} succeeded, {len([r for r in results if not r[0]])} failed."
-    )
-
-    # === PHASE 2: Parallel Testing ===
-    if compiled_map:
-        logger.info(
-            f"[INSTANCENORM] Phase 2/2: Testing {len(compiled_map)} compiled kernels..."
-        )
-        test_configs = [
-            (config, compiled_map[config["file"]])
-            for config in configs
-            if config["file"] in compiled_map
-        ]
-
-        with ThreadPoolExecutor(max_workers=num_workers) as executor:
-            futures = [
-                executor.submit(test_kernel, config, so_path)
-                for config, so_path in test_configs
-            ]
-
-            for future in as_completed(futures):
-                results.append(future.result())
-
-        logger.debug("[INSTANCENORM] Cleaning up generated .so files...")
-        for _, so_path in test_configs:
-            try:
-                if os.path.exists(so_path):
-                    os.remove(so_path)
-            except Exception as e:
-                logger.warning(
-                    f"[INSTANCENORM] Failed to delete {so_path}: {e}"
-                )
-    return results
-
-
 # ========== CLI ==========
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(
-        "--name", required=True, 
-        help="Name of the operator to test (used to filter configs)."
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
     )
     parser.add_argument(
-        "--config", required=True, 
-        help="JSON string or path to config file"
+        "--config", required=True, help="JSON string or path to config file"
     )
     parser.add_argument("--source_dir", required=True)
     parser.add_argument(
@@ -224,9 +120,7 @@ if __name__ == "__main__":
         logger.warning("No valid instancenorm kernels found.")
         exit(0)
 
-    results = run_tests(
-        configs, args.source_dir, args.target, jobs=args.jobs
-    )
+    results = run_tests(configs, args.source_dir, args.target, jobs=args.jobs)
     passed = sum(1 for r, _ in results if r)
     total = len(results)
 
