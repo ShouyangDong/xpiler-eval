@@ -214,21 +214,4 @@ if __name__ == "__main__":
     )
 
     # Log individual results
-    passed = sum(1 for r in results if r[0])
-    total = len(results)
-
-    for success, msg in results:
-        if success:
-            logger.info(msg)
-        else:
-            logger.error(msg)
-
-    # Final summary
-    if passed == total:
-        logger.info(f"🎉 All {total} Deformable Attention tests passed!")
-        exit(0)
-    else:
-        logger.error(
-            f"❌ {total - passed}/{total} Deformable Attention tests failed."
-        )
-        exit(1)
+    log_test_results_and_exit(result, op_name=args.name)

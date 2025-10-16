@@ -100,19 +100,4 @@ if __name__ == "__main__":
     )
 
     # Summary
-    passed = sum(1 for r in results if r[0])
-    total = len(results)
-    rate = passed / total if total else 1.0
-
-    for success, msg in results:
-        if success:
-            logger.info(msg)
-        else:
-            logger.error(msg)
-
-    if rate == 1.0:
-        logger.info(f"🎉 All {total} add tests passed!")
-        exit(0)
-    else:
-        logger.error(f"❌ {total - passed}/{total} add tests failed.")
-        exit(1)
+    log_test_results_and_exit(result, op_name=args.name)

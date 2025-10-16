@@ -120,16 +120,7 @@ if __name__ == "__main__":
         logger.warning("No valid instancenorm kernels found.")
         exit(0)
 
-    results = run_tests(configs, args.source_dir, args.target, jobs=args.jobs)
-    passed = sum(1 for r, _ in results if r)
-    total = len(results)
-
-    for ok, msg in results:
-        (logger.info if ok else logger.error)(msg)
-
-    if passed == total:
-        logger.info(f"🎉 All {total} tests PASSED!")
-        exit(0)
-    else:
-        logger.error(f"❌ {total - passed}/{total} tests FAILED.")
-        exit(1)
+    results = run_tests(
+        configs, args.source_dir, args.target, jobs=args.jobs
+    )
+    log_test_results_and_exit(result, op_name=args.name)

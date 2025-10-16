@@ -422,3 +422,45 @@ def run_tests(
             except Exception as e:
                 logger.warning(f"[{op_name}] Failed to delete {so_path}: {e}")
     return failed_results
+
+
+def log_test_results_and_exit(
+    results: List[Tuple[bool, str]], 
+    op_name: str = "Unknown"
+) -> None:
+    """
+    Logs individual test outcomes and summarizes the overall result.
+    
+    This function processes a list of test results, logs each outcome 
+    (info for success, error for failure), then prints a final summary. 
+    It exits the program based on whether all tests passed.
+
+    Args:
+        results: A list of tuples, each containing:
+                 - bool: True if the test passed, False otherwise.
+                 - str:  Message to log (e.g., test description or error).
+        op_name: Name of the operator or test group (for logging clarity).
+
+    Exits:
+        0 if all tests passed.
+        1 if any test failed.
+    """
+    total = len(results)
+    passed = sum(1 for success, _ in results if success)
+    failure_count = total - passed
+    success_rate = passed / total if total > 0 else 1.0
+
+    # Log individual test results
+    for success, message in results:
+        if success:
+            logger.info("✅ PASS | %s", message)
+        else:
+            logger.error("❌ FAIL | %s", message)
+
+    # Log final summary
+    if success_rate == 1.0:
+        logger.info(f"🎉 All {total} tests for '{op_name}' passed.")
+        exit(0)
+    else:
+        logger.error(f"❌ {failure_count}/{total} tests failed for '{op_name}'.")
+        exit(1)

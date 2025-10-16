@@ -128,15 +128,4 @@ if __name__ == "__main__":
     results = run_tests(
         args.name, configs, args.source_dir, args.target, num_workers=args.jobs
     )
-    passed = sum(1 for r in results if r[0])
-    total = len(results)
-
-    for ok, msg in results:
-        (logger.info if ok else logger.error)(msg)
-
-    if passed == total:
-        logger.info(f"🎉 All {total} SCATTER tests passed!")
-        exit(0)
-    else:
-        logger.error(f"❌ {total - passed}/{total} SCATTER tests failed.")
-        exit(1)
+    log_test_results_and_exit(result, op_name=args.name)
