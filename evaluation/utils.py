@@ -356,6 +356,7 @@ def run_tests(
     """
     Phase 1: Compile all in parallel.
     Phase 2: Test only successful ones in parallel.
+    Phase 3: Clean up .so files.
     """
     logger.info(
         f"[{op_name}] Starting two-phase test for {len(configs)} kernels..."
@@ -370,7 +371,7 @@ def run_tests(
     )
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
         futures = [
-            executor.submit(compile_kernel, op_name, config, source_dir)
+            executor.submit(compile_kernel, op_name, config, source_dir, target)
             for config in configs
         ]
 
@@ -381,14 +382,15 @@ def run_tests(
             else:
                 failed_results.append((False, msg))
 
+    compiled_count = len(compiled_so_map)
     logger.info(
-        f"[{op_name}] Compilation: {len(compiled_so_map)} succeeded, {len(failed_results)} failed."
+        f"[{op_name}] Compilation: {compiled_count} succeeded, {len(failed_results)} failed."
     )
 
-    # === PHASE 2: Parallel Testing (only for compiled kernels) ===
+    # === PHASE 2: Parallel Testing ===
     if compiled_so_map:
         logger.info(
-            f"[{op_name}] Phase 2/2: Testing {len(compiled_so_map)} compiled kernels..."
+            f"[{op_name}] Phase 2/2: Testing {compiled_count} compiled kernels..."
         )
         test_configs = [
             (config, compiled_so_map[config["file"]])
@@ -397,10 +399,7 @@ def run_tests(
         ]
 
         import importlib.util
-
-        spec = importlib.util.spec_from_file_location(
-            f"test_{op_name}", test_script
-        )
+        spec = importlib.util.spec_from_file_location(f"test_{op_name}", test_script)
         test_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(test_module)
 
@@ -412,15 +411,22 @@ def run_tests(
 
             for future in as_completed(futures):
                 result = future.result()
-                failed_results.append(result)
+                failed_results.append(result)  # 所有结果（无论成败）都加入 failed_results
 
-        logger.debug("[{op_name}] Cleaning up generated .so files...")
-        for _, so_path in test_configs:
-            try:
-                if os.path.exists(so_path):
-                    os.remove(so_path)
-            except Exception as e:
-                logger.warning(f"[{op_name}] Failed to delete {so_path}: {e}")
+        passed_count = sum(1 for r in failed_results[-len(test_configs):] if r[0])
+        logger.info(
+            f"[{op_name}] Testing: {passed_count} passed, {len(test_configs) - passed_count} failed."
+        )
+
+    # === PHASE 3: Clean up .so files ===
+    logger.debug(f"[{op_name}] Phase 3/3: Cleaning up generated .so files...")
+    for _, so_path in test_configs:
+        try:
+            if os.path.exists(so_path):
+                os.remove(so_path)
+        except Exception as e:
+            logger.warning(f"[{op_name}] Failed to delete {so_path}: {e}")
+
     return failed_results
 
 
