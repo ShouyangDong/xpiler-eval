@@ -8,7 +8,10 @@ from typing import Dict, List, Tuple
 import torch
 import torch.nn.functional as F
 
-from evaluation.macros import CPP_MACROS as macro
+from evaluation.macros import CPP_MACROS 
+from evaluation.macros import HIP_MACROS 
+from evaluation.macros import CUDA_MACROS 
+from evaluation.macros import MLU_MACROS 
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -62,6 +65,8 @@ TEST_SCRIPT_MAP = {
     "gatemlp": "test_gatemlp.py",
     "gqa": "test_gqa.py",
 }
+
+
 
 def avgpool_np(input_tensor, kernel_stride):
     input_tensor = input_tensor.permute(0, 3, 1, 2)
@@ -279,6 +284,23 @@ def run_test(file_path, test_script, kernel_config, target):
         return False, str(e)
 
 
+# Mapping from target to compilation function
+COMPILATION_FUNCTIONS = {
+    "cpu": run_cpp_compilation,
+    "cuda": run_cuda_compilation,
+    "hip": run_hip_compilation,
+    "mlu": run_mlu_compilation,
+}
+
+
+# Mapping from target to macro
+MACRO_FUNCTIONS = {
+    "cpu": CPP_MACROS,
+    "cuda": CUDA_MACROS,
+    "hip": HIP_MACROS,
+    "mlu": MLU_MACROS,
+}
+
 def parse_op_json(json_path, op_name="None", file_type="cpp"):
     # Load config
     if os.path.isfile(json_path):
@@ -301,11 +323,12 @@ def parse_op_json(json_path, op_name="None", file_type="cpp"):
     return op_configs
 
 
-def patch_source(src_path: str, dst_path: str) -> bool:
+def patch_source(src_path: str, dst_path: str, target: str) -> bool:
     """Insert macros and save patched source."""
     try:
         with open(src_path, "r") as f:
             code = f.read()
+        macro = MACRO_FUNCTIONS.get(target)
         code = macro + code
         with open(dst_path, "w") as f:
             f.write(code)
@@ -316,32 +339,48 @@ def patch_source(src_path: str, dst_path: str) -> bool:
 
 
 def compile_kernel(
-    op_name: str, config: dict, source_dir: str
+    op_name: str, config: dict, source_dir: str, target: str
 ) -> Tuple[dict, bool, str]:
-    """Compile one kernel.
+    """Compile one kernel using target-specific compilation function.
 
     Returns: (config, success, message)
     """
     file_name = config["file"]
     file_path = os.path.join(source_dir, file_name)
-    so_path = file_path.replace(".cpp", ".so")
-    temp_file = file_path.replace(".cpp", "_patched.cpp")
+
+    # Extract base name and extension
+    base_name, ext = os.path.splitext(file_path)
+    so_path = f"{base_name}.so"
+    temp_file = f"{base_name}_patched{ext}"
 
     if not os.path.isfile(file_path):
         return config, False, f"[{op_name}] Source not found: {file_path}"
 
     # Patch source
-    if not patch_source(file_path, temp_file):
+    if not patch_source(file_path, temp_file, target):
         return config, False, f"[{op_name}] Patch failed: {file_path}"
 
-    # Compile
-    success, msg = run_cpp_compilation(so_path, temp_file)
+    # 🔁 Dynamically select compilation function based on target
+    compile_func = COMPILATION_FUNCTIONS.get(target)
+    if compile_func is None:
+        return (
+            config,
+            False,
+            f"[{op_name}] No compilation function for target: {target}",
+        )
+
+    # Run the target-specific compilation
+    success, msg = compile_func(so_path, temp_file)
+
+    # Cleanup temp file (always)
+    try:
+        os.remove(temp_file)
+    except OSError:
+        pass  # Ignore cleanup failure
+
     if success:
-        # Cleanup temp file only on success
-        os.remove(temp_file)
-        return config, True, so_path  # Return path to .so for next phase
+        return config, True, so_path  # Return path to .so
     else:
-        os.remove(temp_file)
         return config, False, f"[{op_name}] Compile failed: {msg}"
 
 
@@ -371,7 +410,9 @@ def run_tests(
     )
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
         futures = [
-            executor.submit(compile_kernel, op_name, config, source_dir, target)
+            executor.submit(
+                compile_kernel, op_name, config, source_dir, target
+            )
             for config in configs
         ]
 
@@ -399,7 +440,10 @@ def run_tests(
         ]
 
         import importlib.util
-        spec = importlib.util.spec_from_file_location(f"test_{op_name}", test_script)
+
+        spec = importlib.util.spec_from_file_location(
+            f"test_{op_name}", test_script
+        )
         test_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(test_module)
 
@@ -411,34 +455,36 @@ def run_tests(
 
             for future in as_completed(futures):
                 result = future.result()
-                failed_results.append(result)  # 所有结果（无论成败）都加入 failed_results
+                failed_results.append(
+                    result
+                )
 
-        passed_count = sum(1 for r in failed_results[-len(test_configs):] if r[0])
+        passed_count = sum(
+            1 for r in failed_results[-len(test_configs) :] if r[0]
+        )
         logger.info(
             f"[{op_name}] Testing: {passed_count} passed, {len(test_configs) - passed_count} failed."
         )
 
-    # === PHASE 3: Clean up .so files ===
-    logger.debug(f"[{op_name}] Phase 3/3: Cleaning up generated .so files...")
-    for _, so_path in test_configs:
-        try:
-            if os.path.exists(so_path):
-                os.remove(so_path)
-        except Exception as e:
-            logger.warning(f"[{op_name}] Failed to delete {so_path}: {e}")
+        # === PHASE 3: Clean up .so files ===
+        logger.debug(f"[{op_name}] Phase 3/3: Cleaning up generated .so files...")
+        for _, so_path in test_configs:
+            try:
+                if os.path.exists(so_path):
+                    os.remove(so_path)
+            except Exception as e:
+                logger.warning(f"[{op_name}] Failed to delete {so_path}: {e}")
 
     return failed_results
 
 
 def log_test_results_and_exit(
-    results: List[Tuple[bool, str]], 
-    op_name: str = "Unknown"
+    results: List[Tuple[bool, str]], op_name: str = "Unknown"
 ) -> None:
-    """
-    Logs individual test outcomes and summarizes the overall result.
-    
-    This function processes a list of test results, logs each outcome 
-    (info for success, error for failure), then prints a final summary. 
+    """Logs individual test outcomes and summarizes the overall result.
+
+    This function processes a list of test results, logs each outcome
+    (info for success, error for failure), then prints a final summary.
     It exits the program based on whether all tests passed.
 
     Args:
@@ -468,5 +514,7 @@ def log_test_results_and_exit(
         logger.info(f"🎉 All {total} tests for '{op_name}' passed.")
         exit(0)
     else:
-        logger.error(f"❌ {failure_count}/{total} tests failed for '{op_name}'.")
+        logger.error(
+            f"❌ {failure_count}/{total} tests failed for '{op_name}'."
+        )
         exit(1)

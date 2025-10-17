@@ -23,9 +23,8 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-def ref_program(x, gamma, beta, eps=1e-5):
+def ref_program(x_tensor, gamma, beta, eps=1e-5):
     # Using PyTorch to compute layer normalization
-    x_tensor = torch.tensor(x)
     layer_norm = torch.nn.LayerNorm(
         x_tensor.size()[1:]
     )  # Initialize LayerNorm, maintaining dimensions.

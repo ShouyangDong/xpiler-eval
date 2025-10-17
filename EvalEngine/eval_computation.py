@@ -16,6 +16,15 @@ from tqdm import tqdm
 from evaluation.utils import TEST_SCRIPT_MAP, run_tests
 
 
+# Define extension mapping
+EXTENSION_MAP = {
+    "cuda": ".cu",
+    "hip": ".hip",
+    "mlu": ".mlu",
+    "cpu": ".cpp",
+}
+
+
 def run_test_for_op(
     op_name, configs, source_dir, test_script, target, job_workers
 ):
@@ -97,10 +106,17 @@ def main():
 
     # Group configs by op_name
     op_to_configs = defaultdict(list)
+
+    # Determine extension based on target
+    ext = EXTENSION_MAP.get(args.target)
+    if ext is None:
+        print(f"[ERROR] Unsupported target: {args.target}", file=sys.stderr)
+        sys.exit(1)
+
     for cfg in kernel_configs:
         op_name = cfg["op_name"]
         shapes = cfg["args"]
-        file_name = f"{op_name}_{'_'.join(map(str, shapes))}.cpp"
+        file_name = f"{op_name}_{'_'.join(map(str, shapes))}{ext}"
         cfg["file"] = file_name
         op_to_configs[op_name].append(cfg)
 
