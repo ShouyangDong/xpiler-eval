@@ -84,17 +84,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         stride_h,
     )
     # Check if the results match
-    try:
-        torch.allclose(
-            result_ctypes,
-            result_cpu,
-            rtol=1e-03,
-            atol=1e-03,
-            equal_nan=True,
-        )
-        return True, f"[{op_name}] PASSED✅: {config['file']}"
-    except AssertionError as e:
-        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
+    return verify_torch_tensor(result_ctypes, result_cpu, op_name=op_name)
 
 
 if __name__ == "__main__":

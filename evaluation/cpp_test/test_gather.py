@@ -11,6 +11,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_numpy_tensor,
 )
 
 # Configure logger
@@ -44,73 +45,53 @@ def reference_gather(
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled Gather kernel."""
-    try:
-        B, L, I = config["args"]
-        file_name = config["file"]
-        op_name = config["op_name"]
-        # Generate inputs
-        torch.manual_seed(1234)
-        params = torch.randn(B, L, dtype=torch.float32)
-        indices = torch.randint(
-            low=-1, high=B + 1, size=(I,), dtype=torch.int32
+    B, L, I = config["args"]
+    config["file"]
+    op_name = config["op_name"]
+    # Generate inputs
+    torch.manual_seed(1234)
+    params = torch.randn(B, L, dtype=torch.float32)
+    indices = torch.randint(low=-1, high=B + 1, size=(I,), dtype=torch.int32)
+
+    # Ensure contiguous
+    params = params.contiguous()
+    indices = indices.contiguous()
+
+    # Reference output
+    ref = reference_gather(params, indices).numpy()
+
+    # Output buffer
+    output = torch.zeros(I, L, dtype=torch.float32).contiguous().numpy()
+
+    # Get pointers
+    params_ptr = params.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    indices_ptr = indices.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_int32)
+    )
+    output_ptr = output.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function 'gather' not found in {so_path}",
         )
 
-        # Ensure contiguous
-        params = params.contiguous()
-        indices = indices.contiguous()
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # params
+        ctypes.POINTER(ctypes.c_int32),  # indices
+        ctypes.POINTER(ctypes.c_float),  # output
+        ctypes.c_int,  # params_batch
+        ctypes.c_int,  # params_len
+        ctypes.c_int,  # indices_len
+    ]
+    func.restype = None
 
-        # Reference output
-        ref = reference_gather(params, indices).numpy()
-
-        # Output buffer
-        output = torch.zeros(I, L, dtype=torch.float32).contiguous().numpy()
-
-        # Get pointers
-        params_ptr = params.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        indices_ptr = indices.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_int32)
-        )
-        output_ptr = output.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return False, f"[{op_name}] Function 'gather' not found in {so_path}"
-
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),  # params
-            ctypes.POINTER(ctypes.c_int32),  # indices
-            ctypes.POINTER(ctypes.c_float),  # output
-            ctypes.c_int,  # params_batch
-            ctypes.c_int,  # params_len
-            ctypes.c_int,  # indices_len
-        ]
-        func.restype = None
-
-        # Call kernel
-        func(params_ptr, indices_ptr, output_ptr, B, L, I)
-
-        # Compare
-        diff = torch.from_numpy(output) - torch.from_numpy(ref)
-        max_abs_err = diff.abs().max().item()
-
-        if max_abs_err < 1e-5:
-            return (
-                True,
-                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
-            )
-        else:
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | Max error: {
-                    max_abs_err:.2e}",
-            )
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Call kernel
+    func(params_ptr, indices_ptr, output_ptr, B, L, I)
+    return verify_numpy_tensor(output, ref, op_name)
 
 
 if __name__ == "__main__":

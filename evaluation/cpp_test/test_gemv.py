@@ -12,6 +12,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -34,59 +35,40 @@ def reference_gemv(A: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled GEMV kernel."""
-    try:
-        M, K = config["args"]
-        file_name = config["file"]
-        op_name = config["op_name"]
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return False, f"[{op_name}] Function 'gemv' not found in {so_path}"
+    M, K = config["args"]
+    config["file"]
+    op_name = config["op_name"]
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return False, f"[{op_name}] Function 'gemv' not found in {so_path}"
 
-        # Set function signature
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),  # A
-            ctypes.POINTER(ctypes.c_float),  # x
-            ctypes.POINTER(ctypes.c_float),  # y
-        ]
-        func.restype = None
+    # Set function signature
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # A
+        ctypes.POINTER(ctypes.c_float),  # x
+        ctypes.POINTER(ctypes.c_float),  # y
+    ]
+    func.restype = None
 
-        # Generate input
-        torch.manual_seed(1234)
-        A = torch.randn(M, K, dtype=torch.float32)
-        x = torch.randn(K, dtype=torch.float32)
-        y = torch.zeros(M, dtype=torch.float32)
+    # Generate input
+    torch.manual_seed(1234)
+    A = torch.randn(M, K, dtype=torch.float32)
+    x = torch.randn(K, dtype=torch.float32)
+    y = torch.zeros(M, dtype=torch.float32)
 
-        # Reference
-        y_ref = reference_gemv(A, x)
+    # Reference
+    y_ref = reference_gemv(A, x)
 
-        # Get pointers
-        A_ptr = A.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        x_ptr = x.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        y_ptr = y.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    # Get pointers
+    A_ptr = A.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    x_ptr = x.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    y_ptr = y.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
-        # Call kernel
-        func(A_ptr, x_ptr, y_ptr)
-
-        # Compare
-        try:
-            torch.allclose(
-                y,
-                y_ref,
-                rtol=1e-3,
-                atol=1e-3,
-                equal_nan=True,
-            )
-            return (
-                True,
-                f"[{op_name}] PASSED✅: {file_name}",
-            )
-        except Exception as e:
-            return False, f"[{op_name}] FAILED❌: {file_name} | {str(e)}"
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Call kernel
+    func(A_ptr, x_ptr, y_ptr)
+    return verify_torch_tensor(y, y_ref, op_name)
 
 
 if __name__ == "__main__":

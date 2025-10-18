@@ -11,6 +11,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_numpy_tensor,
 )
 
 # Configure logger
@@ -57,21 +58,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     output_ptr = output_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     # Invoke the C function
     function(input_ptr, output_ptr, shape[0], shape[1])
-    # Verification results
-
-    try:
-        np.testing.assert_allclose(
-            output_array,
-            expected_output,
-            rtol=1e-03,
-            atol=1e-03,
-            equal_nan=True,
-            err_msg="",
-            verbose=True,
-        )
-        return True, f"[{op_name}] PASSED✅: {config['file']}"
-    except AssertionError:
-        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
+    return verify_numpy_tensor(output_array, expected_output, op_name)
 
 
 if __name__ == "__main__":

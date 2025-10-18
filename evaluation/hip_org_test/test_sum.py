@@ -10,6 +10,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -61,15 +62,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     computed_tensor = torch.tensor(computed_array).view_as(
         torch.from_numpy(expected_numpy)
     )
-
-    # ✅ verification
-    abs_diff = torch.abs(computed_tensor - expected_tensor)
-    max_error = abs_diff.max().item()
-
-    if max_error <= 1e-3:
-        return True, f"[{op_name}] PASSED✅: {config['file']}"
-    else:
-        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
+    return verify_torch_tensor(computed_tensor - expected_tensor, op_name)
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -40,64 +41,50 @@ def reference_dense_int16(
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled dense_int16_bias_int32 kernel."""
-    try:
-        M, N, K = config["args"]
-        file_name = config["file"]
-        op_name = config["op_name"]
-        # Generate inputs
-        A = torch.randint(-10, 10, (M, K), dtype=torch.int16)
-        B = torch.randint(-10, 10, (K, N), dtype=torch.int16)
-        bias = torch.randint(-100, 100, (N,), dtype=torch.int32)
+    M, N, K = config["args"]
+    config["file"]
+    op_name = config["op_name"]
+    # Generate inputs
+    A = torch.randint(-10, 10, (M, K), dtype=torch.int16)
+    B = torch.randint(-10, 10, (K, N), dtype=torch.int16)
+    bias = torch.randint(-100, 100, (N,), dtype=torch.int32)
 
-        A = A.contiguous()
-        B = B.contiguous()
-        bias = bias.contiguous()
+    A = A.contiguous()
+    B = B.contiguous()
+    bias = bias.contiguous()
 
-        # Reference output
-        ref = reference_dense_int16(A, B, bias)
+    # Reference output
+    ref = reference_dense_int16(A, B, bias)
 
-        # Prepare output buffer
-        output = torch.zeros((M, N), dtype=torch.int32).contiguous()
+    # Prepare output buffer
+    output = torch.zeros((M, N), dtype=torch.int32).contiguous()
 
-        # Get pointers
-        A_ptr = ctypes.cast(A.data_ptr(), ctypes.POINTER(ctypes.c_int16))
-        B_ptr = ctypes.cast(B.data_ptr(), ctypes.POINTER(ctypes.c_int16))
-        bias_ptr = ctypes.cast(bias.data_ptr(), ctypes.POINTER(ctypes.c_int32))
-        output_ptr = ctypes.cast(
-            output.data_ptr(), ctypes.POINTER(ctypes.c_int32)
+    # Get pointers
+    A_ptr = ctypes.cast(A.data_ptr(), ctypes.POINTER(ctypes.c_int16))
+    B_ptr = ctypes.cast(B.data_ptr(), ctypes.POINTER(ctypes.c_int16))
+    bias_ptr = ctypes.cast(bias.data_ptr(), ctypes.POINTER(ctypes.c_int32))
+    output_ptr = ctypes.cast(output.data_ptr(), ctypes.POINTER(ctypes.c_int32))
+
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function 'dense' not found in {so_path}",
         )
 
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return False, f"[{op_name}] Function 'dense' not found in {so_path}"
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_int16),
+        ctypes.POINTER(ctypes.c_int16),
+        ctypes.POINTER(ctypes.c_int32),
+        ctypes.POINTER(ctypes.c_int32),
+    ]
+    func.restype = None
 
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_int16),
-            ctypes.POINTER(ctypes.c_int16),
-            ctypes.POINTER(ctypes.c_int32),
-            ctypes.POINTER(ctypes.c_int32),
-        ]
-        func.restype = None
-
-        # Call kernel
-        func(A_ptr, B_ptr, bias_ptr, output_ptr)
-
-        # Compare
-        abs_diff = torch.abs(output - ref)
-        max_diff = abs_diff.max().item()
-
-        if max_diff <= 1:
-            return True, f"[{op_name}] ✅ {file_name}| Max diff: {max_diff}"
-        else:
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | Max diff: {max_diff}",
-            )
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Call kernel
+    func(A_ptr, B_ptr, bias_ptr, output_ptr)
+    return verify_torch_tensor(output, ref, op_name)
 
 
 if __name__ == "__main__":

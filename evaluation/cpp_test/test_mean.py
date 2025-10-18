@@ -12,6 +12,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -36,81 +37,65 @@ def reference_mean(
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled mean kernel."""
-    try:
-        file_name = config["file"]
-        shape = config["args"]
-        reduce_dim = config["axis"]
-        op_name = config["op_name"]
-        dtype_str = config["dtype"]
+    config["file"]
+    shape = config["args"]
+    reduce_dim = config["axis"]
+    op_name = config["op_name"]
+    dtype_str = config["dtype"]
 
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return False, f"[{op_name}] Function '{op_name}' not found in {so_path}"
-
-        # Determine C type
-        ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
-        torch_dtype = (
-            torch.float32 if dtype_str == "float32" else torch.float16
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function '{op_name}' not found in {so_path}",
         )
 
-        # Set function signature
-        rank = len(shape)
-        if rank not in [2, 3, 4]:
-            return False, f"[{op_name}] Rank {rank} not supported (only 2D/3D/4D)"
+    # Determine C type
+    ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+    torch_dtype = torch.float32 if dtype_str == "float32" else torch.float16
 
-        argtypes = [
-            ctypes.POINTER(ctype),  # input
-            ctypes.POINTER(ctype),  # output
-        ]
-
-        func.argtypes = argtypes
-        func.restype = None
-
-        # Generate input
-        input_tensor = torch.rand(shape, dtype=torch_dtype)
-        expected = reference_mean(input_tensor, reduce_dim)
-        output_shape = expected.shape
-        output_numel = expected.numel()
-
-        # Flatten for C
-        input_flat = input_tensor.flatten().numpy()
-        result_array = (ctype * output_numel)()  # allocate C array
-
-        input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctype))
-
-        # Build args list
-        args_list = [input_ptr, result_array] + list(shape) + [reduce_dim]
-
-        # Call kernel
-        func(*args_list)
-
-        # Convert result back
-        computed_flat = torch.tensor(
-            [result_array[i] for i in range(output_numel)], dtype=torch_dtype
+    # Set function signature
+    rank = len(shape)
+    if rank not in [2, 3, 4]:
+        return (
+            False,
+            f"[{op_name}] Rank {rank} not supported (only 2D/3D/4D)",
         )
-        computed = computed_flat.view(output_shape)
 
-        # Compare
-        rtol, atol = (1e-5, 1e-5) if dtype_str == "float32" else (1e-3, 1e-3)
-        if torch.allclose(
-            computed, expected, rtol=rtol, atol=atol, equal_nan=True
-        ):
-            max_error = (computed - expected).abs().max().item()
-            return (
-                True,
-                f"[{op_name}] ✅ {file_name}| Max error: {max_error:.2e}",
-            )
-        else:
-            max_error = (computed - expected).abs().max().item()
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
-            )
+    argtypes = [
+        ctypes.POINTER(ctype),  # input
+        ctypes.POINTER(ctype),  # output
+    ]
 
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    func.argtypes = argtypes
+    func.restype = None
+
+    # Generate input
+    input_tensor = torch.rand(shape, dtype=torch_dtype)
+    expected = reference_mean(input_tensor, reduce_dim)
+    output_shape = expected.shape
+    output_numel = expected.numel()
+
+    # Flatten for C
+    input_flat = input_tensor.flatten().numpy()
+    result_array = (ctype * output_numel)()  # allocate C array
+
+    input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctype))
+
+    # Build args list
+    args_list = [input_ptr, result_array] + list(shape) + [reduce_dim]
+
+    # Call kernel
+    func(*args_list)
+
+    # Convert result back
+    computed_flat = torch.tensor(
+        [result_array[i] for i in range(output_numel)], dtype=torch_dtype
+    )
+    computed = computed_flat.view(output_shape)
+    return verify_torch_tensor(computed, expected, op_name)
 
 
 if __name__ == "__main__":

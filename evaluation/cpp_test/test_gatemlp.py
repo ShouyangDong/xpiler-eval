@@ -13,6 +13,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_numpy_tensor,
 )
 
 # Configure logger
@@ -50,80 +51,59 @@ def reference_gatemlp(
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled GateMLP kernel."""
-    try:
-        B, K, N = config["args"]
-        file_name = config["file"]
-        op_name = config["op_name"]
-        # Generate inputs in int16 range [-10, 10]
-        torch.manual_seed(1234)
-        X_np = torch.randint(
-            low=-10, high=11, size=(B, K), dtype=torch.int16
-        ).numpy()
-        A_np = torch.randint(
-            low=-10, high=11, size=(K, N), dtype=torch.int16
-        ).numpy()
-        B_np = torch.randint(
-            low=-10, high=11, size=(K, N), dtype=torch.int16
-        ).numpy()
+    B, K, N = config["args"]
+    config["file"]
+    op_name = config["op_name"]
+    # Generate inputs in int16 range [-10, 10]
+    torch.manual_seed(1234)
+    X_np = torch.randint(
+        low=-10, high=11, size=(B, K), dtype=torch.int16
+    ).numpy()
+    A_np = torch.randint(
+        low=-10, high=11, size=(K, N), dtype=torch.int16
+    ).numpy()
+    B_np = torch.randint(
+        low=-10, high=11, size=(K, N), dtype=torch.int16
+    ).numpy()
 
-        # Ensure contiguous
-        X_np = np.ascontiguousarray(X_np, dtype=np.int16)
-        A_np = np.ascontiguousarray(A_np, dtype=np.int16)
-        B_np = np.ascontiguousarray(B_np, dtype=np.int16)
+    # Ensure contiguous
+    X_np = np.ascontiguousarray(X_np, dtype=np.int16)
+    A_np = np.ascontiguousarray(A_np, dtype=np.int16)
+    B_np = np.ascontiguousarray(B_np, dtype=np.int16)
 
-        # Reference output
-        ref = reference_gatemlp(X_np, A_np, B_np)
+    # Reference output
+    ref = reference_gatemlp(X_np, A_np, B_np)
 
-        # Prepare output buffer: float32 to hold int32 values
-        output = np.zeros((B, N), dtype=np.float32)
-        output = np.ascontiguousarray(output)
+    # Prepare output buffer: float32 to hold int32 values
+    output = np.zeros((B, N), dtype=np.float32)
+    output = np.ascontiguousarray(output)
 
-        # Get pointers
-        X_ptr = X_np.ctypes.data_as(ctypes.POINTER(ctypes.c_int16))
-        A_ptr = A_np.ctypes.data_as(ctypes.POINTER(ctypes.c_int16))
-        B_ptr = B_np.ctypes.data_as(ctypes.POINTER(ctypes.c_int16))
-        O_ptr = output.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    # Get pointers
+    X_ptr = X_np.ctypes.data_as(ctypes.POINTER(ctypes.c_int16))
+    A_ptr = A_np.ctypes.data_as(ctypes.POINTER(ctypes.c_int16))
+    B_ptr = B_np.ctypes.data_as(ctypes.POINTER(ctypes.c_int16))
+    O_ptr = output.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return (
-                False,
-                f"[{op_name}] Function 'gatemlp' not found in {so_path}",
-            )
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function 'gatemlp' not found in {so_path}",
+        )
 
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_int16),
-            ctypes.POINTER(ctypes.c_int16),
-            ctypes.POINTER(ctypes.c_int16),
-            ctypes.POINTER(ctypes.c_float),  # int32 stored as float
-        ]
-        func.restype = None
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_int16),
+        ctypes.POINTER(ctypes.c_int16),
+        ctypes.POINTER(ctypes.c_int16),
+        ctypes.POINTER(ctypes.c_float),  # int32 stored as float
+    ]
+    func.restype = None
 
-        # Call kernel
-        func(X_ptr, A_ptr, B_ptr, O_ptr)
-
-        # Compare: allow ±2 error due to integer rounding
-        diff = np.abs(output - ref)
-        max_diff = diff.max()
-        mean_diff = diff.mean()
-
-        if max_diff <= 2.0:
-            return (
-                True,
-                f"[{op_name}] ✅ {file_name}| Max diff: {max_diff:.2f}",
-            )
-        else:
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | Max diff: {
-                    max_diff:.2f}, Mean: {
-                    mean_diff:.2f}",
-            )
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Call kernel
+    func(X_ptr, A_ptr, B_ptr, O_ptr)
+    return verify_numpy_tensor(output, ref, op_name)
 
 
 if __name__ == "__main__":

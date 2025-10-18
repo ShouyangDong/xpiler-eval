@@ -13,6 +13,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -35,64 +36,44 @@ def ref_program(x: torch.Tensor) -> torch.Tensor:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled sin kernel (fp32 only)."""
-    try:
-        file_name = config["file"]
-        shape = config["args"]
-        op_name = config["op_name"]
+    config["file"]
+    shape = config["args"]
+    op_name = config["op_name"]
 
-        # Load shared library
-        lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
-        func = getattr(lib, op_name + "_kernel", None)
-        if not func:
-            return False, f"[{op_name}] Function '{op_name}' not found in {so_path}"
-
-        # Set function signature: void sin(float*, float*)
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),  # input
-            ctypes.POINTER(ctypes.c_float),  # output
-        ]
-        func.restype = None
-
-        # Generate input: fp32, contiguous, in range [0, 4π]
-        A_torch = (
-            torch.rand(*shape, device="cpu", dtype=torch.float32)
-            * 4
-            * torch.pi
-        )
-        expected_output = torch.sin(A_torch)  # Golden reference
-
-        # Output tensor
-        result_ctypes = torch.zeros(shape, dtype=torch.float32)
-
-        # Get ctypes pointers (ensure contiguous)
-        input_ptr = A_torch.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        output_ptr = result_ctypes.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
+    # Load shared library
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    func = getattr(lib, op_name + "_kernel", None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function '{op_name}' not found in {so_path}",
         )
 
-        # Call kernel
-        func(input_ptr, output_ptr)
+    # Set function signature: void sin(float*, float*)
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # input
+        ctypes.POINTER(ctypes.c_float),  # output
+    ]
+    func.restype = None
 
-        # Compare with tolerance
-        if torch.allclose(
-            result_ctypes,
-            expected_output,
-            rtol=1e-3,
-            atol=1e-3,
-            equal_nan=True,
-        ):
-            return True, f"[{op_name}] PASSED✅: {file_name}"
-        else:
-            max_error = (result_ctypes - expected_output).abs().max().item()
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
-            )
+    # Generate input: fp32, contiguous, in range [0, 4π]
+    A_torch = (
+        torch.rand(*shape, device="cpu", dtype=torch.float32) * 4 * torch.pi
+    )
+    expected_output = torch.sin(A_torch)  # Golden reference
 
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Output tensor
+    result_ctypes = torch.zeros(shape, dtype=torch.float32)
+
+    # Get ctypes pointers (ensure contiguous)
+    input_ptr = A_torch.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    output_ptr = result_ctypes.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+
+    # Call kernel
+    func(input_ptr, output_ptr)
+    return verify_torch_tensor(result_ctypes, expected_output, op_name)
 
 
 if __name__ == "__main__":

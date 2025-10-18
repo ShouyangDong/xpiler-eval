@@ -12,6 +12,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # ========== Logger ==========
@@ -43,63 +44,48 @@ def reference_instancenorm(input, weight, bias, eps=1e-5):
 # ========== Test One Kernel ==========
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Test compiled kernel correctness (run in subprocess)."""
-    file_name = config["file"]
+    config["file"]
     op_name = config["op_name"]
     N, C, H, W = config["args"]
     eps = 1e-5
 
-    try:
-        input_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
-        weight = torch.rand(C, dtype=torch.float32)
-        bias = torch.rand(C, dtype=torch.float32)
-        expected = reference_instancenorm(input_tensor, weight, bias, eps)
+    input_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
+    weight = torch.rand(C, dtype=torch.float32)
+    bias = torch.rand(C, dtype=torch.float32)
+    expected = reference_instancenorm(input_tensor, weight, bias, eps)
 
-        input_flat = input_tensor.flatten()
-        input_ptr = input_flat.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        weight_ptr = weight.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        bias_ptr = bias.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        result_ctypes = torch.zeros_like(input_flat)
-        output_ptr = result_ctypes.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
+    input_flat = input_tensor.flatten()
+    input_ptr = input_flat.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+    weight_ptr = weight.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    bias_ptr = bias.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    result_ctypes = torch.zeros_like(input_flat)
+    output_ptr = result_ctypes.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
 
-        # local load for safety
-        lib = ctypes.CDLL(so_path, mode=ctypes.RTLD_LOCAL)
-        kernel_func = getattr(lib, op_name, None)
-        kernel_func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),
-            ctypes.POINTER(ctypes.c_float),
-            ctypes.POINTER(ctypes.c_float),
-            ctypes.POINTER(ctypes.c_float),
-            ctypes.c_int,
-            ctypes.c_int,
-            ctypes.c_int,
-            ctypes.c_int,
-            ctypes.c_float,
-        ]
-        kernel_func.restype = None
+    # local load for safety
+    lib = ctypes.CDLL(so_path, mode=ctypes.RTLD_LOCAL)
+    kernel_func = getattr(lib, op_name, None)
+    kernel_func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_float,
+    ]
+    kernel_func.restype = None
 
-        kernel_func(
-            input_ptr, output_ptr, weight_ptr, bias_ptr, N, C, H, W, eps
-        )
-        result_reshaped = result_ctypes.reshape(N, C, H, W)
-
-        torch.allclose(result_reshaped, expected, rtol=1e-3, atol=1e-3)
-        max_err = (result_reshaped - expected).abs().max().item()
-        return (
-            True,
-            f"[{op_name}] ✅ {file_name} PASSED | max_err={max_err:.2e}",
-        )
-
-    except Exception as e:
-        return False, f"[{op_name}] ❌ {file_name} FAILED | {str(e)}"
+    kernel_func(input_ptr, output_ptr, weight_ptr, bias_ptr, N, C, H, W, eps)
+    result_reshaped = result_ctypes.reshape(N, C, H, W)
+    return verify_torch_tensor(result_reshaped, expected, op_name)
 
 
-# ========== CLI ==========
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(

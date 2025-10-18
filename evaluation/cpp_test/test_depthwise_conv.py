@@ -12,6 +12,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_numpy_tensor
 )
 
 # Configure logger
@@ -56,69 +57,52 @@ def depthwise_conv2d(input, w):
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled depthwise_conv2d kernel."""
-    try:
-        input_height, kernel_size, input_channels = config["args"][:3]
-        file_name = config["file"]
-        op_name = config["op_name"]
-        # Define the input tensor, kernel, and parameters
-        input_tensor = np.random.rand(
-            input_height, input_height, input_channels
-        ).astype(np.float32)
-        kernel = np.random.rand(
-            kernel_size, kernel_size, input_channels
-        ).astype(np.float32)
+    input_height, kernel_size, input_channels = config["args"][:3]
+    config["file"]
+    op_name = config["op_name"]
+    # Define the input tensor, kernel, and parameters
+    input_tensor = np.random.rand(
+        input_height, input_height, input_channels
+    ).astype(np.float32)
+    kernel = np.random.rand(kernel_size, kernel_size, input_channels).astype(
+        np.float32
+    )
 
-        # Calculate the output tensor shape
-        output_height = input_height - kernel_size + 1
-        output_width = input_height - kernel_size + 1
+    # Calculate the output tensor shape
+    output_height = input_height - kernel_size + 1
+    output_width = input_height - kernel_size + 1
 
-        # Create an empty output tensor
-        output_ctypes = np.zeros(
-            (output_height, output_width, input_channels), dtype=np.float32
+    # Create an empty output tensor
+    output_ctypes = np.zeros(
+        (output_height, output_width, input_channels), dtype=np.float32
+    )
+
+    # Convert the arrays to contiguous memory for ctypes
+    input_ptr = input_tensor.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    kernel_ptr = kernel.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    output_ptr = output_ctypes.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    # Calculate the result using numpy for comparison
+    output_np = depthwise_conv2d(input_tensor, kernel).astype("float32")
+
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function 'depthwiseconv' not found in {so_path}",
         )
 
-        # Convert the arrays to contiguous memory for ctypes
-        input_ptr = input_tensor.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        kernel_ptr = kernel.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        output_ptr = output_ctypes.ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        # Calculate the result using numpy for comparison
-        output_np = depthwise_conv2d(input_tensor, kernel).astype("float32")
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+    ]
+    func.restype = None
 
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return (
-                False,
-                f"[{op_name}] Function 'depthwiseconv' not found in {so_path}",
-            )
-
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),
-            ctypes.POINTER(ctypes.c_float),
-            ctypes.POINTER(ctypes.c_float),
-        ]
-        func.restype = None
-
-        # Call kernel
-        func(input_ptr, kernel_ptr, output_ptr)
-
-        if np.allclose(
-            output_ctypes, output_np, rtol=1e-03, atol=1e-03, equal_nan=True
-        ):
-            return (True, f"[{op_name}] ✅ {file_name}")
-        else:
-            diff = np.abs(output_ctypes - output_np)
-            max_diff = diff.max()
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | Max diff: {max_diff:.2e}",
-            )
-
-    except Exception as e:
-        return False, f"[{op_name}]❌ Exception in test {file_name}: {str(e)}"
+    # Call kernel
+    func(input_ptr, kernel_ptr, output_ptr)
+    return verify_numpy_tensor(output_ctypes, output_np, op_name)
 
 
 if __name__ == "__main__":

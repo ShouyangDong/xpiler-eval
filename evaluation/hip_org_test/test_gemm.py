@@ -9,6 +9,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -66,13 +67,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # Use .data_ptr() to get raw GPU/CPU memory address (as int,
     # auto-converted by ctypes)
     kernel_func(A.data_ptr(), x.data_ptr(), y_kernel.data_ptr(), M, K, N)
-    # --------------------------------------------------
-    # 7. Verify correctness
-    # --------------------------------------------------
-    if torch.allclose(y_kernel, y_torch, rtol=1e-3, atol=1e-3, equal_nan=True):
-        return True, f"[{op_name}] PASSED✅: {config['file']}"
-    else:
-        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
+    return verify_torch_tensor(y_kernel, y_torch, op_name)
 
 
 if __name__ == "__main__":

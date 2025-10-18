@@ -9,6 +9,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -83,14 +84,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     result_reshaped = output_flat.reshape(expected.shape)
 
     # Verify
-    is_correct = torch.allclose(
-        result_reshaped, expected, rtol=1e-4, atol=1e-4
-    )
-
-    if is_correct:
-        return True, f"[{op_name}] PASSED✅: {config['file']}"
-    else:
-        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
+    return verify_torch_tensor(result_reshaped, expected, op_name=op_name)
 
 
 if __name__ == "__main__":
