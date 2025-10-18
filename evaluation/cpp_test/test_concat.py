@@ -12,6 +12,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -34,57 +35,48 @@ def concat_ref(tensors: List[torch.Tensor], axis: int) -> torch.Tensor:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled concat kernel."""
-    try:
-        file_name = config["file"]
-        shape = config["args"]
-        axis = config["axis"]
-        op_name = config["op_name"]
-        # Create input tensors
-        input1 = torch.randn(*shape, dtype=torch.float32)
-        input2 = torch.randn(*shape, dtype=torch.float32)
+    config["file"]
+    shape = config["args"]
+    axis = config["axis"]
+    op_name = config["op_name"]
+    # Create input tensors
+    input1 = torch.randn(*shape, dtype=torch.float32)
+    input2 = torch.randn(*shape, dtype=torch.float32)
 
-        # Reference output
-        expected = concat_ref([input1, input2], axis=axis)
+    # Reference output
+    expected = concat_ref([input1, input2], axis=axis)
 
-        # Flatten for C++ (row-major)
-        flat1 = input1.flatten().numpy()
-        flat2 = input2.flatten().numpy()
-        output_flat = torch.zeros_like(expected.flatten())
-        out_ptr = output_flat.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
+    # Flatten for C++ (row-major)
+    flat1 = input1.flatten().numpy()
+    flat2 = input2.flatten().numpy()
+    output_flat = torch.zeros_like(expected.flatten())
+    out_ptr = output_flat.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+
+    # Get pointers
+    ptr1 = flat1.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    ptr2 = flat2.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+
+    # Load library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function 'concat' not found in {so_path}",
         )
 
-        # Get pointers
-        ptr1 = flat1.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        ptr2 = flat2.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    func.argtypes = [ctypes.POINTER(ctypes.c_float)] * 3
+    func.restype = None
 
-        # Load library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return False, f"[{op_name}] Function 'concat' not found in {so_path}"
+    # Call kernel
+    func(ptr1, ptr2, out_ptr)
 
-        func.argtypes = [ctypes.POINTER(ctypes.c_float)] * 3
-        func.restype = None
+    # Reshape and compare
+    result_reshaped = output_flat.reshape(expected.shape)
 
-        # Call kernel
-        func(ptr1, ptr2, out_ptr)
-
-        # Reshape and compare
-        result_reshaped = output_flat.reshape(expected.shape)
-        if torch.allclose(
-            result_reshaped, expected, rtol=1e-4, atol=1e-4, equal_nan=True
-        ):
-            return True, f"[{op_name}] PASSED✅: {file_name}"
-        else:
-            max_error = (result_reshaped - expected).abs().max().item()
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
-            )
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    return verify_torch_tensor(result_reshaped, expected, op_name)
 
 
 if __name__ == "__main__":

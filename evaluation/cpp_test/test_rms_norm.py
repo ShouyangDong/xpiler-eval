@@ -12,6 +12,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -34,74 +35,52 @@ def reference_rmsnorm(x: torch.Tensor) -> torch.Tensor:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled RMSNorm kernel."""
-    try:
-        file_name = config["file"]
-        shape = config["args"]
-        dtype_str = config["dtype"]
-        op_name = config["op_name"]
+    config["file"]
+    shape = config["args"]
+    dtype_str = config["dtype"]
+    op_name = config["op_name"]
 
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return (
-                False,
-                f"[{op_name}] Function '{op_name}' not found in {so_path}",
-            )
-
-        # Determine C type and torch dtype
-        ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
-        torch_dtype = (
-            torch.float32 if dtype_str == "float32" else torch.float16
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function '{op_name}' not found in {so_path}",
         )
 
-        # Set function signature: void rmsnorm(float* input, float* output)
-        func.argtypes = [
-            ctypes.POINTER(ctype),
-            ctypes.POINTER(ctype),
-        ]
-        func.restype = None
+    # Determine C type and torch dtype
+    ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+    torch_dtype = torch.float32 if dtype_str == "float32" else torch.float16
 
-        # Generate input
-        input_tensor = torch.randn(shape, dtype=torch_dtype)
-        expected = reference_rmsnorm(input_tensor)
+    # Set function signature: void rmsnorm(float* input, float* output)
+    func.argtypes = [
+        ctypes.POINTER(ctype),
+        ctypes.POINTER(ctype),
+    ]
+    func.restype = None
 
-        # Flatten for C
-        input_flat = input_tensor.flatten().numpy()
-        output_flat = torch.zeros_like(input_tensor).flatten().numpy()
-        output_array = (ctype * output_flat.size)()
+    # Generate input
+    input_tensor = torch.randn(shape, dtype=torch_dtype)
+    expected = reference_rmsnorm(input_tensor)
 
-        input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctype))
-        output_ptr = output_array
+    # Flatten for C
+    input_flat = input_tensor.flatten().numpy()
+    output_flat = torch.zeros_like(input_tensor).flatten().numpy()
+    output_array = (ctype * output_flat.size)()
 
-        # Call kernel
-        func(input_ptr, output_ptr)
+    input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctype))
+    output_ptr = output_array
 
-        # Convert result back
-        computed_flat = torch.tensor(
-            [output_array[i] for i in range(output_flat.size)],
-            dtype=torch_dtype,
-        ).view(shape)
+    # Call kernel
+    func(input_ptr, output_ptr)
 
-        # Compare
-        rtol, atol = (1e-3, 1e-3) if dtype_str == "float32" else (5e-2, 5e-2)
-        if torch.allclose(
-            computed_flat, expected, rtol=rtol, atol=atol, equal_nan=True
-        ):
-            max_error = (computed_flat - expected).abs().max().item()
-            return (
-                True,
-                f"[{op_name}] ✅ {file_name}| Max error: {max_error:.2e}",
-            )
-        else:
-            max_error = (computed_flat - expected).abs().max().item()
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
-            )
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Convert result back
+    computed_flat = torch.tensor(
+        [output_array[i] for i in range(output_flat.size)],
+        dtype=torch_dtype,
+    ).view(shape)
+    return verify_torch_tensor(computed_flat, expected, op_name)
 
 
 if __name__ == "__main__":

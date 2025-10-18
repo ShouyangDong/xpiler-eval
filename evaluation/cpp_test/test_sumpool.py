@@ -12,7 +12,7 @@ import torch
 from evaluation.macros import CPP_MACROS as macro
 from evaluation.utils import parse_op_json
 from evaluation.utils import run_cpp_compilation as run_compilation
-from evaluation.utils import run_tests, sumpool_np
+from evaluation.utils import run_tests, sumpool_np, verify_torch_tensor
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -64,84 +64,56 @@ def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled sumpool kernel."""
-    try:
-        file_name = config["file"]
-        input_shape = config["args"][:4]
-        kernel_size = config["args"][4:6]
-        stride = config["args"][6:8]
-        dtype_str = config["dtype"]
-        op_name = config["op_name"]
+    config["file"]
+    input_shape = config["args"][:4]
+    kernel_size = config["args"][4:6]
+    stride = config["args"][6:8]
+    dtype_str = config["dtype"]
+    op_name = config["op_name"]
 
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return (
-                False,
-                f"[{op_name}] Function '{op_name}' not found in {so_path}",
-            )
-
-        # Determine C type and numpy dtype
-        ctype_float = (
-            ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
-        )
-        np_dtype = np.float32 if dtype_str == "float32" else np.float16
-        torch_dtype = (
-            torch.float32 if dtype_str == "float32" else torch.float16
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function '{op_name}' not found in {so_path}",
         )
 
-        # Set function signature
-        func.argtypes = [
-            ctypes.POINTER(ctype_float),  # input
-            ctypes.POINTER(ctype_float),  # output
-        ]
-        func.restype = None
+    # Determine C type and numpy dtype
+    ctype_float = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+    np_dtype = np.float32 if dtype_str == "float32" else np.float16
+    torch_dtype = torch.float32 if dtype_str == "float32" else torch.float16
 
-        # Generate input
-        input_np = np.random.rand(*input_shape).astype(np_dtype)
-        input_torch = torch.from_numpy(input_np).to(dtype=torch_dtype)
+    # Set function signature
+    func.argtypes = [
+        ctypes.POINTER(ctype_float),  # input
+        ctypes.POINTER(ctype_float),  # output
+    ]
+    func.restype = None
 
-        # Compute reference output
-        expected_output = sumpool_np(input_torch, kernel_size + stride)
-        output_shape = expected_output.shape
-        output_size = expected_output.numel()
-        output_np = np.zeros(output_size, dtype=np_dtype)
+    # Generate input
+    input_np = np.random.rand(*input_shape).astype(np_dtype)
+    input_torch = torch.from_numpy(input_np).to(dtype=torch_dtype)
 
-        # Get pointers
-        input_ptr = input_np.ctypes.data_as(ctypes.POINTER(ctype_float))
-        output_ptr = output_np.ctypes.data_as(ctypes.POINTER(ctype_float))
+    # Compute reference output
+    expected_output = sumpool_np(input_torch, kernel_size + stride)
+    output_shape = expected_output.shape
+    output_size = expected_output.numel()
+    output_np = np.zeros(output_size, dtype=np_dtype)
 
-        # Call kernel
-        func(input_ptr, output_ptr)
+    # Get pointers
+    input_ptr = input_np.ctypes.data_as(ctypes.POINTER(ctype_float))
+    output_ptr = output_np.ctypes.data_as(ctypes.POINTER(ctype_float))
 
-        # Convert back to tensor
-        output_torch = (
-            torch.from_numpy(output_np)
-            .view(output_shape)
-            .to(dtype=torch_dtype)
-        )
+    # Call kernel
+    func(input_ptr, output_ptr)
 
-        # Compare
-        rtol, atol = (1e-3, 1e-3) if dtype_str == "float32" else (5e-2, 5e-2)
-        if torch.allclose(
-            output_torch, expected_output, rtol=rtol, atol=atol, equal_nan=True
-        ):
-            max_error = (output_torch - expected_output).abs().max().item()
-            return (
-                True,
-                f"[{op_name}] ✅ {file_name}| In: {input_shape} → Out: {
-                    list(output_shape)} | Max error: {
-                    max_error:.2e}",
-            )
-        else:
-            max_error = (output_torch - expected_output).abs().max().item()
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
-            )
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Convert back to tensor
+    output_torch = (
+        torch.from_numpy(output_np).view(output_shape).to(dtype=torch_dtype)
+    )
+    return verify_torch_tensor(output_torch, expected_output, op_name)
 
 
 if __name__ == "__main__":

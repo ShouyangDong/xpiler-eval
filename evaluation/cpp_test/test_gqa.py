@@ -12,6 +12,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -45,75 +46,51 @@ def reference_gqa(
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled GQA kernel."""
-    try:
-        B = config["batch"]
-        H = config["num_heads"]
-        Sq = config["seq_q"]
-        Skv = config["seq_kv"]
-        D = config["head_dim"]
-        file_name = config["file"]
-        op_name = config["op_name"]
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return False, f"[{op_name}] Function 'gqa' not found in {so_path}"
+    B = config["batch"]
+    H = config["num_heads"]
+    Sq = config["seq_q"]
+    Skv = config["seq_kv"]
+    D = config["head_dim"]
+    config["file"]
+    op_name = config["op_name"]
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
 
-        # Set function signature
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),  # Q
-            ctypes.POINTER(ctypes.c_float),  # K
-            ctypes.POINTER(ctypes.c_float),  # V
-            ctypes.POINTER(ctypes.c_float),  # O
-            ctypes.c_int,  # batch
-            ctypes.c_int,  # num_heads
-            ctypes.c_int,  # seq_q
-            ctypes.c_int,  # seq_kv
-            ctypes.c_int,  # head_dim
-        ]
-        func.restype = None
+    # Set function signature
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # Q
+        ctypes.POINTER(ctypes.c_float),  # K
+        ctypes.POINTER(ctypes.c_float),  # V
+        ctypes.POINTER(ctypes.c_float),  # O
+        ctypes.c_int,  # batch
+        ctypes.c_int,  # num_heads
+        ctypes.c_int,  # seq_q
+        ctypes.c_int,  # seq_kv
+        ctypes.c_int,  # head_dim
+    ]
+    func.restype = None
 
-        # Generate input
-        torch.manual_seed(1234)
-        Q = torch.randn(B, H, Sq, D, dtype=torch.float32)
-        # Note: K is [B, H, D, Skv]
-        K = torch.randn(B, H, D, Skv, dtype=torch.float32)
-        V = torch.randn(B, H, Skv, D, dtype=torch.float32)
-        O = torch.zeros(B, H, Sq, D, dtype=torch.float32)
+    # Generate input
+    torch.manual_seed(1234)
+    Q = torch.randn(B, H, Sq, D, dtype=torch.float32)
+    # Note: K is [B, H, D, Skv]
+    K = torch.randn(B, H, D, Skv, dtype=torch.float32)
+    V = torch.randn(B, H, Skv, D, dtype=torch.float32)
+    O = torch.zeros(B, H, Sq, D, dtype=torch.float32)
 
-        # Reference
-        O_ref = reference_gqa(Q, K, V)
+    # Reference
+    O_ref = reference_gqa(Q, K, V)
 
-        # Get pointers
-        Q_ptr = Q.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        K_ptr = K.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        V_ptr = V.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        O_ptr = O.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    # Get pointers
+    Q_ptr = Q.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    K_ptr = K.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    V_ptr = V.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    O_ptr = O.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
-        # Call kernel
-        func(Q_ptr, K_ptr, V_ptr, O_ptr, B, H, Sq, Skv, D)
-
-        # Compare
-        try:
-            torch.testing.assert_close(
-                O,
-                O_ref,
-                rtol=5e-3,
-                atol=5e-3,
-                check_dtype=True,
-                equal_nan=False,
-                msg=lambda msg: f"[{op_name}] {file_name} failed: {msg}",
-            )
-            max_abs_err = (O - O_ref).abs().max().item()
-            return (
-                True,
-                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
-            )
-        except Exception as e:
-            return False, f"[{op_name}] FAILED❌: {file_name} | {str(e)}"
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Call kernel
+    func(Q_ptr, K_ptr, V_ptr, O_ptr, B, H, Sq, Skv, D)
+    return verify_torch_tensor(O, O_ref, op_name)
 
 
 if __name__ == "__main__":

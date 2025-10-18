@@ -11,6 +11,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -52,15 +53,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     func.argtypes = [ctypes.POINTER(ctypes.c_float)] * 3
     func.restype = None
     func(A_ptr, B_ptr, out_ptr)
-    try:
-        # Verify
-        torch.allclose(
-            output_tensor, ref, rtol=1e-3, atol=1e-3, equal_nan=True
-        )
-        return True, f"[{op_name}] PASSED✅: {config['file']}"
-
-    except Exception as e:
-        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
+    return verify_torch_tensor(output_tensor, ref, op_name)
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_numpy_tensor,
 )
 
 # Configure logger
@@ -34,56 +35,35 @@ def reference_gelu(x: np.ndarray) -> np.ndarray:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled GELU kernel."""
-    try:
-        N = np.prod(config["args"])
-        file_name = config["file"]
-        op_name = config["op_name"]
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return False, f"[{op_name}] Function 'gelu' not found in {so_path}"
+    N = np.prod(config["args"])
+    config["file"]
+    op_name = config["op_name"]
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return False, f"[{op_name}] Function 'gelu' not found in {so_path}"
 
-        # Set function signature
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),  # input
-            ctypes.POINTER(ctypes.c_float),  # output
-        ]
-        func.restype = None
+    # Set function signature
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # input
+        ctypes.POINTER(ctypes.c_float),  # output
+    ]
+    func.restype = None
 
-        # Generate input
-        np.random.seed(1234)
-        input_data = np.random.uniform(-5, 5, size=N).astype(np.float32)
-        expected = reference_gelu(input_data)
-        output_data = np.zeros_like(input_data)
+    # Generate input
+    np.random.seed(1234)
+    input_data = np.random.uniform(-5, 5, size=N).astype(np.float32)
+    expected = reference_gelu(input_data)
+    output_data = np.zeros_like(input_data)
 
-        # Get pointers
-        input_ptr = input_data.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        output_ptr = output_data.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    # Get pointers
+    input_ptr = input_data.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    output_ptr = output_data.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
-        # Call kernel
-        func(input_ptr, output_ptr)
-
-        # Compare
-        max_abs_err = np.max(np.abs(output_data - expected))
-        max_rel_err = np.max(
-            np.abs(output_data - expected) / (np.abs(expected) + 1e-8)
-        )
-
-        if max_abs_err < 1e-3:
-            return (
-                True,
-                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
-            )
-        else:
-            return False, (
-                f"[{op_name}] FAILED❌: {file_name} | Max abs error: {
-                    max_abs_err:.2e}, "
-                f"Max rel error: {max_rel_err:.2e}"
-            )
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Call kernel
+    func(input_ptr, output_ptr)
+    return verify_numpy_tensor(output_data, expected, op_name)
 
 
 if __name__ == "__main__":

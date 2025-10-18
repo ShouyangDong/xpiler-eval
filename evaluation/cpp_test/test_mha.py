@@ -14,6 +14,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -47,77 +48,54 @@ def reference_mha(
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled MHA kernel."""
-    try:
-        shape = config["args"]
-        causal = config.get("causal", False)
-        dtype_str = config.get("dtype", "float32")
-        file_name = config["file"]
-        op_name = config["op_name"]
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return False, f"[{op_name}] Function 'mha' not found in {so_path}"
+    shape = config["args"]
+    causal = config.get("causal", False)
+    dtype_str = config.get("dtype", "float32")
+    config["file"]
+    op_name = config["op_name"]
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return False, f"[{op_name}] Function 'mha' not found in {so_path}"
 
-        # Set function signature
-        ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
-        torch_dtype = (
-            torch.float32 if dtype_str == "float32" else torch.float16
-        )
+    # Set function signature
+    ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+    torch_dtype = torch.float32 if dtype_str == "float32" else torch.float16
 
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),
-            ctypes.POINTER(ctypes.c_float),
-            ctypes.POINTER(ctypes.c_float),
-            ctypes.POINTER(ctypes.c_float),
-        ]
-        func.restype = None
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+    ]
+    func.restype = None
 
-        # Generate input
-        torch.manual_seed(1234)
-        q = torch.randn(shape, dtype=torch_dtype)
-        k = torch.randn(shape, dtype=torch_dtype)
-        v = torch.randn(shape, dtype=torch_dtype)
+    # Generate input
+    torch.manual_seed(1234)
+    q = torch.randn(shape, dtype=torch_dtype)
+    k = torch.randn(shape, dtype=torch_dtype)
+    v = torch.randn(shape, dtype=torch_dtype)
 
-        expected = reference_mha(q, k, v, causal=causal).cpu()
+    expected = reference_mha(q, k, v, causal=causal).cpu()
 
-        # Flatten and get pointers
-        q_flat = q.flatten().numpy()
-        k_flat = k.flatten().numpy()
-        v_flat = v.flatten().numpy()
-        out_flat = (
-            torch.zeros(expected.shape, dtype=torch_dtype).flatten().numpy()
-        )
+    # Flatten and get pointers
+    q_flat = q.flatten().numpy()
+    k_flat = k.flatten().numpy()
+    v_flat = v.flatten().numpy()
+    out_flat = torch.zeros(expected.shape, dtype=torch_dtype).flatten().numpy()
 
-        ptr_q = q_flat.ctypes.data_as(ctypes.POINTER(ctype))
-        ptr_k = k_flat.ctypes.data_as(ctypes.POINTER(ctype))
-        ptr_v = v_flat.ctypes.data_as(ctypes.POINTER(ctype))
-        ptr_out = out_flat.ctypes.data_as(ctypes.POINTER(ctype))
+    ptr_q = q_flat.ctypes.data_as(ctypes.POINTER(ctype))
+    ptr_k = k_flat.ctypes.data_as(ctypes.POINTER(ctype))
+    ptr_v = v_flat.ctypes.data_as(ctypes.POINTER(ctype))
+    ptr_out = out_flat.ctypes.data_as(ctypes.POINTER(ctype))
 
-        # Call kernel
-        func(ptr_q, ptr_k, ptr_v, ptr_out, causal)
+    # Call kernel
+    func(ptr_q, ptr_k, ptr_v, ptr_out, causal)
 
-        # Reshape and compare
-        result = torch.from_numpy(out_flat).reshape(expected.shape).cpu()
-
-        try:
-            torch.allclose(
-                result,
-                expected,
-                rtol=1e-3,
-                atol=1e-3,
-                equal_nan=False,
-            )
-            max_abs_err = (result - expected).abs().max().item()
-            return (
-                True,
-                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
-            )
-        except Exception as e:
-            return False, f"[{op_name}] FAILED❌: {file_name} | {str(e)}"
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Reshape and compare
+    result = torch.from_numpy(out_flat).reshape(expected.shape).cpu()
+    return verify_torch_tensor(result, expected, op_name)
 
 
 if __name__ == "__main__":

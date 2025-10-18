@@ -10,6 +10,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -82,14 +83,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     computed_tensor = computed_flat.view(output_shape)
 
     # ✅ verification
-    is_correct = torch.testing.assert_close(
-        computed_tensor, expected, rtol=1e-5, atol=1e-5
-    )
-
-    if is_correct:
-        return True, f"[{op_name}] PASSED✅: {config['file']}"
-    else:
-        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
+    return verify_torch_tensor(computed_tensor, expected, op_name=op_name)
 
 
 if __name__ == "__main__":

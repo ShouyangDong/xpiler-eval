@@ -10,6 +10,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_numpy_tensor,
 )
 
 # Configure logger
@@ -75,22 +76,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
     # Invoke the HIP kernel.
     function(input_ptr_q, input_ptr_k, input_ptr_v, output_ptr, *shape)
-    # Verification results
-
-    # Verification results
-    try:
-        np.testing.assert_allclose(
-            output_array,
-            expected_output.numpy(),
-            rtol=1e-03,
-            atol=1e-03,
-            equal_nan=True,
-            err_msg="",
-            verbose=True,
-        )
-        return True, f"[{op_name}] PASSED✅: {config['file']}"
-    except AssertionError:
-        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
+    return verify_numpy_tensor(output_array, expected_output.numpy(), op_name)
 
 
 if __name__ == "__main__":

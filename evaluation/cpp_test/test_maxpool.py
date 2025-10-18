@@ -13,6 +13,7 @@ from evaluation.utils import (
     maxpool_np,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -30,70 +31,48 @@ if not logger.handlers:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled maxpool kernel."""
-    try:
-        shape = config["args"][:4]
-        kernel = config["args"][4:6]
-        stride = config["args"][6:8]
+    shape = config["args"][:4]
+    kernel = config["args"][4:6]
+    stride = config["args"][6:8]
 
-        file_name = config["file"]
-        dtype_str = config.get("dtype", "float32")
+    config["file"]
+    dtype_str = config.get("dtype", "float32")
 
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        op_name = config["op_name"]
-        func = getattr(lib, op_name, None)
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    op_name = config["op_name"]
+    func = getattr(lib, op_name, None)
 
-        # Set function signature
-        ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
-        torch_dtype = (
-            torch.float32 if dtype_str == "float32" else torch.float16
-        )
+    # Set function signature
+    ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+    torch_dtype = torch.float32 if dtype_str == "float32" else torch.float16
 
-        func.argtypes = [
-            ctypes.POINTER(ctype),  # input
-            ctypes.POINTER(ctype),  # output
-        ]
-        func.restype = None
+    func.argtypes = [
+        ctypes.POINTER(ctype),  # input
+        ctypes.POINTER(ctype),  # output
+    ]
+    func.restype = None
 
-        # Generate input
-        torch.manual_seed(1234)
-        input_tensor = torch.randn(*shape, dtype=torch_dtype) * 100
-        expected = maxpool_np(input_tensor, kernel + stride)
+    # Generate input
+    torch.manual_seed(1234)
+    input_tensor = torch.randn(*shape, dtype=torch_dtype) * 100
+    expected = maxpool_np(input_tensor, kernel + stride)
 
-        # Flatten and get pointers
-        input_flat = input_tensor.flatten().numpy()
-        output_flat = (
-            torch.zeros(expected.shape, dtype=torch_dtype).flatten().numpy()
-        )
+    # Flatten and get pointers
+    input_flat = input_tensor.flatten().numpy()
+    output_flat = (
+        torch.zeros(expected.shape, dtype=torch_dtype).flatten().numpy()
+    )
 
-        input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctype))
-        output_ptr = output_flat.ctypes.data_as(ctypes.POINTER(ctype))
+    input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctype))
+    output_ptr = output_flat.ctypes.data_as(ctypes.POINTER(ctype))
 
-        # Call kernel
-        func(input_ptr, output_ptr)
+    # Call kernel
+    func(input_ptr, output_ptr)
 
-        # Reshape and compare
-        result_reshaped = torch.from_numpy(output_flat).reshape(expected.shape)
-
-        try:
-            rtol, atol = (
-                (1e-3, 1e-3) if dtype_str == "float32" else (1e-2, 5e-2)
-            )
-            torch.allclose(
-                result_reshaped,
-                expected,
-                rtol=rtol,
-                equal_nan=False,
-            )
-            return (
-                True,
-                f"[{op_name}] PASSED✅: {file_name}",
-            )
-        except Exception as e:
-            return False, f"[{op_name}] FAILED❌: {file_name} | {str(e)}"
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Reshape and compare
+    result_reshaped = torch.from_numpy(output_flat).reshape(expected.shape)
+    return verify_torch_tensor(result_reshaped, expected, op_name)
 
 
 if __name__ == "__main__":

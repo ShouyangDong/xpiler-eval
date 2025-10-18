@@ -12,6 +12,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -42,76 +43,57 @@ def ref_program(x_tensor, gamma, beta, eps=1e-5):
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled LayerNorm kernel."""
-    try:
-        shape = config["args"]
-        file_name = config["file"]
-        op_name = config["op_name"]
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return (
-                False,
-                f"[{op_name}] Function 'layernorm' not found in {so_path}",
-            )
-
-        # Set function signature
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),  # input
-            ctypes.POINTER(ctypes.c_float),  # weight (gamma)
-            ctypes.POINTER(ctypes.c_float),  # bias (beta)
-            ctypes.POINTER(ctypes.c_float),  # output
-        ]
-        func.restype = None
-
-        # Generate input
-        torch.manual_seed(1234)
-        # Create the input array.
-        input_array = torch.randn(shape)
-        gamma_array = torch.randn(shape[-1:])
-        beta_array = torch.randn(shape[-1:])
-
-        # Use the modified ref_program for layer normalization calculation.
-        expected_output = ref_program(input_array, gamma_array, beta_array)
-
-        # Create the output array.
-        output_array = torch.zeros(shape)
-
-        # Convert the input and output arrays to C pointer types.
-        input_ptr = input_array.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        gamma_ptr = gamma_array.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        beta_ptr = beta_array.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        output_ptr = output_array.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
+    shape = config["args"]
+    config["file"]
+    op_name = config["op_name"]
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function 'layernorm' not found in {so_path}",
         )
 
-        # If the call to the C func can be preserved:
-        func(input_ptr, gamma_ptr, beta_ptr, output_ptr)
+    # Set function signature
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # input
+        ctypes.POINTER(ctypes.c_float),  # weight (gamma)
+        ctypes.POINTER(ctypes.c_float),  # bias (beta)
+        ctypes.POINTER(ctypes.c_float),  # output
+    ]
+    func.restype = None
 
-        try:
-            torch.allclose(
-                output_array,
-                expected_output,
-                rtol=1e-3,
-                atol=1e-3,
-                equal_nan=False,
-            )
-            max_abs_err = (output_array - expected_output).abs().max().item()
-            return (
-                True,
-                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
-            )
-        except Exception as e:
-            return False, f"[{op_name}] FAILED❌: {file_name} | {str(e)}"
+    # Generate input
+    torch.manual_seed(1234)
+    # Create the input array.
+    input_array = torch.randn(shape)
+    gamma_array = torch.randn(shape[-1:])
+    beta_array = torch.randn(shape[-1:])
 
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Use the modified ref_program for layer normalization calculation.
+    expected_output = ref_program(input_array, gamma_array, beta_array)
+
+    # Create the output array.
+    output_array = torch.zeros(shape)
+
+    # Convert the input and output arrays to C pointer types.
+    input_ptr = input_array.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+    gamma_ptr = gamma_array.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+    beta_ptr = beta_array.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+    output_ptr = output_array.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+
+    # If the call to the C func can be preserved:
+    func(input_ptr, gamma_ptr, beta_ptr, output_ptr)
+    return verify_torch_tensor(output_array, expected_output, op_name)
 
 
 if __name__ == "__main__":

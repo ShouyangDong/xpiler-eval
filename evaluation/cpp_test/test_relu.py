@@ -13,6 +13,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_numpy_tensor,
 )
 
 # Configure logger
@@ -36,74 +37,47 @@ def reference_relu(input_array: np.ndarray) -> np.ndarray:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled ReLU kernel."""
-    try:
-        shape = config["args"]
-        file_name = config["file"]
-        dtype_str = config.get("dtype", "float32")
-        op_name = config["op_name"]
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return (
-                False,
-                f"[{op_name}] Function '{func_name}' not found in {so_path}",
-            )
+    shape = config["args"]
+    config["file"]
+    dtype_str = config.get("dtype", "float32")
+    op_name = config["op_name"]
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function '{func_name}' not found in {so_path}",
+        )
 
-        # Set function signature
-        ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
-        np_dtype = np.float32 if dtype_str == "float32" else np.float16
+    # Set function signature
+    ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+    np_dtype = np.float32 if dtype_str == "float32" else np.float16
 
-        func.argtypes = [
-            ctypes.POINTER(ctype),  # input
-            ctypes.POINTER(ctype),  # output
-        ]
-        func.restype = None
+    func.argtypes = [
+        ctypes.POINTER(ctype),  # input
+        ctypes.POINTER(ctype),  # output
+    ]
+    func.restype = None
 
-        # Generate input data
-        np.random.seed(1234)
-        input_array = np.random.uniform(-5.0, 5.0, size=shape).astype(np_dtype)
-        expected = reference_relu(input_array)
+    # Generate input data
+    np.random.seed(1234)
+    input_array = np.random.uniform(-5.0, 5.0, size=shape).astype(np_dtype)
+    expected = reference_relu(input_array)
 
-        # Flatten and get pointers
-        input_flat = input_array.flatten()
-        output_flat = np.zeros_like(input_flat)
+    # Flatten and get pointers
+    input_flat = input_array.flatten()
+    output_flat = np.zeros_like(input_flat)
 
-        input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctype))
-        output_ptr = output_flat.ctypes.data_as(ctypes.POINTER(ctype))
+    input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctype))
+    output_ptr = output_flat.ctypes.data_as(ctypes.POINTER(ctype))
 
-        # Call kernel
-        func(input_ptr, output_ptr)
+    # Call kernel
+    func(input_ptr, output_ptr)
 
-        # Reshape result
-        result_reshaped = output_flat.reshape(shape)
-
-        # Compare
-        try:
-            rtol, atol = (
-                (1e-3, 1e-3) if dtype_str == "float32" else (1e-2, 1e-2)
-            )
-            np.testing.assert_allclose(
-                result_reshaped,
-                expected,
-                rtol=rtol,
-                atol=atol,
-                equal_nan=False,
-                err_msg=f"[{op_name}] {file_name} failed",
-            )
-            max_abs_err = np.max(np.abs(result_reshaped - expected))
-            return (
-                True,
-                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
-            )
-        except AssertionError as e:
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | {str(e).splitlines()[0]}",
-            )
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Reshape result
+    result_reshaped = output_flat.reshape(shape)
+    return verify_numpy_tensor(result_reshaped, expected, op_name)
 
 
 if __name__ == "__main__":

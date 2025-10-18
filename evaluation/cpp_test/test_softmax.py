@@ -13,6 +13,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -35,72 +36,48 @@ def ref_program(x: torch.Tensor) -> torch.Tensor:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled softmax kernel."""
-    try:
-        file_name = config["file"]
-        shape = config["args"]
-        dtype_str = config["dtype"]
-        op_name = config["op_name"]
+    config["file"]
+    shape = config["args"]
+    dtype_str = config["dtype"]
+    op_name = config["op_name"]
 
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return (
-                False,
-                f"[{op_name}] Function '{op_name}' not found in {so_path}",
-            )
-
-        # Determine C type and numpy dtype
-        ctype_float = (
-            ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
-        )
-        np_dtype = np.float32 if dtype_str == "float32" else np.float16
-        torch_dtype = (
-            torch.float32 if dtype_str == "float32" else torch.float16
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function '{op_name}' not found in {so_path}",
         )
 
-        # Set function signature
-        func.argtypes = [
-            ctypes.POINTER(ctype_float),  # input
-            ctypes.POINTER(ctype_float),  # output
-        ]
-        func.restype = None
+    # Determine C type and numpy dtype
+    ctype_float = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+    np_dtype = np.float32 if dtype_str == "float32" else np.float16
+    torch_dtype = torch.float32 if dtype_str == "float32" else torch.float16
 
-        # Generate input
-        A_np = np.random.randn(*shape).astype(np_dtype)
-        A_torch = torch.from_numpy(A_np).to(dtype=torch_dtype)
-        expected_output = ref_program(A_torch)
+    # Set function signature
+    func.argtypes = [
+        ctypes.POINTER(ctype_float),  # input
+        ctypes.POINTER(ctype_float),  # output
+    ]
+    func.restype = None
 
-        # Prepare output array
-        output_np = np.zeros_like(A_np)
-        input_ptr = A_np.ctypes.data_as(ctypes.POINTER(ctype_float))
-        output_ptr = output_np.ctypes.data_as(ctypes.POINTER(ctype_float))
+    # Generate input
+    A_np = np.random.randn(*shape).astype(np_dtype)
+    A_torch = torch.from_numpy(A_np).to(dtype=torch_dtype)
+    expected_output = ref_program(A_torch)
 
-        # Call kernel
-        func(input_ptr, output_ptr)
+    # Prepare output array
+    output_np = np.zeros_like(A_np)
+    input_ptr = A_np.ctypes.data_as(ctypes.POINTER(ctype_float))
+    output_ptr = output_np.ctypes.data_as(ctypes.POINTER(ctype_float))
 
-        # Convert result back to torch tensor
-        output_torch = torch.from_numpy(output_np).to(dtype=torch_dtype)
+    # Call kernel
+    func(input_ptr, output_ptr)
 
-        # Compare
-        rtol, atol = (1e-3, 1e-3) if dtype_str == "float32" else (5e-2, 5e-2)
-        if torch.allclose(
-            output_torch, expected_output, rtol=rtol, atol=atol, equal_nan=True
-        ):
-            max_error = (output_torch - expected_output).abs().max().item()
-            return (
-                True,
-                f"[{op_name}] ✅ {file_name}| Max error: {max_error:.2e}",
-            )
-        else:
-            max_error = (output_torch - expected_output).abs().max().item()
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
-            )
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Convert result back to torch tensor
+    output_torch = torch.from_numpy(output_np).to(dtype=torch_dtype)
+    return verify_torch_tensor(output_torch, expected_output, op_name)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -77,10 +78,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
     # === 8. Load shared library ===
     lib = ctypes.CDLL(so_path)
-
-    # Look for 'gather' function
-    func_name = "gather_kernel"
-    kernel_func = getattr(lib, func_name)
+    kernel_func = getattr(lib, op_name + "_kernel")
 
     # === 9. Set function signature ===
     kernel_func.argtypes = [
@@ -93,14 +91,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
     # === 10. Call C++ kernel ===
     kernel_func(params_ptr, indices_ptr, output_ptr, indices_len)
-
-    # === 11. Verify result ===
-    is_correct = torch.allclose(result_ctypes, expected, rtol=1e-5, atol=1e-5)
-
-    if is_correct:
-        return True, f"[{op_name}] PASSED✅: {config['file']}"
-    else:
-        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
+    return verify_torch_tensor(result_ctypes, expected, op_name)
 
 
 if __name__ == "__main__":

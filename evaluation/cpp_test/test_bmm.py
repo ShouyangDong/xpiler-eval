@@ -16,6 +16,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # ------------------ Logging setup ------------------
@@ -34,55 +35,38 @@ if not logger.handlers:
 # ------------------ Testing ------------------
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled BMM kernel."""
-    try:
-        B, M, K, N = config["args"]
-        file_name = config["file"]
-        op_name = config["op_name"]
+    B, M, K, N = config["args"]
+    config["file"]
+    op_name = config["op_name"]
 
-        # Generate input tensors
-        A = torch.randn(B, M, K, dtype=torch.float32)
-        B_ = torch.randn(B, K, N, dtype=torch.float32)
-        ref = torch.matmul(A, B_)  # reference result
+    # Generate input tensors
+    A = torch.randn(B, M, K, dtype=torch.float32)
+    B_ = torch.randn(B, K, N, dtype=torch.float32)
+    ref = torch.matmul(A, B_)  # reference result
 
-        # Prepare output buffer
-        C = torch.zeros((B, M, N), dtype=torch.float32)
+    # Prepare output buffer
+    C = torch.zeros((B, M, N), dtype=torch.float32)
 
-        # Convert to ctypes
-        A_ptr = A.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        B_ptr = B_.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        C_ptr = C.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    # Convert to ctypes
+    A_ptr = A.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    B_ptr = B_.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    C_ptr = C.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),  # A
-            ctypes.POINTER(ctypes.c_float),  # B
-            ctypes.POINTER(ctypes.c_float),  # C
-        ]
-        func.restype = None
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # A
+        ctypes.POINTER(ctypes.c_float),  # B
+        ctypes.POINTER(ctypes.c_float),  # C
+    ]
+    func.restype = None
 
-        # Run kernel
-        func(A_ptr, B_ptr, C_ptr)
-
-        # Compare with reference
-        try:
-            torch.allclose(
-                C,
-                ref,
-                rtol=1e-3,
-                atol=1e-3,
-                equal_nan=True,
-            )
-            return True, f"[{op_name}] PASSED✅: {file_name}"
-        except Exception as e:
-            return False, f"[{op_name}] FAILED❌: {file_name} | {e}"
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {config['file']}: {e}"
+    # Run kernel
+    func(A_ptr, B_ptr, C_ptr)
+    return verify_torch_tensor(C, ref, op_name)
 
 
-# ------------------ Main ------------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(

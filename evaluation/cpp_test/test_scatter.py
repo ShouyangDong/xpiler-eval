@@ -13,6 +13,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # ----------------- Logger -----------------
@@ -44,64 +45,51 @@ def reference_scatter(
 # ----------------- Core: Kernel Test -----------------
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled scatter kernel."""
-    try:
-        dim = config["axis"]
-        shape = config["args"]
-        config["op_name"]
-        file_name = config["file"]
-        op_name = config["op_name"]
-        # ----------- Prepare tensors -----------
-        self_tensor = torch.rand(*shape, dtype=torch.float32)
-        src_tensor = torch.rand(*shape, dtype=torch.float32)
-        size_dim = shape[dim]
-        indices_tensor = torch.randint(0, size_dim, shape, dtype=torch.int64)
+    dim = config["axis"]
+    shape = config["args"]
+    config["op_name"]
+    config["file"]
+    op_name = config["op_name"]
+    # ----------- Prepare tensors -----------
+    self_tensor = torch.rand(*shape, dtype=torch.float32)
+    src_tensor = torch.rand(*shape, dtype=torch.float32)
+    size_dim = shape[dim]
+    indices_tensor = torch.randint(0, size_dim, shape, dtype=torch.int64)
 
-        expected = reference_scatter(
-            self_tensor, indices_tensor, src_tensor, dim
-        )
+    expected = reference_scatter(self_tensor, indices_tensor, src_tensor, dim)
 
-        # Convert to contiguous numpy arrays
-        self_np = (
-            self_tensor.contiguous().numpy().astype(np.float32, copy=False)
-        )
-        src_np = src_tensor.contiguous().numpy().astype(np.float32, copy=False)
-        indices_np = (
-            indices_tensor.contiguous().numpy().astype(np.int32, copy=False)
-        )
-        out_np = np.zeros_like(self_np, dtype=np.float32)
+    # Convert to contiguous numpy arrays
+    self_np = self_tensor.contiguous().numpy().astype(np.float32, copy=False)
+    src_np = src_tensor.contiguous().numpy().astype(np.float32, copy=False)
+    indices_np = (
+        indices_tensor.contiguous().numpy().astype(np.int32, copy=False)
+    )
+    out_np = np.zeros_like(self_np, dtype=np.float32)
 
-        # ----------- Load shared lib -----------
-        lib = ctypes.CDLL(so_path)
-        kernel_func = getattr(lib, op_name, None)
-        kernel_func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),  # self
-            ctypes.POINTER(ctypes.c_int32),  # indices
-            ctypes.POINTER(ctypes.c_float),  # src
-            ctypes.POINTER(ctypes.c_float),  # output
-        ]
-        kernel_func.restype = None
+    # ----------- Load shared lib -----------
+    lib = ctypes.CDLL(so_path)
+    kernel_func = getattr(lib, op_name, None)
+    kernel_func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # self
+        ctypes.POINTER(ctypes.c_int32),  # indices
+        ctypes.POINTER(ctypes.c_float),  # src
+        ctypes.POINTER(ctypes.c_float),  # output
+    ]
+    kernel_func.restype = None
 
-        # ----------- Call kernel -----------
-        kernel_func(
-            self_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
-            indices_np.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
-            src_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
-            out_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
-        )
+    # ----------- Call kernel -----------
+    kernel_func(
+        self_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        indices_np.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+        src_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        out_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+    )
 
-        # Compare
-        result_reshaped = torch.from_numpy(out_np).reshape(expected.shape)
-        try:
-            torch.allclose(result_reshaped, expected, rtol=1e-4, atol=1e-4)
-            return True, f"[{op_name}] PASSED✅: {file_name}"
-        except Exception as e:
-            return False, f"[{op_name}] FAILED❌: {file_name} | {str(e)}"
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Compare
+    result_reshaped = torch.from_numpy(out_np).reshape(expected.shape)
+    return verify_torch_tensor(result_reshaped, expected, op_name)
 
 
-# ----------------- CLI -----------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test kernels (CPU)")
     parser.add_argument(

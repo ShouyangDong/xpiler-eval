@@ -12,6 +12,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -34,70 +35,47 @@ def reference_max(input: torch.Tensor, axis: int) -> torch.Tensor:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled max kernel."""
-    try:
-        shape = config["args"]
-        axis = config["axis"]
-        file_name = config["file"]
-        output_shape = [
-            1 if i == axis else size for i, size in enumerate(shape)
-        ]
-        op_name = config["op_name"]
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return False, f"[{op_name}] Function 'max' not found in {so_path}"
+    shape = config["args"]
+    axis = config["axis"]
+    config["file"]
+    output_shape = [1 if i == axis else size for i, size in enumerate(shape)]
+    op_name = config["op_name"]
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return False, f"[{op_name}] Function 'max' not found in {so_path}"
 
-        # Set function signature
-        dtype_str = config.get("dtype", "float32")
-        ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+    # Set function signature
+    dtype_str = config.get("dtype", "float32")
+    ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
 
-        func.argtypes = [
-            ctypes.POINTER(ctype),  # input
-            ctypes.POINTER(ctype),  # output
-        ]
-        func.restype = None
+    func.argtypes = [
+        ctypes.POINTER(ctype),  # input
+        ctypes.POINTER(ctype),  # output
+    ]
+    func.restype = None
 
-        # Generate input
-        torch.manual_seed(1234)
-        input_tensor = (
-            torch.randn(*shape, dtype=torch.float32) * 100
-        )  # scale for visibility
-        expected = reference_max(input_tensor, axis)
+    # Generate input
+    torch.manual_seed(1234)
+    input_tensor = (
+        torch.randn(*shape, dtype=torch.float32) * 100
+    )  # scale for visibility
+    expected = reference_max(input_tensor, axis)
 
-        # Flatten and get pointers
-        input_flat = input_tensor.flatten().numpy()
-        output_flat = torch.zeros(output_shape).flatten().numpy()
+    # Flatten and get pointers
+    input_flat = input_tensor.flatten().numpy()
+    output_flat = torch.zeros(output_shape).flatten().numpy()
 
-        input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctype))
-        output_ptr = output_flat.ctypes.data_as(ctypes.POINTER(ctype))
+    input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctype))
+    output_ptr = output_flat.ctypes.data_as(ctypes.POINTER(ctype))
 
-        # Call kernel
-        func(input_ptr, output_ptr)
+    # Call kernel
+    func(input_ptr, output_ptr)
 
-        # Reshape and compare
-        result_reshaped = torch.from_numpy(output_flat).reshape(expected.shape)
-
-        try:
-            torch.testing.assert_close(
-                result_reshaped,
-                expected,
-                rtol=1e-3,
-                atol=1e-3,
-                check_dtype=True,
-                equal_nan=False,
-                msg=lambda msg: f"[{op_name}] {file_name} failed: {msg}",
-            )
-            max_abs_err = (result_reshaped - expected).abs().max().item()
-            return (
-                True,
-                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
-            )
-        except Exception as e:
-            return False, f"[{op_name}] FAILED❌: {file_name} | {str(e)}"
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Reshape and compare
+    result_reshaped = torch.from_numpy(output_flat).reshape(expected.shape)
+    return verify_torch_tensor(result_reshaped, expected, op_name)
 
 
 if __name__ == "__main__":

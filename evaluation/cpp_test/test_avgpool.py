@@ -12,6 +12,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -40,14 +41,14 @@ def avgpool_ref(
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled avgpool kernel."""
-    file_name = config["file"]
+    config["file"]
     shape = config["args"][:4]
     kernel_stride = config["args"][4:8]
     kh, kw, sh, sw = kernel_stride
     op_name = config["op_name"]
     # Generate input
     input_tensor = torch.randn(*shape, dtype=torch.float32, device="cpu")
-    ref_output = avgpool_ref(input_tensor, kernel_stride)
+    ref = avgpool_ref(input_tensor, kernel_stride)
 
     # Prepare output buffer
     out_shape = [
@@ -80,15 +81,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     func.restype = None
     func(input_ptr, output_ptr)
 
-    try:
-        # Verify
-        torch.allclose(
-            output_tensor, ref, rtol=1e-3, atol=1e-3, equal_nan=True
-        )
-        return True, f"[{op_name}] PASSED✅: {config['file']}"
-
-    except Exception as e:
-        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
+    return verify_torch_tensor(output_tensor, ref, op_name)
 
 
 if __name__ == "__main__":

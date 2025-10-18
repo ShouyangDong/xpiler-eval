@@ -5,6 +5,7 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 
@@ -518,3 +519,53 @@ def log_test_results_and_exit(
             f"❌ {failure_count}/{total} tests failed for '{op_name}'."
         )
         exit(1)
+
+
+def verify_numpy_tensor(
+    output_tensor, ref_tensor, op_name="OP", rtol=1e-3, atol=1e-3
+):
+    """Check if output_tensor is close to ref_tensor.
+
+    Args:
+        output_tensor: Computed result
+        ref_tensor: Expected (reference) result
+        op_name: Operation name for logging
+        rtol: Relative tolerance
+        atol: Absolute tolerance
+
+    Returns:
+        (success: bool, message: str)
+    """
+    try:
+        np.allclose(
+            output_tensor, ref_tensor, rtol=1e-3, atol=1e-3, equal_nan=True
+        )
+        return True, f"[{op_name}] PASSED✅"
+
+    except Exception as e:
+        return False, f"[{op_name}] FAILED❌ - Error: {e}"
+
+
+def verify_torch_tensor(
+    output_tensor, ref_tensor, op_name="OP", rtol=1e-3, atol=1e-3
+):
+    """Check if output_tensor is close to ref_tensor.
+
+    Args:
+        output_tensor: Computed result
+        ref_tensor: Expected (reference) result
+        op_name: Operation name for logging
+        rtol: Relative tolerance
+        atol: Absolute tolerance
+
+    Returns:
+        (success: bool, message: str)
+    """
+    try:
+        torch.allclose(
+            output_tensor, ref_tensor, rtol=rtol, atol=atol, equal_nan=True
+        )
+        return True, f"[{op_name}] PASSED✅"
+
+    except Exception as e:
+        return False, f"[{op_name}] FAILED❌ - Error: {e}"

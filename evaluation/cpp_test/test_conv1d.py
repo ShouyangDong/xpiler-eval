@@ -11,6 +11,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_numpy_tensor,
 )
 
 # Configure logger
@@ -33,61 +34,49 @@ def conv1d_ref(input_array: np.ndarray, kernel: np.ndarray) -> np.ndarray:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled conv1d kernel."""
-    try:
-        file_name = config["file"]
-        output_size, input_length = config["args"]
-        op_name = config["op_name"]
-        # Generate random input
-        input_array = np.random.uniform(size=input_length).astype(
-            np.float32
-        )  # shape: (input_length,)
+    config["file"]
+    output_size, input_length = config["args"]
+    op_name = config["op_name"]
+    # Generate random input
+    input_array = np.random.uniform(size=input_length).astype(
+        np.float32
+    )  # shape: (input_length,)
 
-        # Fixed kernel [0.5, 1.0, 0.5]
-        kernel = np.array([0.5, 1.0, 0.5], dtype=np.float32)
+    # Fixed kernel [0.5, 1.0, 0.5]
+    kernel = np.array([0.5, 1.0, 0.5], dtype=np.float32)
 
-        # Reference output
-        expected = conv1d_ref(input_array, kernel)
+    # Reference output
+    expected = conv1d_ref(input_array, kernel)
 
-        # Prepare output buffer
-        output_ctypes = np.zeros(output_size, dtype=np.float32)
+    # Prepare output buffer
+    output_ctypes = np.zeros(output_size, dtype=np.float32)
 
-        # Get pointers
-        input_ptr = input_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        kernel_ptr = kernel.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        output_ptr = output_ctypes.ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
+    # Get pointers
+    input_ptr = input_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    kernel_ptr = kernel.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    output_ptr = output_ctypes.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function 'conv1d' not found in {so_path}",
         )
 
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return False, f"[{op_name}] Function 'conv1d' not found in {so_path}"
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # input
+        ctypes.POINTER(ctypes.c_float),  # kernel
+        ctypes.POINTER(ctypes.c_float),  # output
+    ]
+    func.restype = None
 
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),  # input
-            ctypes.POINTER(ctypes.c_float),  # kernel
-            ctypes.POINTER(ctypes.c_float),  # output
-        ]
-        func.restype = None
+    # Call kernel
+    func(input_ptr, kernel_ptr, output_ptr)
 
-        # Call kernel
-        func(input_ptr, kernel_ptr, output_ptr)
-
-        # Compare
-        if np.allclose(
-            output_ctypes, expected, rtol=1e-3, atol=1e-3, equal_nan=True
-        ):
-            return True, f"[{op_name}] PASSED✅: {file_name}"
-        else:
-            max_error = np.max(np.abs(output_ctypes - expected))
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
-            )
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Compare
+    return verify_numpy_tensor(output_ctypes, expected, op_name)
 
 
 if __name__ == "__main__":

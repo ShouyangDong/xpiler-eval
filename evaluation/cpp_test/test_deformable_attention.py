@@ -14,6 +14,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_numpy_tensor
 )
 
 # Configure logger
@@ -83,99 +84,75 @@ def deformable_attention_pytorch(
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled deformable_attention kernel."""
-    try:
-        file_name = config["file"]
-        N, M, D, Lq, L, P = config["args"]
-        op_name = config["op_name"]
-        # Hardcoded spatial shapes (same as your example)
-        # You can make this configurable via JSON if needed
-        shapes = torch.tensor(
-            [[84, 117], [42, 59], [21, 30], [11, 15]], dtype=torch.long
-        )
-        S = sum((H * W).item() for H, W in shapes)
+    config["file"]
+    N, M, D, Lq, L, P = config["args"]
+    op_name = config["op_name"]
+    # Hardcoded spatial shapes (same as your example)
+    # You can make this configurable via JSON if needed
+    shapes = torch.tensor(
+        [[84, 117], [42, 59], [21, 30], [11, 15]], dtype=torch.long
+    )
+    S = sum((H * W).item() for H, W in shapes)
 
-        # Generate inputs
-        value = torch.rand(N, S, M, D, dtype=torch.float32) * 0.01
-        sampling_locations = torch.rand(N, Lq, M, L, P, 2, dtype=torch.float32)
-        attention_weights = (
-            torch.rand(N, Lq, M, L, P, dtype=torch.float32) + 1e-5
-        )
-        attention_weights /= attention_weights.sum(dim=-1, keepdim=True).sum(
-            dim=-2, keepdim=True
-        )
+    # Generate inputs
+    value = torch.rand(N, S, M, D, dtype=torch.float32) * 0.01
+    sampling_locations = torch.rand(N, Lq, M, L, P, 2, dtype=torch.float32)
+    attention_weights = torch.rand(N, Lq, M, L, P, dtype=torch.float32) + 1e-5
+    attention_weights /= attention_weights.sum(dim=-1, keepdim=True).sum(
+        dim=-2, keepdim=True
+    )
 
-        # Reference output
-        torch_da = deformable_attention_pytorch(
-            value, shapes, sampling_locations, attention_weights
-        )
+    # Reference output
+    torch_da = deformable_attention_pytorch(
+        value, shapes, sampling_locations, attention_weights
+    )
 
-        # Prepare output buffer
-        output_array = np.zeros((N, Lq, M * D), dtype=np.float32)
+    # Prepare output buffer
+    output_array = np.zeros((N, Lq, M * D), dtype=np.float32)
 
-        # Get pointers
-        value_ptr = value.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        shapes_ptr = (
-            shapes.numpy()
-            .astype(np.int32)
-            .ctypes.data_as(ctypes.POINTER(ctypes.c_int))
-        )
-        sampling_locs_ptr = sampling_locations.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        attn_weights_ptr = attention_weights.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        output_ptr = output_array.ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
+    # Get pointers
+    value_ptr = value.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    shapes_ptr = (
+        shapes.numpy()
+        .astype(np.int32)
+        .ctypes.data_as(ctypes.POINTER(ctypes.c_int))
+    )
+    sampling_locs_ptr = sampling_locations.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+    attn_weights_ptr = attention_weights.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+    output_ptr = output_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return (
-                False,
-                f"[{op_name}] Function 'deformable' not found in {so_path}",
-            )
-
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),  # value
-            ctypes.POINTER(ctypes.c_int),  # shapes (int array of [L, 2])
-            ctypes.POINTER(ctypes.c_float),  # sampling_locations
-            ctypes.POINTER(ctypes.c_float),  # attention_weights
-            ctypes.POINTER(ctypes.c_float),  # output
-        ]
-        func.restype = None
-
-        # Call kernel
-        func(
-            value_ptr,
-            shapes_ptr,
-            sampling_locs_ptr,
-            attn_weights_ptr,
-            output_ptr,
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function 'deformable' not found in {so_path}",
         )
 
-        # Compare
-        if np.allclose(
-            output_array,
-            torch_da.numpy(),
-            rtol=1e-3,
-            atol=1e-3,
-            equal_nan=True,
-        ):
-            return True, f"[{op_name}] PASSED✅: {file_name}"
-        else:
-            max_error = np.max(np.abs(output_array - torch_da.numpy()))
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
-            )
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # value
+        ctypes.POINTER(ctypes.c_int),  # shapes (int array of [L, 2])
+        ctypes.POINTER(ctypes.c_float),  # sampling_locations
+        ctypes.POINTER(ctypes.c_float),  # attention_weights
+        ctypes.POINTER(ctypes.c_float),  # output
+    ]
+    func.restype = None
 
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    # Call kernel
+    func(
+        value_ptr,
+        shapes_ptr,
+        sampling_locs_ptr,
+        attn_weights_ptr,
+        output_ptr,
+    )
+
+    return verify_numpy_tensor(output_array, torch_da.numpy(), op_name)
 
 
 if __name__ == "__main__":

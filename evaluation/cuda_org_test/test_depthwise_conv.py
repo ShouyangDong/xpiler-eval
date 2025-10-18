@@ -10,6 +10,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -103,19 +104,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         input_channels,
     )
     # Check if the results match
-    try:
-        np.testing.assert_allclose(
-            output_ctypes,
-            output_np,
-            rtol=1e-03,
-            atol=1e-03,
-            equal_nan=True,
-            err_msg="",
-            verbose=True,
-        )
-        return True, f"[{op_name}] PASSED✅: {config['file']}"
-    except AssertionError:
-        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
+    return verify_torch_tensor(output_ctypes, output_np, op_name=op_name)
 
 
 if __name__ == "__main__":

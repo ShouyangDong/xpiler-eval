@@ -13,6 +13,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -50,96 +51,79 @@ def batchnorm_ref(
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled batchnorm kernel."""
-    try:
-        file_name = config["file"]
-        N, C, H, W = config["args"]
-        op_name = config["op_name"]
-        # Generate input and parameters
-        input_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
-        running_mean = torch.rand(C, dtype=torch.float32)
-        running_var = torch.rand(C, dtype=torch.float32) + 0.5
-        weight = torch.rand(C, dtype=torch.float32)  # gamma
-        bias = torch.rand(C, dtype=torch.float32)  # beta
+    config["file"]
+    N, C, H, W = config["args"]
+    op_name = config["op_name"]
+    # Generate input and parameters
+    input_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
+    running_mean = torch.rand(C, dtype=torch.float32)
+    running_var = torch.rand(C, dtype=torch.float32) + 0.5
+    weight = torch.rand(C, dtype=torch.float32)  # gamma
+    bias = torch.rand(C, dtype=torch.float32)  # beta
 
-        # Golden reference
-        expected = batchnorm_ref(
-            input_tensor, weight, bias, running_mean, running_var
+    # Golden reference
+    expected = batchnorm_ref(
+        input_tensor, weight, bias, running_mean, running_var
+    )
+
+    result_flat = torch.zeros_like(input_tensor)
+
+    # Get pointers
+    input_ptr = input_tensor.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+    output_ptr = result_flat.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+    mean_ptr = running_mean.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+    var_ptr = running_var.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+    weight_ptr = weight.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    bias_ptr = bias.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+
+    # Load shared library
+    lib = ctypes.CDLL(so_path)
+    func = getattr(lib, op_name, None)
+    if not func:
+        return (
+            False,
+            f"[{op_name}] Function 'batchnorm' not found in {so_path}",
         )
 
-        result_flat = torch.zeros_like(input_tensor)
+    func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # input
+        ctypes.POINTER(ctypes.c_float),  # output
+        ctypes.POINTER(ctypes.c_float),  # mean
+        ctypes.POINTER(ctypes.c_float),  # var
+        ctypes.POINTER(ctypes.c_float),  # weight
+        ctypes.POINTER(ctypes.c_float),  # bias
+        ctypes.c_int,  # N
+        ctypes.c_int,  # C
+        ctypes.c_int,  # H
+        ctypes.c_int,  # W
+        ctypes.c_float,  # eps
+    ]
+    func.restype = None
+    eps = 1e-5
+    # Call kernel
+    func(
+        input_ptr,
+        output_ptr,
+        mean_ptr,
+        var_ptr,
+        weight_ptr,
+        bias_ptr,
+        N,
+        C,
+        H,
+        W,
+        eps,
+    )
 
-        # Get pointers
-        input_ptr = input_tensor.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        output_ptr = result_flat.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        mean_ptr = running_mean.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        var_ptr = running_var.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        weight_ptr = weight.numpy().ctypes.data_as(
-            ctypes.POINTER(ctypes.c_float)
-        )
-        bias_ptr = bias.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-
-        # Load shared library
-        lib = ctypes.CDLL(so_path)
-        func = getattr(lib, op_name, None)
-        if not func:
-            return (
-                False,
-                f"[{op_name}] Function 'batchnorm' not found in {so_path}",
-            )
-
-        func.argtypes = [
-            ctypes.POINTER(ctypes.c_float),  # input
-            ctypes.POINTER(ctypes.c_float),  # output
-            ctypes.POINTER(ctypes.c_float),  # mean
-            ctypes.POINTER(ctypes.c_float),  # var
-            ctypes.POINTER(ctypes.c_float),  # weight
-            ctypes.POINTER(ctypes.c_float),  # bias
-            ctypes.c_int,  # N
-            ctypes.c_int,  # C
-            ctypes.c_int,  # H
-            ctypes.c_int,  # W
-            ctypes.c_float,  # eps
-        ]
-        func.restype = None
-        eps = 1e-5
-        # Call kernel
-        func(
-            input_ptr,
-            output_ptr,
-            mean_ptr,
-            var_ptr,
-            weight_ptr,
-            bias_ptr,
-            N,
-            C,
-            H,
-            W,
-            eps,
-        )
-
-        # Reshape and compare
-        if torch.allclose(
-            result_flat, expected, rtol=1e-3, atol=1e-3, equal_nan=True
-        ):
-            return True, f"[{op_name}] PASSED✅: {file_name}"
-        else:
-            max_error = (result_flat - expected).abs().max().item()
-            return (
-                False,
-                f"[{op_name}] FAILED❌: {file_name} | Max error: {
-                    max_error:.2e}",
-            )
-
-    except Exception as e:
-        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
+    return verify_torch_tensor(result_flat, expected, op_name)
 
 
 if __name__ == "__main__":

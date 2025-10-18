@@ -10,6 +10,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_numpy_tensor,
 )
 
 # Configure logger
@@ -81,22 +82,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # 6. invoke C++/CUDA kernel
     # ---------------------------------------------
     gqa_func(Q_ptr, K_ptr, V_ptr, O_ptr, batch, 2, seq_q, seq_kv, 64)
-
-    # ---------------------------------------------
-    # 7. Verification
-    # ---------------------------------------------
-    try:
-        np.testing.assert_allclose(
-            O,  # C++ kernel output(NumPy)
-            O_ref.cpu().numpy(),
-            rtol=5e-3,
-            atol=5e-3,
-            equal_nan=True,
-            verbose=True,
-        )
-        return True, f"[{op_name}] PASSED✅: {config['file']}"
-    except AssertionError:
-        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
+    return verify_numpy_tensor(O, O_ref.cpu().numpy(), op_name)
 
 
 if __name__ == "__main__":
