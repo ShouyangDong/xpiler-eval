@@ -43,7 +43,7 @@ extern "C" void gather_kernel(const float *h_params, const int64_t *h_indices,
   hipMemcpy(d_params, h_params, params_bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_indices, h_indices, indices_bytes, hipMemcpyHostToDevice);
 
-  const int block_size = 256;
+  const int block_size = 1024;
   int total_threads = D0 * N * D2;
   int grid_size = (total_threads + block_size - 1) / block_size;
 

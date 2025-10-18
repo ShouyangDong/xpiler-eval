@@ -1,62 +1,51 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
 import torch
 
-from evaluation.macros import HIP_MACROS as macro
-from evaluation.utils import run_hip_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Validate Dense (Linear) HIP kernel output against PyTorch"
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
-    parser.add_argument(
-        "--file", type=str, help="Path to the source .hip file"
-    )
-    parser.add_argument(
-        "--config",
-        required=True,
-        help="JSON string or path to kernel configuration file",
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform for compilation",
-    )
-    args = parser.parse_args()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
-    base_name = os.path.basename(args.file)
-    # Example filename: dense_16_1024_1024.hip → shape = [batch, in_feat,
-    # out_feat]
-    shapes = base_name.split(".")[0]
-    shape = [int(dim) for dim in shapes.split("_")[1:]]
 
-    name = base_name.split("_")[0]  # e.g., 'dense'
-
-    if len(shape) != 3:
-        print(
-            "[ERROR] Filename should encode: dense_batch_in_features_out_features.hip"
-        )
-        exit(1)
-
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    shape = config["args"]
+    op_name = config["op_name"]
     batch_size, in_features, out_features = shape
-
-    # Use AMD GPU if available
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if not torch.cuda.is_available():
-        print("[WARNING] ROCm not available. Running on CPU.")
-
     # Generate input and parameters
     x = torch.randn(
-        batch_size, in_features, dtype=torch.float32, device=device
+        batch_size,
+        in_features,
+        dtype=torch.float32,
+        device=torch.device("cuda"),
     )
     weight = torch.randn(
-        out_features, in_features, dtype=torch.float32, device=device
+        out_features,
+        in_features,
+        dtype=torch.float32,
+        device=torch.device("cuda"),
     )
-    bias = torch.randn(out_features, dtype=torch.float32, device=device)
+    bias = torch.randn(
+        out_features, dtype=torch.float32, device=torch.device("cuda")
+    )
 
     # Reference: PyTorch Linear forward
     y_torch = torch.nn.functional.linear(
@@ -86,35 +75,12 @@ if __name__ == "__main__":
     )
     y_ptr = ctypes.cast(y_kernel.data_ptr(), ctypes.POINTER(ctypes.c_float))
 
-    # Shared library name
-    so_name = args.file.replace(".hip", ".so")
-
-    # Read and inject macros
-    with open(args.file, "r") as f:
-        code = f.read()
-
-    code = macro + code  # Inject config constants
-
-    # Write temporary .hip file
-    temp_file = base_name + "_bak.hip"
-    with open(temp_file, "w") as f:
-        f.write(code)
-
-    # Compile kernel
-    success, output = run_compilation(so_name, temp_file)
-    if not success:
-        print("[ERROR] Compilation failed:")
-        print(output)
-        exit(1)
-
-    os.remove(temp_file)
-
     # Load shared library
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    dense_func = getattr(lib, name + "_kernel")
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    function = getattr(lib, op_name + "_kernel")
 
     # Define function signature
-    dense_func.argtypes = [
+    function.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # input (x)
         ctypes.POINTER(ctypes.c_float),  # weight (W)
         ctypes.POINTER(ctypes.c_float),  # bias (b)
@@ -123,10 +89,10 @@ if __name__ == "__main__":
         ctypes.c_int,  # in_features
         ctypes.c_int,  # out_features
     ]
-    dense_func.restype = None
+    function.restype = None
 
     # Call the Dense kernel
-    dense_func(
+    function(
         x_ptr,
         weight_ptr,
         bias_ptr,
@@ -140,12 +106,47 @@ if __name__ == "__main__":
     if torch.allclose(
         y_kernel, y_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True
     ):
-        print(
-            "✅ Verification successful! Dense layer output matches PyTorch."
-        )
+        return True, f"[ADD] PASSED✅: {config['file']}"
     else:
-        print("❌ Verification failed! Results do not match.")
-        exit(1)
+        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
 
-    # Clean up
-    subprocess.run(["rm", so_name], check=False)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="hip")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

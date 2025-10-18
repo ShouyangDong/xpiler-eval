@@ -122,7 +122,9 @@ if __name__ == "__main__":
 
     # === 7. Load shared library ===
     lib = ctypes.CDLL(so_name)
-    kernel_name = f"transpose_kernel_{'_'.join(map(str, shape))}_to_{'_'.join(map(str, [shape[i] for i in axes]))}"
+    kernel_name = f"transpose_kernel_{'_'.join(map(str,
+                                                   shape))}_to_{'_'.join(map(str,
+                                                                             [shape[i] for i in axes]))}"
     try:
         kernel_func = getattr(lib, kernel_name)
     except AttributeError:

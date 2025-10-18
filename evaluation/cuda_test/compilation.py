@@ -65,7 +65,8 @@ def main():
     total = len(files)
     succ = sum(results)
     print(
-        f"[INFO] cuda compilation success rate: {succ}/{total} = {succ/total:.2%}"
+        f"[INFO] cuda compilation success rate: {succ}/{total} = {
+            succ / total:.2%}"
     )
 
 

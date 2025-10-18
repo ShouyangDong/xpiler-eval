@@ -1,12 +1,28 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
 import torch
 
-from evaluation.macros import HIP_MACROS as macro
-from evaluation.utils import run_hip_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 def add(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
@@ -14,33 +30,11 @@ def add(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
     return torch.add(A, B)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Validate HIP kernel output against PyTorch"
-    )
-    parser.add_argument(
-        "--file", type=str, help="Path to the source .hip file"
-    )
-    parser.add_argument(
-        "--config",
-        required=True,
-        help="JSON string or path to kernel configuration file",
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform for compilation",
-    )
-    args = parser.parse_args()
-
-    base_name = os.path.basename(args.file)
-    shapes = base_name.split(".")[0]
-    shape = [
-        int(dim) for dim in shapes.split("_")[1:]
-    ]  # Extract shape from filename
-    name = base_name.split("_")[0]  # Extract kernel name
-
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    shape = config["args"]
+    op_name = config["op_name"]
+    config["file"]
     # Generate random input tensors on CPU using PyTorch
     A = torch.rand(shape, dtype=torch.float32)
     B = torch.rand(shape, dtype=torch.float32)
@@ -51,42 +45,15 @@ if __name__ == "__main__":
     # Ensure tensors are contiguous in memory for ctypes pointer access
     A_cont = A.contiguous()
     B_cont = B.contiguous()
-    result_torch_cont = result_torch.contiguous()
+    result_torch.contiguous()
 
     # Get raw pointers to tensor data
     A_ptr = ctypes.cast(A_cont.data_ptr(), ctypes.POINTER(ctypes.c_float))
     B_ptr = ctypes.cast(B_cont.data_ptr(), ctypes.POINTER(ctypes.c_float))
 
-    # Output shared library name
-    so_name = args.file.replace(".hip", ".so")
-
-    # Read original HIP source
-    with open(args.file, "r") as f:
-        code = f.read()
-
-    # Prepend macro definitions (e.g., for configuration)
-    code = macro + code
-
-    # Create a backup .hip file with macros injected
-    file_name = args.file.replace(
-        base_name.replace(".hip", ""), base_name + "_bak.hip"
-    )
-    with open(file_name, "w") as f:
-        f.write(code)
-
-    # Compile the HIP kernel into a shared library (.so)
-    success, output = run_compilation(so_name, file_name)
-    if not success:
-        print("[ERROR] Compilation failed:")
-        print(output)
-        exit(1)
-
-    # Clean up the temporary source file
-    os.remove(file_name)
-
     # Load the compiled shared library
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    function = getattr(lib, name + "_kernel")
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    function = getattr(lib, op_name + "_kernel")
 
     # Define the function signature
     function.argtypes = [
@@ -111,13 +78,47 @@ if __name__ == "__main__":
     if torch.allclose(
         result_ctypes_torch, result_torch, rtol=1e-3, atol=1e-3, equal_nan=True
     ):
-        print("✅ Verification successful! Results match.")
+        return True, f"[ADD] PASSED✅: {config['file']}"
     else:
-        print("❌ Verification failed! Results do not match.")
-        # Optional: print first few elements for debugging
-        print("Expected (PyTorch):", result_torch.flatten()[:10].tolist())
-        print("Got (Kernel):", result_ctypes_torch.flatten()[:10].tolist())
-        exit(1)
+        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
 
-    # Clean up the compiled shared library
-    subprocess.run(["rm", so_name], check=False)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="hip")
+
+    if not configs:
+        logger.warning("No 'add' kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

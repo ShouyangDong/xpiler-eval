@@ -28,7 +28,7 @@ def verify_softmax(base_name, file, shape):
     os.remove(file_name)
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
     name = base_name.split("_")[0]
-    function = getattr(lib, name + "_kernel")
+    function = getattr(lib, op_name + "_kernel")
     # Define the function parameters and return types.
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),

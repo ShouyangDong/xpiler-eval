@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
     # Load library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, name + "_kernel")  # e.g., instancenorm
+    kernel_func = getattr(lib, op_name + "_kernel")  # e.g., instancenorm
 
     # Function signature
     kernel_func.argtypes = [

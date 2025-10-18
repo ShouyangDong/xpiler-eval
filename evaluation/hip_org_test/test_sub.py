@@ -1,12 +1,28 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
 import torch
 
-from evaluation.macros import HIP_MACROS as macro
-from evaluation.utils import run_hip_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 def ref_program(A, B):
@@ -16,37 +32,11 @@ def ref_program(A, B):
     return torch.sub(A, B)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Validate HIP element-wise subtraction kernel"
-    )
-    parser.add_argument(
-        "--file", type=str, help="Path to the source .hip file"
-    )
-    parser.add_argument(
-        "--config",
-        required=True,
-        help="JSON string or path to kernel configuration file",
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform for compilation",
-    )
-    args = parser.parse_args()
-
-    base_name = os.path.basename(args.file)
-    shapes = base_name.split(".")[0]
-    shape = [
-        int(dim) for dim in shapes.split("_")[1:]
-    ]  # e.g., [1024], [32, 768]
-    total_elements = int(
-        torch.prod(torch.tensor(shape))
-    )  # Total number of elements
-    name = base_name.split("_")[0]  # e.g., "sub" from "sub_1024.hip"
-    so_name = args.file.replace(".hip", ".so")
-
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    shape = config["args"]
+    total_elements = torch.prod(torch.tensor(shape))
+    op_name = config["op_name"]
     # Generate random input tensors
     dtype = torch.float32
     A = torch.rand(shape, dtype=dtype)
@@ -70,31 +60,9 @@ if __name__ == "__main__":
         output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
     )
 
-    # Read and modify source code
-    with open(args.file, "r") as f:
-        code = f.read()
-
-    code = macro + code  # Inject macros
-
-    # Write to temporary .hip file
-    file_name = args.file.replace(
-        base_name.replace(".hip", ""), base_name + "_bak.hip"
-    )
-    with open(file_name, "w") as f:
-        f.write(code)
-
-    # Compile the HIP kernel
-    success, output = run_compilation(so_name, file_name)
-    if not success:
-        print("[ERROR] Compilation failed:")
-        print(output)
-        exit(1)
-
-    os.remove(file_name)
-
     # Load the compiled shared library
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    function = getattr(lib, name + "_kernel")
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    function = getattr(lib, op_name + "_kernel")
 
     # Define function signature
     function.argtypes = [
@@ -112,15 +80,47 @@ if __name__ == "__main__":
     if torch.allclose(
         output_tensor, expected_output, rtol=1e-3, atol=1e-3, equal_nan=True
     ):
-        print("✅ Verification successful! Results match.")
+        return True, f"[ADD] PASSED✅: {config['file']}"
     else:
-        print("❌ Verification failed! Results do not match.")
-        # Debug: Print first 10 elements
-        print("A (first 10):", A.flatten()[:10].tolist())
-        print("B (first 10):", B.flatten()[:10].tolist())
-        print("Expected (A-B):", expected_output.flatten()[:10].tolist())
-        print("Got (Kernel):", output_tensor.flatten()[:10].tolist())
-        exit(1)
+        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
 
-    # Clean up compiled library
-    subprocess.run(["rm", so_name], check=False)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="hip")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

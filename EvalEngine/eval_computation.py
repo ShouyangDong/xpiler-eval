@@ -15,6 +15,14 @@ from tqdm import tqdm
 
 from evaluation.utils import TEST_SCRIPT_MAP, run_tests
 
+# Define extension mapping
+EXTENSION_MAP = {
+    "cuda": ".cu",
+    "hip": ".hip",
+    "mlu": ".mlu",
+    "cpu": ".cpp",
+}
+
 
 # Define extension mapping
 EXTENSION_MAP = {
@@ -81,10 +89,7 @@ def main():
 
     # Load kernels.json
     if not os.path.exists(args.json_path):
-        print(
-            f"[ERROR] kernels.json not found: {args.json_path}",
-            file=sys.stderr,
-        )
+        print(f"[ERROR] kernels.json not found: {args.json_path}", file=sys.stderr)
         sys.exit(1)
 
     try:

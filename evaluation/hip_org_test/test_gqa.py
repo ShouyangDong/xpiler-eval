@@ -1,65 +1,39 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
-import numpy as np
 import torch
 
-from evaluation.macros import CUDA_MACROS as macro
-from evaluation.utils import run_cuda_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
-    parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform",
-    )
-    parser.add_argument(
-        "--batch", type=int, default=1, help="Batch size for test"
-    )
-    args = parser.parse_args()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
-    # ---------------------------------------------
-    # 1.  Parse file name
-    # ---------------------------------------------
-    base_name = os.path.basename(args.file)
-    shapes = base_name.split(".")[0]
-    parts = [int(x) for x in shapes.split("_")[1:]]
-    batch, seq_q, seq_kv, head_dim = parts
 
-    so_name = args.file.replace(".cpp", ".so")
-
-    # ---------------------------------------------
-    # 2. Add macro
-    # ---------------------------------------------
-    with open(args.file, "r") as f:
-        code = f.read()
-    code = macro + code
-
-    file_name = args.file.replace(".cpp", "_bak.cpp")
-    with open(file_name, "w") as f:
-        f.write(code)
-
-    success, output = run_compilation(so_name, file_name)
-    if not success:
-        print("Compilation failed:")
-        print(output)
-        exit(1)
-
-    os.remove(file_name)
-
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    batch, seq_q, seq_kv, head_dim = config["args"]
+    op_name = config["op_name"]
     # ---------------------------------------------
     # 3. Load shared library
     # ---------------------------------------------
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    gqa_func = getattr(lib, args.name + "_kernel")
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    gqa_func = getattr(lib, op_name + "_kernel")
     gqa_func.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # Q
         ctypes.POINTER(ctypes.c_float),  # K
@@ -111,18 +85,55 @@ if __name__ == "__main__":
     # ---------------------------------------------
     # 7. Verification
     # ---------------------------------------------
-    np.testing.assert_allclose(
+    if np.testing.assert_allclose(
         O,  # C++ kernel output(NumPy)
         O_ref.cpu().numpy(),
         rtol=5e-3,
         atol=5e-3,
         equal_nan=True,
         verbose=True,
+    ):
+        return True, f"[ADD] PASSED✅: {config['file']}"
+    else:
+        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
     )
 
-    print("✅ GQA verification passed!")
+    args = parser.parse_args()
 
-    # ---------------------------------------------
-    # 8. clean
-    # ---------------------------------------------
-    subprocess.run(["rm", so_name], check=False)
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="hip")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

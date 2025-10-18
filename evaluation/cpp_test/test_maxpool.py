@@ -8,7 +8,12 @@ from typing import Tuple
 
 import torch
 
-from evaluation.utils import maxpool_np, parse_op_json, run_tests
+from evaluation.utils import (
+    log_test_results_and_exit,
+    maxpool_np,
+    parse_op_json,
+    run_tests,
+)
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -37,11 +42,6 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         lib = ctypes.CDLL(so_path)
         op_name = config["op_name"]
         func = getattr(lib, op_name, None)
-        if not func:
-            return (
-                False,
-                f"[MAXPOOL] Function '{func_name}' not found in {so_path}",
-            )
 
         # Set function signature
         ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
@@ -134,4 +134,4 @@ if __name__ == "__main__":
     )
 
     # Log individual results
-    log_test_results_and_exit(result, op_name=args.name)
+    log_test_results_and_exit(results, op_name=args.name)

@@ -16,7 +16,7 @@ extern "C" void sin_kernel(float *h_A, float *h_C, int total) {
   hipMemcpy(d_A, h_A, total * sizeof(float), hipMemcpyHostToDevice);
 
   dim3 blockSize(1024);
-  dim3 numBlocks((total + 293) / 1024);
+  dim3 numBlocks((total + 1023) / 1024);
 
   sin<<<numBlocks, blockSize>>>(d_A, d_C);
 

@@ -9,7 +9,11 @@ from typing import Tuple
 import numpy as np
 import torch
 
-from evaluation.utils import parse_op_json, run_tests
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
 
 # ----------------- Logger -----------------
 logger = logging.getLogger(__name__)
@@ -128,4 +132,4 @@ if __name__ == "__main__":
     results = run_tests(
         args.name, configs, args.source_dir, args.target, num_workers=args.jobs
     )
-    log_test_results_and_exit(result, op_name=args.name)
+    log_test_results_and_exit(results, op_name=args.name)
