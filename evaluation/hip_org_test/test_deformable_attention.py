@@ -154,12 +154,13 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         output_ptr,
     )
     # Verification results
-    if np.testing.assert_allclose(
-        output_array, torch_da.numpy(), atol=1e-6, rtol=1e-6
-    ):
-        return True, f"[ADD] PASSED✅: {config['file']}"
-    else:
-        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+    try:
+        np.testing.assert_allclose(
+            output_array, torch_da.numpy(), atol=1e-6, rtol=1e-6
+        )
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
+    except AssertionError:
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
 
 if __name__ == "__main__":

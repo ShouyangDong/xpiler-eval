@@ -57,7 +57,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         lib = ctypes.CDLL(so_path)
         func = getattr(lib, op_name, None)
         if not func:
-            return False, f"[MHA] Function 'mha' not found in {so_path}"
+            return False, f"[{op_name}] Function 'mha' not found in {so_path}"
 
         # Set function signature
         ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
@@ -111,13 +111,13 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             max_abs_err = (result - expected).abs().max().item()
             return (
                 True,
-                f"[MHA] ✅ {file_name}| Max error: {max_abs_err:.2e}",
+                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
             )
         except Exception as e:
-            return False, f"[MHA] FAILED❌: {file_name} | {str(e)}"
+            return False, f"[{op_name}] FAILED❌: {file_name} | {str(e)}"
 
     except Exception as e:
-        return False, f"[MHA] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

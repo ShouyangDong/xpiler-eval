@@ -57,7 +57,6 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     kernel_func.argtypes = [ctypes.POINTER(ctypes.c_float)] * 3
     kernel_func.restype = None
 
-
     kernel_func(input1_ptr, input2_ptr, output_ptr)
 
     result_reshaped = output_flat.reshape(expected.shape)
@@ -67,9 +66,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     )
 
     if is_correct:
-        return True, f"[ADD] PASSED✅: {config['file']}"
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
     else:
-        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
 
 if __name__ == "__main__":

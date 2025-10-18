@@ -92,7 +92,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if not func:
             return (
                 False,
-                f"[DWConv] Function 'depthwiseconv' not found in {so_path}",
+                f"[{op_name}] Function 'depthwiseconv' not found in {so_path}",
             )
 
         func.argtypes = [
@@ -108,17 +108,17 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if np.allclose(
             output_ctypes, output_np, rtol=1e-03, atol=1e-03, equal_nan=True
         ):
-            return (True, f"[DWConv] ✅ {file_name}")
+            return (True, f"[{op_name}] ✅ {file_name}")
         else:
             diff = np.abs(output_ctypes - output_np)
             max_diff = diff.max()
             return (
                 False,
-                f"[DWConv] FAILED❌: {file_name} | Max diff: {max_diff:.2e}",
+                f"[{op_name}] FAILED❌: {file_name} | Max diff: {max_diff:.2e}",
             )
 
     except Exception as e:
-        return False, f"[DWConv]❌ Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}]❌ Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

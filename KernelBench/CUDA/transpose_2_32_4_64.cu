@@ -8,16 +8,12 @@ __global__ void transpose(const float *__restrict__ input,
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int total = N * C * H * W;
   if (idx < total) {
-
-    int out_idx = (idx / (C * H * W)) * (H * C * W) +
-                  ((idx / W) % H) * (C * W) + ((idx / (H * W)) % C) * W +
-                  (idx % W);
-
-    int in_idx = (idx / (C * H * W)) * (C * H * W) +
-                 ((idx / (H * W)) % C) * (H * W) + ((idx / W) % H) * W +
-                 (idx % W);
-
-    output[out_idx] = input[in_idx];
+    int n = idx / (C * H * W); 
+    int c = (idx / (H * W)) % C; 
+    int h = (idx / W) % H; 
+    int w = idx % W; 
+    int out_idx = ((n * H + h) * W + w) * C + c; 
+    output[out_idx] = input[idx];
   }
 }
 
@@ -30,7 +26,7 @@ extern "C" void transpose_kernel(float *input, float *output, int N, int C,
   cudaMalloc(&d_output, total * sizeof(float));
 
   cudaMemcpy(d_input, input, total * sizeof(float), cudaMemcpyHostToDevice);
-  int threads = 256;
+  int threads = 1024;
   int blocks = (total + threads - 1) / threads;
   transpose<<<blocks, threads>>>(d_input, d_output);
 

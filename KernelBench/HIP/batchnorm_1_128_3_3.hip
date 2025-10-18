@@ -25,7 +25,7 @@ extern "C" void batchnorm_kernel(const float *h_input, float *h_output,
                                  const float *h_mean, const float *h_variance,
                                  const float *h_gamma, const float *h_beta) {
   float *d_input, *d_output, *d_mean, *d_variance, *d_gamma, *d_beta;
-  const int input_size = 48;
+  const int input_size = 1 * 128 * 3 * 3;
 
   hipMalloc(&d_input, input_size * sizeof(float));
   hipMalloc(&d_output, input_size * sizeof(float));

@@ -137,7 +137,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if not func:
             return (
                 False,
-                f"[DA] Function 'deformable' not found in {so_path}",
+                f"[{op_name}] Function 'deformable' not found in {so_path}",
             )
 
         func.argtypes = [
@@ -166,16 +166,16 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             atol=1e-3,
             equal_nan=True,
         ):
-            return True, f"[DA] PASSED✅: {file_name}"
+            return True, f"[{op_name}] PASSED✅: {file_name}"
         else:
             max_error = np.max(np.abs(output_array - torch_da.numpy()))
             return (
                 False,
-                f"[DA] FAILED❌: {file_name} | Max error: {max_error:.2e}",
+                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
             )
 
     except Exception as e:
-        return False, f"[DA] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

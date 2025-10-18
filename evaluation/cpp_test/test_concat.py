@@ -62,7 +62,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         lib = ctypes.CDLL(so_path)
         func = getattr(lib, op_name, None)
         if not func:
-            return False, f"[Concat] Function 'concat' not found in {so_path}"
+            return False, f"[{op_name}] Function 'concat' not found in {so_path}"
 
         func.argtypes = [ctypes.POINTER(ctypes.c_float)] * 3
         func.restype = None
@@ -75,16 +75,16 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if torch.allclose(
             result_reshaped, expected, rtol=1e-4, atol=1e-4, equal_nan=True
         ):
-            return True, f"[Concat] PASSED✅: {file_name}"
+            return True, f"[{op_name}] PASSED✅: {file_name}"
         else:
             max_error = (result_reshaped - expected).abs().max().item()
             return (
                 False,
-                f"[Concat] FAILED❌: {file_name} | Max error: {max_error:.2e}",
+                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
             )
 
     except Exception as e:
-        return False, f"[Concat] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

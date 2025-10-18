@@ -107,7 +107,6 @@ if __name__ == "__main__":
     ]
     kernel_func.restype = None
 
-
     kernel_func(self_ptr, indices_ptr, src_ptr, output_ptr)
 
     result_reshaped = output_flat.reshape(expected.shape)

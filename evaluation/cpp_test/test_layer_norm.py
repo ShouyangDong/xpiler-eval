@@ -52,7 +52,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if not func:
             return (
                 False,
-                f"[LAYERNORM] Function 'layernorm' not found in {so_path}",
+                f"[{op_name}] Function 'layernorm' not found in {so_path}",
             )
 
         # Set function signature
@@ -105,13 +105,13 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             max_abs_err = (output_array - expected_output).abs().max().item()
             return (
                 True,
-                f"[LAYERNORM] ✅ {file_name}| Max error: {max_abs_err:.2e}",
+                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
             )
         except Exception as e:
-            return False, f"[LAYERNORM] FAILED❌: {file_name} | {str(e)}"
+            return False, f"[{op_name}] FAILED❌: {file_name} | {str(e)}"
 
     except Exception as e:
-        return False, f"[LAYERNORM] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

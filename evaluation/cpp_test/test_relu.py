@@ -47,7 +47,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if not func:
             return (
                 False,
-                f"[RELU] Function '{func_name}' not found in {so_path}",
+                f"[{op_name}] Function '{func_name}' not found in {so_path}",
             )
 
         # Set function signature
@@ -89,21 +89,21 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
                 rtol=rtol,
                 atol=atol,
                 equal_nan=False,
-                err_msg=f"[RELU] {file_name} failed",
+                err_msg=f"[{op_name}] {file_name} failed",
             )
             max_abs_err = np.max(np.abs(result_reshaped - expected))
             return (
                 True,
-                f"[RELU] ✅ {file_name}| Max error: {max_abs_err:.2e}",
+                f"[{op_name}] ✅ {file_name}| Max error: {max_abs_err:.2e}",
             )
         except AssertionError as e:
             return (
                 False,
-                f"[RELU] FAILED❌: {file_name} | {str(e).splitlines()[0]}",
+                f"[{op_name}] FAILED❌: {file_name} | {str(e).splitlines()[0]}",
             )
 
     except Exception as e:
-        return False, f"[RELU] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

@@ -25,21 +25,21 @@ extern "C" void batchnorm_kernel(const float *h_input, float *h_output,
                                  const float *h_mean, const float *h_variance,
                                  const float *h_gamma, const float *h_beta) {
   float *d_input, *d_output, *d_mean, *d_variance, *d_gamma, *d_beta;
-  const int input_size = 9;
+  const int input_size = 1 * 3 * 224 * 224;
 
   cudaMalloc(&d_input, input_size * sizeof(float));
   cudaMalloc(&d_output, input_size * sizeof(float));
-  cudaMalloc(&d_mean, 1 * sizeof(float));
-  cudaMalloc(&d_variance, 1 * sizeof(float));
-  cudaMalloc(&d_gamma, 1 * sizeof(float));
-  cudaMalloc(&d_beta, 1 * sizeof(float));
+  cudaMalloc(&d_mean, 3 * sizeof(float));
+  cudaMalloc(&d_variance, 3 * sizeof(float));
+  cudaMalloc(&d_gamma, 3 * sizeof(float));
+  cudaMalloc(&d_beta, 3 * sizeof(float));
 
   cudaMemcpy(d_input, h_input, input_size * sizeof(float),
              cudaMemcpyHostToDevice);
-  cudaMemcpy(d_mean, h_mean, 1 * sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_variance, h_variance, 1 * sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_gamma, h_gamma, 1 * sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_beta, h_beta, 1 * sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_mean, h_mean, 3 * sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_variance, h_variance, 3 * sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_gamma, h_gamma, 3 * sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_beta, h_beta, 3 * sizeof(float), cudaMemcpyHostToDevice);
 
   dim3 blockSize(256);
   dim3 numBlocks((input_size + 255) / 256);

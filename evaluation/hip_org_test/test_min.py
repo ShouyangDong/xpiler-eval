@@ -85,9 +85,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # Verification
     rtol, atol = (1e-3, 1e-3) if dtype_str == "float32" else (1e-2, 5e-2)
     if torch.allclose(result_tensor, expected, rtol=rtol, atol=atol):
-        return True, f"[ADD] PASSED✅: {config['file']}"
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
     else:
-        return False, f"[ADD] FAILED❌: {config['file']} (mismatch)"
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
 
 if __name__ == "__main__":

@@ -47,7 +47,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if not func:
             return (
                 False,
-                f"[TRANSPOSE] Function '{op_name}' not found in {so_path}",
+                f"[{op_name}] Function '{op_name}' not found in {so_path}",
             )
 
         # Determine C type and numpy dtype
@@ -92,7 +92,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             max_error = (output_torch - expected_output).abs().max().item()
             return (
                 True,
-                f"[TRANSPOSE] ✅ {file_name}| In: {input_shape} → Out: {
+                f"[{op_name}] ✅ {file_name}| In: {input_shape} → Out: {
                     list(
                         expected_output.shape)} | Perm: {perm} | Max error: {
                     max_error:.2e}",
@@ -101,14 +101,14 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             max_error = (output_torch - expected_output).abs().max().item()
             return (
                 False,
-                f"[TRANSPOSE] FAILED❌: {file_name} |In: {input_shape} → Out: {
+                f"[{op_name}] FAILED❌: {file_name} |In: {input_shape} → Out: {
                     list(
                         expected_output.shape)} | Perm: {perm} | Max error: {
                     max_error:.2e}",
             )
 
     except Exception as e:
-        return False, f"[TRANSPOSE] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

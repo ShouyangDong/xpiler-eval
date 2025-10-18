@@ -39,7 +39,7 @@ def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
     )
 
     if not os.path.isfile(file_path):
-        return config, False, f"[SUMPOOL] File not found: {file_path}"
+        return config, False, f"[{op_name}] File not found: {file_path}"
 
     try:
         with open(file_path, "r") as f:
@@ -48,7 +48,7 @@ def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
         with open(temp_file, "w") as f:
             f.write(code)
     except Exception as e:
-        return config, False, f"[SUMPOOL] Patch failed {file_name}: {e}"
+        return config, False, f"[{op_name}] Patch failed {file_name}: {e}"
 
     success, msg = run_compilation(so_path, temp_file)
     try:
@@ -59,7 +59,7 @@ def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
     if success:
         return config, True, so_path
     else:
-        return config, False, f"[SUMPOOL] Compile failed {file_name}: {msg}"
+        return config, False, f"[{op_name}] Compile failed {file_name}: {msg}"
 
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
@@ -78,7 +78,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         if not func:
             return (
                 False,
-                f"[SUMPOOL] Function '{op_name}' not found in {so_path}",
+                f"[{op_name}] Function '{op_name}' not found in {so_path}",
             )
 
         # Determine C type and numpy dtype
@@ -129,7 +129,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             max_error = (output_torch - expected_output).abs().max().item()
             return (
                 True,
-                f"[SUMPOOL] ✅ {file_name}| In: {input_shape} → Out: {
+                f"[{op_name}] ✅ {file_name}| In: {input_shape} → Out: {
                     list(output_shape)} | Max error: {
                     max_error:.2e}",
             )
@@ -137,11 +137,11 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             max_error = (output_torch - expected_output).abs().max().item()
             return (
                 False,
-                f"[SUMPOOL] FAILED❌: {file_name} | Max error: {max_error:.2e}",
+                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
             )
 
     except Exception as e:
-        return False, f"[SUMPOOL] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

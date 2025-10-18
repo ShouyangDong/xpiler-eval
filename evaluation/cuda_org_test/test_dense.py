@@ -1,156 +1,100 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
 import torch
 
-from evaluation.macros import CUDA_MACROS as macro
-from evaluation.utils import run_cuda_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
 
-# Or simply use c_uint16 to represent __half*
-c_half_p = ctypes.POINTER(ctypes.c_uint16)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Validate Dense (Linear) CUDA kernel output against PyTorch"
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
-    parser.add_argument(
-        "--file", type=str, help="Path to the source .cuda file"
-    )
-    parser.add_argument(
-        "--config",
-        required=True,
-        help="JSON string or path to kernel configuration file",
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform for compilation",
-    )
-    args = parser.parse_args()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
-    base_name = os.path.basename(args.file)
-    # Example filename: dense_16_1024_1024.cu → shape = [batch, in_feat,
-    # out_feat]
-    shapes = base_name.split(".")[0]
-    shape = [int(dim) for dim in shapes.split("_")[1:]]
 
-    name = base_name.split("_")[0]  # e.g., 'dense'
-
-    if len(shape) != 3:
-        print(
-            "[ERROR] Filename should encode: dense_batch_in_features_out_features.cu"
-        )
-        exit(1)
-
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    shape = config["args"]
+    op_name = config["op_name"]
     batch_size, in_features, out_features = shape
+    # Generate input and parameters
+    x = torch.randn(
+        batch_size,
+        in_features,
+        dtype=torch.float16,
+        device=torch.device("cuda"),
+    )
+    weight = torch.randn(
+        out_features,
+        in_features,
+        dtype=torch.float16,
+        device=torch.device("cuda"),
+    )
+    bias = torch.randn(
+        out_features, dtype=torch.float32, device=torch.device("cuda")
+    )
 
-    # Use GPU if available
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if not torch.cuda.is_available():
-        print("[WARNING] CUDA not available. Running on CPU.")
-        device = "cpu"
-
-    # -------------------------------------------------------
-    # ✅ 1. Generate input and parameters in correct dtypes
-    # -------------------------------------------------------
-    x = torch.ones(
-        batch_size, in_features, dtype=torch.float16, device=device
-    )  # fp16
-    weight = torch.ones(
-        in_features, out_features, dtype=torch.float16, device=device
-    )  # fp16
-    bias = torch.zeros(
-        out_features, dtype=torch.float32, device=device
-    )  # fp32
-
-    # -------------------------------------------------------
-    # ✅ 2. Reference: PyTorch Linear forward
-    # -------------------------------------------------------
+    # Reference: PyTorch Linear forward
     with torch.amp.autocast(
         enabled=True, device_type="cuda", dtype=torch.float16
     ):
         matmul_out = x @ weight
         y_torch = matmul_out + bias
-    y_torch = y_torch.float()  # ensure output is fp32 for comparison
+
+    # Move reference result to CPU for comparison
     y_torch_cpu = y_torch.cpu().contiguous()
 
-    # -------------------------------------------------------
-    # ✅ 3. Host tensors for kernel input (ensure contiguous)
-    # -------------------------------------------------------
-    x_host = x.cpu().contiguous()  # fp16
-    # fp16 (no need to transpose unless kernel expects it)
-    weight_host = weight.cpu().contiguous()
-    bias_host = bias.cpu().contiguous()  # fp32
+    # Host tensors for kernel input
+    x_host = x.cpu().contiguous()
+    weight_host = weight.t().cpu().contiguous()
+    bias_host = bias.cpu().contiguous()
+
+    # Output buffer (CPU)
     y_kernel = torch.zeros(
         batch_size, out_features, dtype=torch.float32
     ).contiguous()
 
-    # -------------------------------------------------------
-    # ✅ 4. Get raw pointers (use c_uint16 for __half*)
-    # -------------------------------------------------------
-    x_ptr = ctypes.cast(x_host.data_ptr(), c_half_p)
-    weight_ptr = ctypes.cast(weight_host.data_ptr(), c_half_p)
+    # Get raw pointers
+    x_ptr = ctypes.cast(x_host.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    weight_ptr = ctypes.cast(
+        weight_host.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
     bias_ptr = ctypes.cast(
         bias_host.data_ptr(), ctypes.POINTER(ctypes.c_float)
     )
     y_ptr = ctypes.cast(y_kernel.data_ptr(), ctypes.POINTER(ctypes.c_float))
 
-    # -------------------------------------------------------
-    # ✅ 5. Shared library name
-    # -------------------------------------------------------
-    so_name = args.file.replace(".cu", ".so")
+    # Load shared library
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    function = getattr(lib, op_name + "_kernel")
 
-    # -------------------------------------------------------
-    # ✅ 6. Read and inject macros
-    # -------------------------------------------------------
-    with open(args.file, "r") as f:
-        code = f.read()
-
-    code = macro + code  # Inject config constants
-
-    temp_file = base_name + "_bak.cu"
-    with open(temp_file, "w") as f:
-        f.write(code)
-
-    # -------------------------------------------------------
-    # ✅ 7. Compile kernel
-    # -------------------------------------------------------
-    success, output = run_compilation(so_name, temp_file)
-    if not success:
-        print("[ERROR] Compilation failed:")
-        print(output)
-        exit(1)
-
-    os.remove(temp_file)
-
-    # -------------------------------------------------------
-    # ✅ 8. Load shared library
-    # -------------------------------------------------------
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    kernel_func = getattr(lib, op_name + "_kernel")
-
-    # -------------------------------------------------------
-    # ✅ 9. Define function signature
-    # -------------------------------------------------------
-    kernel_func.argtypes = [
-        c_half_p,  # input x: half*
-        c_half_p,  # weight W: half*
-        ctypes.POINTER(ctypes.c_float),  # bias b: float*
-        ctypes.POINTER(ctypes.c_float),  # output y: float*
-        ctypes.c_int,  # batch_size (M)
-        ctypes.c_int,  # in_features (K)
-        ctypes.c_int,  # out_features (N)
+    # Define function signature
+    function.argtypes = [
+        ctypes.POINTER(ctypes.c_uint16),  # input (x)
+        ctypes.POINTER(ctypes.c_uint16),  # weight (W)
+        ctypes.POINTER(ctypes.c_float),  # bias (b)
+        ctypes.POINTER(ctypes.c_float),  # output (y)
+        ctypes.c_int,  # batch_size
+        ctypes.c_int,  # in_features
+        ctypes.c_int,  # out_features
     ]
-    kernel_func.restype = None
+    function.restype = None
 
-    # -------------------------------------------------------
-    # ✅ 10. Call the kernel
-    # -------------------------------------------------------
-    kernel_func(
+    # Call the Dense kernel
+    function(
         x_ptr,
         weight_ptr,
         bias_ptr,
@@ -160,22 +104,51 @@ if __name__ == "__main__":
         out_features,
     )
 
-    # -------------------------------------------------------
-    # ✅ 11. Verify results
-    # -------------------------------------------------------
+    # Verify results
     if torch.allclose(
-        y_kernel, y_torch_cpu, rtol=1e-2, atol=1e-2, equal_nan=True
+        y_kernel, y_torch_cpu, rtol=1e-3, atol=1e-3, equal_nan=True
     ):
-        print(
-            "✅ Verification successful! Dense layer output matches PyTorch (FP16 input, FP32 output)."
-        )
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
     else:
-        print("❌ Verification failed! Results do not match.")
-        # Optional: debug print
-        # print("Max diff:", (y_kernel - y_torch_cpu).abs().max().item())
-        exit(1)
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
-    # -------------------------------------------------------
-    # ✅ 12. Clean up
-    # -------------------------------------------------------
-    subprocess.run(["rm", so_name], check=False)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="cu")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

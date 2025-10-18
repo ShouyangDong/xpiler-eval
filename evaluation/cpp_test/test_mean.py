@@ -47,7 +47,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         lib = ctypes.CDLL(so_path)
         func = getattr(lib, op_name, None)
         if not func:
-            return False, f"[MEAN] Function '{op_name}' not found in {so_path}"
+            return False, f"[{op_name}] Function '{op_name}' not found in {so_path}"
 
         # Determine C type
         ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
@@ -58,7 +58,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         # Set function signature
         rank = len(shape)
         if rank not in [2, 3, 4]:
-            return False, f"[MEAN] Rank {rank} not supported (only 2D/3D/4D)"
+            return False, f"[{op_name}] Rank {rank} not supported (only 2D/3D/4D)"
 
         argtypes = [
             ctypes.POINTER(ctype),  # input
@@ -100,17 +100,17 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
             max_error = (computed - expected).abs().max().item()
             return (
                 True,
-                f"[MEAN] ✅ {file_name}| Max error: {max_error:.2e}",
+                f"[{op_name}] ✅ {file_name}| Max error: {max_error:.2e}",
             )
         else:
             max_error = (computed - expected).abs().max().item()
             return (
                 False,
-                f"[MEAN] FAILED❌: {file_name} | Max error: {max_error:.2e}",
+                f"[{op_name}] FAILED❌: {file_name} | Max error: {max_error:.2e}",
             )
 
     except Exception as e:
-        return False, f"[MEAN] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

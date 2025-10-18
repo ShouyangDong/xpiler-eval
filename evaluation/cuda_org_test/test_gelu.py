@@ -1,14 +1,28 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
-from ctypes import CDLL
+from typing import Tuple
 
 import torch
-import torch.nn as nn
 
-from evaluation.macros import CUDA_MACROS as macro
-from evaluation.utils import run_cuda_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 def ref_program(x: torch.Tensor) -> torch.Tensor:
@@ -16,61 +30,17 @@ def ref_program(x: torch.Tensor) -> torch.Tensor:
 
     Approximation: 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))
     """
-    gelu = nn.GELU()
+    gelu = torch.nn.GELU()
     return gelu(x)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Validate GELU CUDA kernel output against PyTorch"
-    )
-    parser.add_argument("--file", type=str, help="Path to the source .cu file")
-    parser.add_argument(
-        "--config",
-        required=True,
-        help="JSON string or path to kernel configuration file",
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform for compilation",
-    )
-    args = parser.parse_args()
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]
 
-    base_name = os.path.basename(args.file)
-    name = "gelu"  # Kernel name
-    shapes = base_name.split(".")[0]
-    shape = [int(dim) for dim in shapes.split("_")[1:]]
+    shape = config["args"]
 
-    so_name = args.file.replace(".cu", ".so")
-
-    # Read and modify source code
-    with open(args.file, "r") as f:
-        code = f.read()
-
-    # Inject macros (e.g., configuration constants)
-    code = macro + code
-
-    # Write modified code to temporary file
-    file_name = args.file.replace(
-        base_name.replace(".cu", ""), base_name + "_bak.cu"
-    )
-    with open(file_name, "w") as f:
-        f.write(code)
-
-    # Compile the CUDA kernel
-    success, output = run_compilation(so_name, file_name)
-    if not success:
-        print("[ERROR] Compilation failed:")
-        print(output)
-        exit(1)
-
-    # Clean up temporary source file
-    os.remove(file_name)
-
-    # Load the compiled shared library
-    lib = CDLL(os.path.join(os.getcwd(), so_name))
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
     function = getattr(lib, op_name + "_kernel")
 
     # Define function signature
@@ -104,13 +74,47 @@ if __name__ == "__main__":
     if torch.allclose(
         output_tensor, expected_output, rtol=1e-3, atol=1e-3, equal_nan=True
     ):
-        print("✅ Verification successful! Results match.")
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
     else:
-        print("❌ Verification failed! Results do not match.")
-        # Optional: print first few values
-        print("Expected (PyTorch):", expected_output.flatten()[:10].tolist())
-        print("Got (Kernel):", output_tensor.flatten()[:10].tolist())
-        exit(1)
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
-    # Clean up shared library
-    subprocess.run(["rm", so_name], check=False)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="cu")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

@@ -71,7 +71,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         lib = ctypes.CDLL(so_path)
         func = getattr(lib, op_name, None)
         if not func:
-            return False, f"[Dense] Function 'dense' not found in {so_path}"
+            return False, f"[{op_name}] Function 'dense' not found in {so_path}"
 
         func.argtypes = [
             ctypes.POINTER(ctypes.c_int16),
@@ -89,15 +89,15 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         max_diff = abs_diff.max().item()
 
         if max_diff <= 1:
-            return True, f"[Dense] ✅ {file_name}| Max diff: {max_diff}"
+            return True, f"[{op_name}] ✅ {file_name}| Max diff: {max_diff}"
         else:
             return (
                 False,
-                f"[Dense] FAILED❌: {file_name} | Max diff: {max_diff}",
+                f"[{op_name}] FAILED❌: {file_name} | Max diff: {max_diff}",
             )
 
     except Exception as e:
-        return False, f"[Dense] Exception in test {file_name}: {str(e)}"
+        return False, f"[{op_name}] Exception in test {file_name}: {str(e)}"
 
 
 if __name__ == "__main__":

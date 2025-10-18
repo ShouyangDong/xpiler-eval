@@ -1,41 +1,39 @@
 import argparse
 import ctypes
-import json
-import os
-import subprocess
+import logging
+from typing import Tuple
 
 import torch
 
-from evaluation.macros import CUDA_MACROS as macro
-from evaluation.utils import run_cuda_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 def concat_reference(tensors, axis):
     return torch.cat(tensors, dim=axis)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--file", type=str, required=True, help="Path to C++ file"
-    )
-    parser.add_argument("--config", required=True)
-    parser.add_argument(
-        "--target", choices=["cuda", "hip", "mlu", "cpu"], required=True
-    )
-    args = parser.parse_args()
-
-    base_name = os.path.basename(args.file)
-    name = base_name.split("_")[0]
-    config = json.loads(args.config)
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]
     axis = config["axis"]
-    try:
-        shape_parts = base_name.replace(f".cu", "").split("_")
-        N, C, H, W = map(int, shape_parts[1:5])
-    except Exception as e:
-        raise ValueError(f"Invalid filename format: {base_name}") from e
 
-    print(f"Testing {name.upper()} | Shape: [{N},{C},{H},{W}] | Axis: {axis}")
+    N, C, H, W = config["args"]
 
     input1 = torch.rand(N, C, H, W, dtype=torch.float32)
     input2 = torch.rand(N, C, H, W, dtype=torch.float32)
@@ -54,30 +52,10 @@ if __name__ == "__main__":
         ctypes.POINTER(ctypes.c_float)
     )
 
-    so_name = args.file.replace(".cu", ".so")
-
-    with open(args.file, "r") as f:
-        code = f.read()
-    code = macro + code
-
-    temp_file = args.file.replace(".cu", "_bak.cu")
-    with open(temp_file, "w") as f:
-        f.write(code)
-
-    print(f"Compiling {temp_file} -> {so_name}")
-    success, log = run_compilation(so_name, temp_file)
-    if not success:
-        print("Compilation failed:")
-        print(log)
-        exit(1)
-
-    os.remove(temp_file)
-
-    lib = ctypes.CDLL(so_name)
+    lib = ctypes.CDLL(so_path)
     kernel_func = getattr(lib, op_name + "_kernel")
     kernel_func.argtypes = [ctypes.POINTER(ctypes.c_float)] * 3
     kernel_func.restype = None
-
 
     kernel_func(input1_ptr, input2_ptr, output_ptr)
 
@@ -88,22 +66,47 @@ if __name__ == "__main__":
     )
 
     if is_correct:
-        print("Verification successful!")
+        return True, f"[{op_name}] PASSED✅: {config['file']}"
     else:
-        print("Verification failed!")
-        diff = (result_reshaped - expected).abs()
-        print("Max error:", diff.max().item())
-        print(
-            "Sample expected:\n",
-            expected[0, :3, :2, :2] if axis == 1 else expected[0, 0, :2, :2],
-        )
-        print(
-            "Sample got:\n",
-            (
-                result_reshaped[0, :3, :2, :2]
-                if axis == 1
-                else result_reshaped[0, 0, :2, :2]
-            ),
-        )
+        return False, f"[{op_name}] FAILED❌: {config['file']} (mismatch)"
 
-    subprocess.run(["rm", so_name], check=False)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .cpp files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="cu")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)
