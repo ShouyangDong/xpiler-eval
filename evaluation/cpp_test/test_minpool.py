@@ -10,10 +10,10 @@ import torch
 
 from evaluation.utils import (
     log_test_results_and_exit,
+    minpool_np,
     parse_op_json,
     run_tests,
     verify_torch_tensor,
-    minpool_np,
 )
 
 # Configure logger

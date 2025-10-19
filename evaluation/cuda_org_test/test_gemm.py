@@ -68,7 +68,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # --------------------------------------------------
     # Use .data_ptr() to get raw GPU/CPU memory address (as int,
     # auto-converted by ctypes)
-    kernel_func(A.cpu().data_ptr(), x.cpu().data_ptr(), y_kernel.data_ptr(), M, K, N)
+    kernel_func(
+        A.cpu().data_ptr(), x.cpu().data_ptr(), y_kernel.data_ptr(), M, K, N
+    )
     # --------------------------------------------------
     # 7. Verify correctness
     # --------------------------------------------------

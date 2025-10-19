@@ -14,7 +14,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
-    verify_numpy_tensor
+    verify_numpy_tensor,
 )
 
 # Configure logger

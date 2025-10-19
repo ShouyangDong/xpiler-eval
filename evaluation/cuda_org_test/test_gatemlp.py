@@ -1,10 +1,8 @@
 import argparse
 import ctypes
 import logging
-import os
 from typing import Tuple
 
-import numpy as np
 import torch
 
 from evaluation.utils import (
@@ -26,6 +24,7 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
+
 def ref_program(X_fp16, A_fp16, B_fp16):
     """Golden reference using autocast to mimic real inference behavior.
 
@@ -39,6 +38,7 @@ def ref_program(X_fp16, A_fp16, B_fp16):
         O2 = torch.matmul(X_fp16, B_fp16)
         O = O1 * O2
     return O.float()
+
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""

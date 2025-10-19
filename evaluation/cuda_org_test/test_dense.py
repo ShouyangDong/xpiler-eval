@@ -34,15 +34,11 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    x = torch.ones(
-        batch_size, in_features, dtype=torch.float16, device=device
-    )
+    x = torch.ones(batch_size, in_features, dtype=torch.float16, device=device)
     weight = torch.ones(
         in_features, out_features, dtype=torch.float16, device=device
     )
-    bias = torch.zeros(
-        out_features, dtype=torch.float32, device=device
-    )
+    bias = torch.zeros(out_features, dtype=torch.float32, device=device)
 
     with torch.amp.autocast(
         enabled=True, device_type="cuda", dtype=torch.float16
@@ -61,7 +57,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     ).contiguous()
 
     x_ptr = ctypes.cast(x_host.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
-    weight_ptr = ctypes.cast(weight_host.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
+    weight_ptr = ctypes.cast(
+        weight_host.data_ptr(), ctypes.POINTER(ctypes.c_uint16)
+    )
     bias_ptr = ctypes.cast(
         bias_host.data_ptr(), ctypes.POINTER(ctypes.c_float)
     )
