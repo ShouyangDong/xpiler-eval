@@ -54,9 +54,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # Define argument types
     # Inputs A, x, y are raw pointers (void*), followed by M, K, N
     kernel_func.argtypes = [
-        ctypes.c_uint16,  # A (GPU pointer)
-        ctypes.c_uint16,  # x (GPU pointer)
-        ctypes.c_float,  # y (output pointer, could be CPU or GPU)
+        ctypes.c_void_p,  # A (GPU pointer)
+        ctypes.c_void_p,  # x (GPU pointer)
+        ctypes.c_void_p,  # y (output pointer, could be CPU or GPU)
         ctypes.c_int,  # M
         ctypes.c_int,  # K
         ctypes.c_int,  # N
@@ -68,7 +68,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # --------------------------------------------------
     # Use .data_ptr() to get raw GPU/CPU memory address (as int,
     # auto-converted by ctypes)
-    kernel_func(A.data_ptr(), x.data_ptr(), y_kernel.data_ptr(), M, K, N)
+    kernel_func(A.cpu().data_ptr(), x.cpu().data_ptr(), y_kernel.data_ptr(), M, K, N)
     # --------------------------------------------------
     # 7. Verify correctness
     # --------------------------------------------------

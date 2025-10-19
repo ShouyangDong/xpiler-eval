@@ -26,71 +26,60 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
+def ref_program(X_fp16, A_fp16, B_fp16):
+    """Golden reference using autocast to mimic real inference behavior.
 
-def ref_program(X, A, B):
-    """Golden reference using PyTorch.
-
-    Inputs: X, A, B as PyTorch tensors (on CUDA)
-    Output: O = SiLU(X @ A) * (X @ B) as NumPy array
+    Inputs: fp16 tensors on CUDA
+    Output: fp32 tensor on CUDA
     """
-    O1 = torch.nn.functional.silu(torch.matmul(X, A))
-    O2 = torch.matmul(X, B)
-    O = O1 * O2
-    return O.cpu().numpy()
-
+    with torch.amp.autocast(
+        enabled=True, device_type="cuda", dtype=torch.float16
+    ):
+        O1 = torch.nn.functional.silu(torch.matmul(X_fp16, A_fp16))
+        O2 = torch.matmul(X_fp16, B_fp16)
+        O = O1 * O2
+    return O.float()
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
     op_name = config["op_name"]
     batch, dim_k, dim_n = config["args"]
-    # -------------------------------
-    # 2. Load kernel
-    # -------------------------------
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
-    function = getattr(lib, op_name + "_kernel")
-    function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # X
-        ctypes.POINTER(ctypes.c_float),  # A
-        ctypes.POINTER(ctypes.c_float),  # B
-        ctypes.POINTER(ctypes.c_float),  # O
-        ctypes.c_int,  # batch
-        ctypes.c_int,  # dim
-        ctypes.c_int,  # k
+    lib = ctypes.CDLL(so_path)
+    kernel_func = getattr(lib, op_name + "_kernel")
+    kernel_func.argtypes = [
+        ctypes.POINTER(ctypes.c_uint16),  # X (fp16)
+        ctypes.POINTER(ctypes.c_uint16),  # A (fp16)
+        ctypes.POINTER(ctypes.c_uint16),  # B (fp16)
+        ctypes.POINTER(ctypes.c_float),  # O (fp32)
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
     ]
-    function.restype = None
-
-    # -------------------------------
-    # ✅ 3. Generate random inputs
-    # -------------------------------
+    kernel_func.restype = None
     torch.manual_seed(1234)
+    device = torch.device("cuda")
 
-    #
-    X = torch.randn(batch, dim_k, dtype=torch.float32, device="cuda")
-    A = torch.randn(dim_k, dim_n, dtype=torch.float32, device="cuda")
-    B = torch.randn(dim_k, dim_n, dtype=torch.float32, device="cuda")
+    # Generate fp16 inputs
+    X_fp16 = torch.ones(batch, dim_k, dtype=torch.float16, device=device) / 16
+    A_fp16 = torch.ones(dim_k, dim_n, dtype=torch.float16, device=device) / 16
+    B_fp16 = torch.ones(dim_k, dim_n, dtype=torch.float16, device=device) / 16
 
-    # Calculate output
-    O_ref = ref_program(X, A, B)
+    # Reference output (fp32 on CUDA)
+    O_ref = ref_program(X_fp16, A_fp16, B_fp16)
 
-    X_np = X.cpu().numpy()
-    A_np = A.cpu().numpy()
-    B_np = B.cpu().numpy()
-    O = np.zeros_like(O_ref)  # output buffer
+    # Output buffer: allocate fp32 tensor on CUDA
+    O = torch.zeros(batch, dim_n, dtype=torch.float32, device=device)
 
-    # Get pointer
-    X_ptr = X_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    A_ptr = A_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    B_ptr = B_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    O_ptr = O.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    X_fp16 = X_fp16.contiguous()
+    A_fp16 = A_fp16.contiguous()
+    B_fp16 = B_fp16.contiguous()
+    O = O.contiguous()
 
-    # -------------------------------
-    # 4. invoke C++/CUDA kernel
-    # -------------------------------
-    function(X_ptr, A_ptr, B_ptr, O_ptr, batch, dim_k, dim_n)
-
-    # -------------------------------
-    # 5. Verification
-    # -------------------------------
+    X_ptr = ctypes.cast(X_fp16.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
+    A_ptr = ctypes.cast(A_fp16.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
+    B_ptr = ctypes.cast(B_fp16.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
+    O_ptr = ctypes.cast(O.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    kernel_func(X_ptr, A_ptr, B_ptr, O_ptr, batch, dim_k, dim_n)
     return verify_torch_tensor(O, O_ref, op_name=op_name)
 
 

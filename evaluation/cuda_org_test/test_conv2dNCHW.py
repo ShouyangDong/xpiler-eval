@@ -11,6 +11,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    verify_torch_tensor
 )
 
 # Configure logger
