@@ -12,7 +12,11 @@ from typing import Tuple
 
 import torch
 
-from evaluation.utils import parse_op_json,verify_torch_tensor,log_test_results_and_exit
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    verify_torch_tensor,
+)
 
 # ------------------ Logging setup ------------------
 logger = logging.getLogger(__name__)

@@ -1,18 +1,20 @@
 import argparse
 import ctypes
 import logging
+import math
 import os
 from typing import Tuple
-import math
-import torch
+
 import numpy as np
+import torch
+import torch.nn.functional as F
+
 from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
     verify_numpy_tensor,
 )
-import torch.nn.functional as F
 
 # Configure logger
 logger = logging.getLogger(__name__)
