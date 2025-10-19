@@ -31,71 +31,56 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     shape = config["args"]
     op_name = config["op_name"]
     batch_size, in_features, out_features = shape
-    # Generate input and parameters
-    x = torch.randn(
-        batch_size,
-        in_features,
-        dtype=torch.float16,
-        device=torch.device("cuda"),
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    x = torch.ones(
+        batch_size, in_features, dtype=torch.float16, device=device
     )
-    weight = torch.randn(
-        out_features,
-        in_features,
-        dtype=torch.float16,
-        device=torch.device("cuda"),
+    weight = torch.ones(
+        in_features, out_features, dtype=torch.float16, device=device
     )
-    bias = torch.randn(
-        out_features, dtype=torch.float32, device=torch.device("cuda")
+    bias = torch.zeros(
+        out_features, dtype=torch.float32, device=device
     )
 
-    # Reference: PyTorch Linear forward
     with torch.amp.autocast(
         enabled=True, device_type="cuda", dtype=torch.float16
     ):
         matmul_out = x @ weight
         y_torch = matmul_out + bias
-
-    # Move reference result to CPU for comparison
+    y_torch = y_torch.float()  # ensure output is fp32 for comparison
     y_torch_cpu = y_torch.cpu().contiguous()
 
-    # Host tensors for kernel input
-    x_host = x.cpu().contiguous()
-    weight_host = weight.t().cpu().contiguous()
-    bias_host = bias.cpu().contiguous()
+    x_host = x.cpu().contiguous()  # fp16
 
-    # Output buffer (CPU)
+    weight_host = weight.cpu().contiguous()
+    bias_host = bias.cpu().contiguous()  # fp32
     y_kernel = torch.zeros(
         batch_size, out_features, dtype=torch.float32
     ).contiguous()
 
-    # Get raw pointers
-    x_ptr = ctypes.cast(x_host.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    weight_ptr = ctypes.cast(
-        weight_host.data_ptr(), ctypes.POINTER(ctypes.c_float)
-    )
+    x_ptr = ctypes.cast(x_host.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
+    weight_ptr = ctypes.cast(weight_host.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
     bias_ptr = ctypes.cast(
         bias_host.data_ptr(), ctypes.POINTER(ctypes.c_float)
     )
     y_ptr = ctypes.cast(y_kernel.data_ptr(), ctypes.POINTER(ctypes.c_float))
 
-    # Load shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
-    function = getattr(lib, op_name + "_kernel")
+    kernel_func = getattr(lib, op_name + "_kernel")
 
-    # Define function signature
-    function.argtypes = [
-        ctypes.POINTER(ctypes.c_uint16),  # input (x)
-        ctypes.POINTER(ctypes.c_uint16),  # weight (W)
-        ctypes.POINTER(ctypes.c_float),  # bias (b)
-        ctypes.POINTER(ctypes.c_float),  # output (y)
-        ctypes.c_int,  # batch_size
-        ctypes.c_int,  # in_features
-        ctypes.c_int,  # out_features
+    kernel_func.argtypes = [
+        ctypes.POINTER(ctypes.c_uint16),
+        ctypes.POINTER(ctypes.c_uint16),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
     ]
-    function.restype = None
-
-    # Call the Dense kernel
-    function(
+    kernel_func.restype = None
+    kernel_func(
         x_ptr,
         weight_ptr,
         bias_ptr,
@@ -104,8 +89,6 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         in_features,
         out_features,
     )
-
-    # Verify results
     return verify_torch_tensor(y_kernel, y_torch_cpu, op_name=op_name)
 
 

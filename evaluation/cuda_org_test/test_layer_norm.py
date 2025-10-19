@@ -10,7 +10,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
-    verify_torch_tensor,
+    verify_numpy_tensor,
 )
 
 # Configure logger
@@ -69,7 +69,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # Calling a C function
     function(input_ptr, gamma_ptr, beta_ptr, output_ptr, *shape)
     # Verification results
-    return verify_torch_tensor(output_array, expected_output, op_name=op_name)
+    return verify_numpy_tensor(output_array, expected_output, op_name=op_name)
 
 
 if __name__ == "__main__":

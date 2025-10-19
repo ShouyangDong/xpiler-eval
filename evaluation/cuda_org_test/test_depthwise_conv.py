@@ -10,7 +10,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
-    verify_torch_tensor,
+    verify_numpy_tensor,
 )
 
 # Configure logger
@@ -104,7 +104,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         input_channels,
     )
     # Check if the results match
-    return verify_torch_tensor(output_ctypes, output_np, op_name=op_name)
+    return verify_numpy_tensor(output_ctypes, output_np, op_name=op_name)
 
 
 if __name__ == "__main__":
