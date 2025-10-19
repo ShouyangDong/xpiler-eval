@@ -76,7 +76,7 @@ if __name__ == "__main__":
         "--config", required=True, help="JSON string or path to config file"
     )
     parser.add_argument(
-        "--source_dir", default="./", help="Directory with .cpp files"
+        "--source_dir", default="./", help="Directory with .hip files"
     )
     parser.add_argument(
         "--target",

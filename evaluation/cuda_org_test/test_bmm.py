@@ -106,7 +106,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser = argparse.ArgumentParser(description="Test kernels (CUDA)")
     parser.add_argument(
         "--name",
         required=True,

@@ -114,7 +114,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test kernels (HIP)")
+    parser = argparse.ArgumentParser(description="Test kernels (CUDA)")
     parser.add_argument(
         "--name",
         required=True,
@@ -124,7 +124,7 @@ if __name__ == "__main__":
         "--config", required=True, help="JSON string or path to config file"
     )
     parser.add_argument(
-        "--source_dir", default="./", help="Directory with .cpp files"
+        "--source_dir", default="./", help="Directory with .cu files"
     )
     parser.add_argument(
         "--target",
