@@ -37,7 +37,8 @@ extern "C" void batchnorm_kernel(const float *h_input, float *h_output,
   cudaMemcpy(d_input, h_input, input_size * sizeof(float),
              cudaMemcpyHostToDevice);
   cudaMemcpy(d_mean, h_mean, 128 * sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_variance, h_variance, 128 * sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_variance, h_variance, 128 * sizeof(float),
+             cudaMemcpyHostToDevice);
   cudaMemcpy(d_gamma, h_gamma, 128 * sizeof(float), cudaMemcpyHostToDevice);
   cudaMemcpy(d_beta, h_beta, 128 * sizeof(float), cudaMemcpyHostToDevice);
 

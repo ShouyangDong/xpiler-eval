@@ -28,7 +28,7 @@ __global__ void conv2d(float *input, float *kernel, float *output) {
   }
 }
 
-extern "C" void conv2d_kernel(float *input, float *filter, float *output, 
+extern "C" void conv2d_kernel(float *input, float *filter, float *output,
                               int batch_size, int input_height,
                               int input_channels, int output_channels,
                               int kernel_height, int stride) {

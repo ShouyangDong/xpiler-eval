@@ -38,7 +38,6 @@ extern "C" void transpose_kernel(float *host_input, float *host_output, int d0,
 
   transpose<<<grid, block>>>(d_input, d_output);
 
-
   hipMemcpy(host_output, d_output, out_bytes, hipMemcpyDeviceToHost);
 
   hipFree(d_input);

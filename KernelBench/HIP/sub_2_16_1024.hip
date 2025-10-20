@@ -2,7 +2,7 @@
 
 __global__ void __launch_bounds__(256)
     sub(const float *__restrict__ A, const float *__restrict__ B,
-                  float *__restrict__ C) {
+        float *__restrict__ C) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < 32768) {
     C[idx] = A[idx] - B[idx];
