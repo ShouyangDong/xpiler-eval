@@ -1,9 +1,7 @@
-"""Batch correctness tester for GQA kernels with parallel compilation and
-testing."""
-
 import argparse
 import ctypes
 import logging
+import os
 from typing import Tuple
 
 import torch
@@ -28,69 +26,67 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-def reference_gqa(
-    Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor
-) -> torch.Tensor:
-    """Reference GQA using PyTorch."""
-    # Q: [B, H, Sq, D]
-    # K: [B, H, D, Skv]
-    # V: [B, H, Skv, D]
-    # S = softmax(Q @ K)
-    # O = S @ V
-    with torch.no_grad():
-        S = torch.matmul(Q, K)  # [B, H, Sq, Skv]
-        S = torch.softmax(S, dim=-1)
-        O = torch.matmul(S, V)  # [B, H, Sq, D]
-    return O
-
-
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
-    """Run correctness test on compiled GQA kernel."""
-    B = config["batch"]
-    H = config["num_heads"]
-    Sq = config["seq_q"]
-    Skv = config["seq_kv"]
-    D = config["head_dim"]
-    config["file"]
+    """Run correctness test on a successfully compiled kernel."""
+    batch, seq_q, seq_M, seq_K, seq_N = config["args"]
     op_name = config["op_name"]
-    # Load shared library
-    lib = ctypes.CDLL(so_path)
-    func = getattr(lib, op_name, None)
-
-    # Set function signature
-    func.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # Q
-        ctypes.POINTER(ctypes.c_float),  # K
-        ctypes.POINTER(ctypes.c_float),  # V
-        ctypes.POINTER(ctypes.c_float),  # O
+    # ---------------------------------------------
+    # 3. Load shared library
+    # ---------------------------------------------
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    gqa_func = getattr(lib, op_name)
+    gqa_func.argtypes = [
+        ctypes.POINTER(ctypes.c_int16),  # Q
+        ctypes.POINTER(ctypes.c_int16),  # K
+        ctypes.POINTER(ctypes.c_int16),  # V
+        ctypes.POINTER(ctypes.c_int),  # O
         ctypes.c_int,  # batch
         ctypes.c_int,  # num_heads
         ctypes.c_int,  # seq_q
         ctypes.c_int,  # seq_kv
         ctypes.c_int,  # head_dim
     ]
-    func.restype = None
+    gqa_func.restype = None
 
-    # Generate input
+    # ---------------------------------------------
+    # 4. Get the refered output using Pytorch
+    # ---------------------------------------------
     torch.manual_seed(1234)
-    Q = torch.randn(B, H, Sq, D, dtype=torch.float32)
-    # Note: K is [B, H, D, Skv]
-    K = torch.randn(B, H, D, Skv, dtype=torch.float32)
-    V = torch.randn(B, H, Skv, D, dtype=torch.float32)
-    O = torch.zeros(B, H, Sq, D, dtype=torch.float32)
 
-    # Reference
-    O_ref = reference_gqa(Q, K, V)
+    # Generate Q, K, V
+    Q = torch.randint(-10, 10, (batch, seq_q, seq_M, seq_K), dtype=torch.int16)
+    K = torch.randint(-10, 10, (batch, seq_q, seq_K, seq_N), dtype=torch.int16)
+    V = torch.randint(-10, 10, (batch, seq_q, seq_N, seq_K), dtype=torch.int16)
 
-    # Get pointers
-    Q_ptr = Q.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    K_ptr = K.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    V_ptr = V.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    O_ptr = O.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    # ✅ Get the referenced ouput
+    with torch.no_grad():
+        S = torch.matmul(Q, K).to(torch.float32)  # [b, 2, seq_q, seq_kv]
+        S = torch.softmax(S, dim=-1).to(torch.int16)
+        O_ref = torch.matmul(S, V).to(torch.int32)  # [b, 2, seq_q, 64]
 
-    # Call kernel
-    func(Q_ptr, K_ptr, V_ptr, O_ptr, B, H, Sq, Skv, D)
-    return verify_torch_tensor(O, O_ref, op_name)
+    # ---------------------------------------------
+    # 5. Prepare C++ kernel and feed output buffer
+    # ---------------------------------------------
+    O = torch.zeros_like(O_ref, dtype=torch.int32)  # host buffer for output
+
+    Q_cpu = Q.numpy()
+    K_cpu = K.numpy()
+    V_cpu = V.numpy()
+
+    Q_ptr = Q_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_int16))
+    K_ptr = K_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_int16))
+    V_ptr = V_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_int16))
+    O_ptr = O.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_int))
+
+    # ---------------------------------------------
+    # 6. invoke C++/CUDA kernel
+    # ---------------------------------------------
+    gqa_func(Q_ptr, K_ptr, V_ptr, O_ptr, batch, seq_q, seq_M, seq_K, seq_N)
+
+    # ---------------------------------------------
+    # 7. Verification
+    # ---------------------------------------------
+    return verify_torch_tensor(O, O_ref, op_name=op_name)
 
 
 if __name__ == "__main__":
@@ -104,12 +100,12 @@ if __name__ == "__main__":
         "--config", required=True, help="JSON string or path to config file"
     )
     parser.add_argument(
-        "--source_dir", default="./", help="Directory containing .cpp files"
+        "--source_dir", default="./", help="Directory with .cpp files"
     )
     parser.add_argument(
         "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
         help="Target platform",
     )
     parser.add_argument(
@@ -119,16 +115,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config
-    configs = parse_op_json(args.config, args.name)
+    configs = parse_op_json(args.config, args.name, file_type="cu")
 
     if not configs:
-        logger.warning("No valid 'gqa' kernels found in config.")
+        logger.warning(f"No {args.name} kernels found in config.")
         exit(0)
 
-    # Run tests
+    # Run two-phase test
     results = run_tests(
         args.name, configs, args.source_dir, args.target, num_workers=args.jobs
     )
 
-    # Log individual results
+    # Summary
     log_test_results_and_exit(results, op_name=args.name)
