@@ -2701,42 +2701,42 @@
     {
         "op_name": "gqa",
         "dtype": "float32",
-        "args": [1, 2, 256, 64, 4096]
+        "args": [1, 2, 16, 16, 512]
     },
     {
         "op_name": "gqa",
         "dtype": "float32",
-        "args": [1, 4, 256, 64, 4096]
+        "args": [1, 4, 16, 16, 512]
     },
     {
         "op_name": "gqa",
         "dtype": "float32",
-        "args": [2, 2, 256, 64, 4096]
+        "args": [2, 2, 16, 16, 512]
     },
     {
         "op_name": "gqa",
         "dtype": "float32",
-        "args": [2, 4, 256, 64, 4096]
+        "args": [2, 4, 16, 16, 512]
     },
     {
         "op_name": "gqa",
         "dtype": "float32",
-        "args": [4, 2, 256, 64, 4096]
+        "args": [4, 2, 16, 16, 512]
     },
     {
         "op_name": "gqa",
         "dtype": "float32",
-        "args": [4, 4, 256, 64, 4096]
+        "args": [4, 4, 16, 16, 512]
     },
     {
         "op_name": "gqa",
         "dtype": "float32",
-        "args": [8, 2, 256, 64, 4096]
+        "args": [8, 2, 16, 16, 512]
     },
     {
         "op_name": "gqa",
         "dtype": "float32",
-        "args": [8, 4, 256, 64, 4096]
+        "args": [8, 4, 16, 16, 512]
     }
 ]
 

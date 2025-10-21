@@ -28,7 +28,7 @@ if not logger.handlers:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
-    batch, seq_q, seq_kv, head_dim = config["args"]
+    batch, seq_q, seq_M, seq_K, seq_N = config["args"]
     op_name = config["op_name"]
     # ---------------------------------------------
     # 3. Load shared library
@@ -81,7 +81,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # ---------------------------------------------
     # 6. invoke C++/CUDA kernel
     # ---------------------------------------------
-    gqa_func(Q_ptr, K_ptr, V_ptr, O_ptr, batch, 2, seq_q, seq_kv, 64)
+    gqa_func(Q_ptr, K_ptr, V_ptr, O_ptr, batch, seq_q, seq_M, seq_K, seq_N)
     return verify_torch_tensor(O, O_ref, op_name)
 
 
