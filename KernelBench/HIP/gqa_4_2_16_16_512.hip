@@ -2,23 +2,23 @@
 #define BLOCK_N 16
 #define BLOCK_K 4
 
-#define M_outer 256
-#define K_outer 64
-#define N_outer 4096
+#define M_outer 16
+#define K_outer 16
+#define N_outer 512
 
-__global__ void gqa(float *Q, // [B, H, M, K]
-                    float *K, // [B, H, K, N]
-                    float *V, // [B, H, N, K]
-                    float *O, // [B, H, M, K]
+__global__ void gqa(float *Q,
+                    float *K,
+                    float *V,
+                    float *O
 ) {
   int bid = blockIdx.z; // batch * heads
-  int m_base = threadIdx.x * BLOCK_M;
-  int n_base = threadIdx.y * BLOCK_N;
-  using float4 = __attribute__((__vector_size__(K * sizeof(float)))) float;
+  int m_base = blockIdx.x * BLOCK_M;
+  int n_base = blockIdx.y * BLOCK_N;
+  using float4 = __attribute__((__vector_size__(BLOCK_K * sizeof(float)))) float;
   float4 dmn = {0};
   __shared__ float temp[M_outer * N_outer];
   __shared__ float sum_array[N_outer];
-  for (int kk = 0; kk < K_outer; kk += K) {
+  for (int kk = 0; kk < K_outer; kk += BLOCK_K) {
     int a_row = m_base + threadIdx.x;
     int a_col = kk + threadIdx.y;
     int b_row = kk + threadIdx.y;
@@ -51,11 +51,11 @@ __global__ void gqa(float *Q, // [B, H, M, K]
     }
     for (int k_sf = 0; k_sf < N_outer; ++k_sf) {
       temp[global_row * N_outer + k_sf] =
-          score[global_row * N_outer + k_sf] / sum;
+          sum_array[global_row * N_outer + k_sf] / sum;
     }
   }
-  float4 dmn = {0};
-  for (int kk = 0; kk < K_outer; kk += K) {
+  dmn = {0};
+  for (int kk = 0; kk < K_outer; kk += BLOCK_K) {
     int a_row = m_base + threadIdx.x;
     int a_col = kk + threadIdx.y;
     int c_row = kk + threadIdx.y;
@@ -75,7 +75,7 @@ __global__ void gqa(float *Q, // [B, H, M, K]
     int global_row = m_base + local_row;
     int global_col = n_base + local_col;
     if (global_row < M_outer && global_col < K_outer) {
-      O[global_row * N_outer + global_col] = dmn[i] + C[global_col];
+      O[global_row * N_outer + global_col] = dmn[i];
     }
   }
 }
@@ -100,11 +100,11 @@ extern "C" void gqa_kernel(float *Q, float *K, float *V, float *O, int batch,
 
   // Grid: M_blocks x N_blocks x (batch * heads)
   dim3 grid((M + BLOCK_M - 1) / BLOCK_M,
-            maxf((N + BLOCK_K - 1) / BLOCK_K, (K + BLOCK_K - 1) / BLOCK_K),
+            (N + BLOCK_K - 1) / BLOCK_K,
             batch * heads);
   dim3 block(16, 4, 1);
 
-  gqa<<<grid, block>>>(d_Q, d_K, d_V, d_O, );
+  gqa<<<grid, block>>>(d_Q, d_K, d_V, d_O);
 
   hipMemcpy(O, d_O, o_sz, hipMemcpyDeviceToHost);
 
