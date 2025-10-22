@@ -8,18 +8,15 @@
 #define SEQ_KV 512
 #define HEAD_DIM 16
 
-// kernel: O = softmax(Q @ K) @ V
 __global__ void gqa(const half *__restrict__ Q, const half *__restrict__ K,
                     const half *__restrict__ V, half *__restrict__ O) {
   int batch = blockIdx.z;
   int head = blockIdx.y;
   int tile_row = blockIdx.x;
 
-  // Shared memory for temp attention scores
   __shared__ half attn_tile[BLOCK_M * SEQ_KV];
   __shared__ half softmax_tile[BLOCK_M * SEQ_KV];
 
-  // 1️⃣ 计算 S = Q @ K^T
   for (int row = 0; row < SEQ_Q; row += BLOCK_M) {
     wmma::fragment<wmma::matrix_a, BLOCK_M, BLOCK_N, BLOCK_K, half,
                    wmma::row_major>
@@ -44,7 +41,6 @@ __global__ void gqa(const half *__restrict__ Q, const half *__restrict__ K,
                             wmma::mem_row_major);
   }
 
-  // 2️⃣ softmax 按行归一化
   for (int i = 0; i < SEQ_Q; ++i) {
     half max_val = -1e9f;
     for (int j = 0; j < SEQ_KV; ++j)

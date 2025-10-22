@@ -13,7 +13,7 @@ from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
-    verify_numpy_tensor,
+    verify_torch_tensor,
 )
 
 # Configure logger
@@ -49,18 +49,18 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     shape = config["args"]
     dtype = torch.float32
 
-    query = torch.randn(shape).to(dtype).contiguous()
-    key = torch.randn(shape).to(dtype).contiguous()
-    value = torch.randn(shape).to(dtype).contiguous()
+    query = torch.randn(shape, dtype=torch.float16, device="cuda").contiguous()
+    key = torch.randn(shape, dtype=torch.float16, device="cuda").contiguous()
+    value = torch.randn(shape, dtype=torch.float16, device="cuda").contiguous()
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
     # Obtain function handle
     function = getattr(lib, op_name + "_kernel")
     # Define the function's parameters and return types.
     function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_uint16),
+        ctypes.POINTER(ctypes.c_uint16),
+        ctypes.POINTER(ctypes.c_uint16),
+        ctypes.POINTER(ctypes.c_uint16),
         ctypes.c_int,
         ctypes.c_int,
         ctypes.c_int,
@@ -70,18 +70,18 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # Create the input array.
     expected_output = ref_program(query, key, value)
     # Create the output array.
-    output_array = np.zeros_like(query.numpy())
+    output_array = torch.zeros_like(expected_output, dtype=torch.float16, device="cuda")
     # Convert the input and output arrays to C pointer types.
-    input_ptr_q = query.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    input_ptr_k = key.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    input_ptr_v = value.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    output_ptr = output_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    input_ptr_q = query.cpu().numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
+    input_ptr_k = key.cpu().numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
+    input_ptr_v = value.cpu().numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
+    output_ptr = output_array.cpu().numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
 
     # Invoke the HIP kernel.
     function(input_ptr_q, input_ptr_k, input_ptr_v, output_ptr, *shape)
     # Verification results
-    return verify_numpy_tensor(
-        output_array, expected_output.numpy(), op_name=op_name
+    return verify_torch_tensor(
+        output_array, expected_output, op_name=op_name
     )
 
 

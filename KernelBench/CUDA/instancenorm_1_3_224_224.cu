@@ -18,7 +18,6 @@ __global__ void __launch_bounds__(256)
   int h = (idx % (H * W)) / W;
   int w = idx % W;
 
-  // Compute mean for current (n, c)
   float sum = 0.0f;
   for (int i = 0; i < H; i++) {
     for (int j = 0; j < W; j++) {
@@ -28,7 +27,6 @@ __global__ void __launch_bounds__(256)
   }
   float mean = sum / spatial;
 
-  // Compute variance for current (n, c)
   float sum_sq = 0.0f;
   for (int i = 0; i < H; i++) {
     for (int j = 0; j < W; j++) {
@@ -39,7 +37,6 @@ __global__ void __launch_bounds__(256)
   }
   float variance = sum_sq / spatial;
 
-  // Normalize and apply affine transform
   float inv_std = 1.0f / sqrtf(variance + eps);
   float norm_val = (input[idx] - mean) * inv_std;
 

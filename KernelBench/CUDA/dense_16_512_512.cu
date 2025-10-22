@@ -1,11 +1,9 @@
 #define WARP_SIZE 32
 
-// MMA matrix tile dimensions.
 #define M 16
 #define N 16
 #define K 16
 
-// GEMM configuration.
 #define M_TOTAL 16
 #define N_TOTAL 512
 #define K_TOTAL 512
@@ -20,21 +18,18 @@ __global__ void dense(half *A, half *B, float *C, float *D) {
 
   wmma::fill_fragment(ab_frag, 0.0f);
 
-  // AB = A*B
   int a_row = ix * M;
   int b_row = iy * N;
   for (int k = 0; k < K_TOTAL; k += K) {
     if (a_row < M_TOTAL && k < K_TOTAL && b_row < K_TOTAL && k < N_TOTAL) {
-      // Load the inputs
+
       wmma::load_matrix_sync(a_frag, A + k + a_row * M_TOTAL, M_TOTAL);
       wmma::load_matrix_sync(b_frag, B + k + k * K_TOTAL, K_TOTAL);
 
-      // Perform the matrix multiplication
       wmma::mma_sync(ab_frag, a_frag, b_frag, ab_frag);
     }
   }
 
-  // D = AB + C
   for (int i = 0; i < ab_frag.num_elements; i++) {
     int row_in_tile = i / N;
     int col_in_tile = i % N;
