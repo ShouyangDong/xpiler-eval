@@ -62,7 +62,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     computed_tensor = torch.tensor(computed_array).view_as(
         torch.from_numpy(expected_numpy)
     )
-    return verify_torch_tensor(computed_tensor - expected_tensor, op_name)
+    return verify_torch_tensor(computed_tensor, expected_tensor, op_name)
 
 
 if __name__ == "__main__":
