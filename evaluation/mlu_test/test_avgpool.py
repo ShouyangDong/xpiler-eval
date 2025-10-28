@@ -1,18 +1,40 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
-import numpy as np
 import torch
-from benchmark.template.mlu_host_template import create_mlu_func
 
-from evaluation.utils import avgpool_np
-from evaluation.utils import run_mlu_compilation as run_compilation
+from evaluation.utils import (
+    avgpool_np,
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+    verify_torch_tensor,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
-def verify_pooling(base_name, file, shape, kernel_stride):
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]
+    shape = config["args"][:4]
+    kernel_stride = config["args"][4:]
+
     input_array = torch.randn(*shape, device="cpu")
+    # Calculate the result using numpy for comparison
     output_np = avgpool_np(input_array, kernel_stride)
     output_array = torch.zeros(output_np.shape, dtype=torch.float32)
     # Convert the arrays to contiguous memory for ctypes
@@ -22,12 +44,8 @@ def verify_pooling(base_name, file, shape, kernel_stride):
     output_ptr = output_array.numpy().ctypes.data_as(
         ctypes.POINTER(ctypes.c_float)
     )
-    so_name = file.replace(".mlu", ".so")
-    file_name = create_mlu_func(file, op_type="pool")
-    success, output = run_compilation(so_name, file_name)
-    os.remove(file_name)
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    base_name.split("_")[0]
+
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
     function = getattr(lib, op_name + "_kernel")
     # Define the function's parameters and return types.
     function.argtypes = [
@@ -35,39 +53,61 @@ def verify_pooling(base_name, file, shape, kernel_stride):
         ctypes.POINTER(ctypes.c_float),
         ctypes.c_int,
         ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
     ]
     function.restype = None
     # Call the function with the matrices and dimensions
-    function(input_ptr, output_ptr, np.prod(shape), np.prod(output_np.shape))
-    # Check if the results match
-    torch.allclose(
-        output_array,
-        output_np,
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
+    function(
+        input_ptr,
+        output_ptr,
+        shape[0],
+        shape[3],
+        shape[1],
+        kernel_stride[0],
+        kernel_stride[2],
     )
-    print("Verification successful!")
-    subprocess.run(["rm", so_name])
+    # Check if the results match
+    return verify_torch_tensor(output_array, output_np, op_name=op_name)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
+    parser = argparse.ArgumentParser(description="Test kernels (MLU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .mlu files"
     )
     parser.add_argument(
         "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
         help="Target platform",
     )
-    args = parser.parse_args()
-    base_name = os.path.basename(args.file)
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
 
-    shape = base_name.split("_")[1:5]
-    shape = [int(intg) for intg in shape]
-    kernel_stride = base_name.split(".")[0].split("_")[5:]
-    kernel_stride = [int(intg) for intg in kernel_stride]
-    verify_pooling(base_name, args.file, shape, kernel_stride)
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="mlu")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

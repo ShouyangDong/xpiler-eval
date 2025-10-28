@@ -4,6 +4,7 @@ import logging
 import os
 from typing import Tuple
 
+import numpy as np
 import torch
 
 from evaluation.utils import (
@@ -26,53 +27,49 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-def ref_program(x: torch.Tensor) -> torch.Tensor:
-    """GELU activation function reference implementation using PyTorch.
-
-    Approximation: 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))
-    """
-    gelu = torch.nn.GELU()
-    return gelu(x)
+# Define the sin function using torch
+def sin(A):
+    return torch.sin(A)
 
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
     op_name = config["op_name"]
-
     shape = config["args"]
 
+    # Generate random input matrix
+    A = torch.rand(*shape, device="cpu", dtype=torch.float32) * 4 * torch.pi
+
+    # Perform sin using PyTorch (golden reference)
+    expected = sin(A)
+
+    # Convert to NumPy and get ctypes pointers
+    A_ptr = A.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+
+    # Output tensor
+    result_ctypes = torch.zeros(shape, dtype=torch.float32)
+    output_ptr = result_ctypes.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+
+    # Load the compiled shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
-    function = getattr(lib, op_name + "_kernel")
+    kernel_func = getattr(lib, op_name + "_kernel")  # e.g., `sin`
 
-    # Define function signature
-    function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # Input array (float32)
-        ctypes.POINTER(ctypes.c_float),  # Output array (float32)
-        ctypes.c_int,  # Total number of elements
+    # Define function signature: void sin(float* input, float* output)
+    kernel_func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # input
+        ctypes.POINTER(ctypes.c_float),  # output
+        ctypes.c_int,
     ]
-    function.restype = None
+    kernel_func.restype = None
 
-    # Generate input tensor using PyTorch
-    input_tensor = torch.rand(shape, dtype=torch.float32)
-    total_elements = input_tensor.numel()
-    expected_output = ref_program(input_tensor)
+    # Call the C++ kernel
 
-    # Prepare output tensor
-    output_tensor = torch.zeros_like(input_tensor).contiguous()
+    kernel_func(A_ptr, output_ptr, np.prod(shape))
 
-    # Ensure input is contiguous and get raw pointers
-    input_ptr = ctypes.cast(
-        input_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
-    )
-    output_ptr = ctypes.cast(
-        output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
-    )
-
-    # Call the compiled GELU kernel
-    function(input_ptr, output_ptr, total_elements)
-
-    # Verify results
-    return verify_torch_tensor(output_tensor, expected_output, op_name=op_name)
+    # Verify result
+    return verify_torch_tensor(result_ctypes, expected, op_name=op_name)
 
 
 if __name__ == "__main__":

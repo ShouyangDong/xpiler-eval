@@ -1,70 +1,45 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
-import numpy as np
 import torch
 
-from evaluation.macros import CUDA_MACROS as macro
-from evaluation.utils import run_cuda_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+    verify_torch_tensor,
+)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
-    parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform",
-    )
-    parser.add_argument(
-        "--batch", type=int, default=1, help="Batch size for test"
-    )
-    args = parser.parse_args()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
-    # ---------------------------------------------
-    # 1.  Parse file name
-    # ---------------------------------------------
-    base_name = os.path.basename(args.file)
-    shapes = base_name.split(".")[0]
-    parts = [int(x) for x in shapes.split("_")[1:]]
-    batch, seq_q, seq_kv, head_dim = parts
 
-    so_name = args.file.replace(".cpp", ".so")
-
-    # ---------------------------------------------
-    # 2. Add macro
-    # ---------------------------------------------
-    with open(args.file, "r") as f:
-        code = f.read()
-    code = macro + code
-
-    file_name = args.file.replace(".cpp", "_bak.cpp")
-    with open(file_name, "w") as f:
-        f.write(code)
-
-    success, output = run_compilation(so_name, file_name)
-    if not success:
-        print("Compilation failed:")
-        print(output)
-        exit(1)
-
-    os.remove(file_name)
-
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    batch, seq_q, seq_M, seq_K, seq_N = config["args"]
+    op_name = config["op_name"]
     # ---------------------------------------------
     # 3. Load shared library
     # ---------------------------------------------
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    gqa_func = getattr(lib, args.name + "_kernel")
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
+    gqa_func = getattr(lib, op_name + "_kernel")
     gqa_func.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # Q
-        ctypes.POINTER(ctypes.c_float),  # K
-        ctypes.POINTER(ctypes.c_float),  # V
-        ctypes.POINTER(ctypes.c_float),  # O
+        ctypes.POINTER(ctypes.c_uint16),  # Q
+        ctypes.POINTER(ctypes.c_uint16),  # K
+        ctypes.POINTER(ctypes.c_uint16),  # V
+        ctypes.POINTER(ctypes.c_uint16),  # O
         ctypes.c_int,  # batch
         ctypes.c_int,  # num_heads
         ctypes.c_int,  # seq_q
@@ -79,9 +54,9 @@ if __name__ == "__main__":
     torch.manual_seed(1234)
 
     # Generate Q, K, V
-    Q = torch.rand([batch, 2, seq_q, 64], dtype=torch.float32, device="cuda")
-    K = torch.rand([batch, 2, 64, seq_kv], dtype=torch.float32, device="cuda")
-    V = torch.rand([batch, 2, seq_kv, 64], dtype=torch.float32, device="cuda")
+    Q = torch.rand([batch, seq_q, seq_M, seq_K], dtype=torch.float16, device="cuda")
+    K = torch.rand([batch, seq_q, seq_K, seq_N], dtype=torch.float16, device="cuda")
+    V = torch.rand([batch, seq_q, seq_N, seq_K], dtype=torch.float16, device="cuda")
 
     # ✅ Get the referenced ouput
     with torch.no_grad():
@@ -92,37 +67,64 @@ if __name__ == "__main__":
     # ---------------------------------------------
     # 5. Prepare C++ kernel and feed output buffer
     # ---------------------------------------------
-    O = torch.zeros_like(O_ref, device="cuda")  # host buffer for output
+    O = torch.zeros_like(O_ref, dtype=torch.float16, device="cuda")  # host buffer for output
 
     Q_cpu = Q.cpu().numpy()
     K_cpu = K.cpu().numpy()
     V_cpu = V.cpu().numpy()
 
-    Q_ptr = Q_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    K_ptr = K_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    V_ptr = V_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    O_ptr = O.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    Q_ptr = Q_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
+    K_ptr = K_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
+    V_ptr = V_cpu.ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
+    O_ptr = O.cpu().numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_uint16))
 
     # ---------------------------------------------
     # 6. invoke C++/CUDA kernel
     # ---------------------------------------------
-    gqa_func(Q_ptr, K_ptr, V_ptr, O_ptr, batch, 2, seq_q, seq_kv, 64)
+    gqa_func(Q_ptr, K_ptr, V_ptr, O_ptr, batch, seq_q, seq_M, seq_K, seq_N)
 
     # ---------------------------------------------
     # 7. Verification
     # ---------------------------------------------
-    np.testing.assert_allclose(
-        O,  # C++ kernel output(NumPy)
-        O_ref.cpu().numpy(),
-        rtol=5e-3,
-        atol=5e-3,
-        equal_nan=True,
-        verbose=True,
+    return verify_torch_tensor(O, O_ref, op_name=op_name)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (MLU)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .mlu files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
     )
 
-    print("✅ GQA verification passed!")
+    args = parser.parse_args()
 
-    # ---------------------------------------------
-    # 8. clean
-    # ---------------------------------------------
-    subprocess.run(["rm", so_name], check=False)
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="mlu")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

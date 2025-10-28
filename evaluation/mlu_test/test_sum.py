@@ -26,53 +26,47 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-def ref_program(x: torch.Tensor) -> torch.Tensor:
-    """GELU activation function reference implementation using PyTorch.
-
-    Approximation: 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))
-    """
-    gelu = torch.nn.GELU()
-    return gelu(x)
-
-
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
     op_name = config["op_name"]
-
     shape = config["args"]
+    axis = config["axis"]
+    # ✅ Generate input tensor
+    A = torch.rand(shape, device="cpu", dtype=torch.float32)
 
+    expected_tensor = torch.sum(A, dim=axis)  # shape: reduced
+    expected_numpy = expected_tensor.numpy()
+    expected_flat = expected_numpy.flatten()
+
+    A_flat = A.numpy()
+    A_ptr = A_flat.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+
+    output_size = expected_flat.size  # int
+    result_array = (ctypes.c_float * output_size)()
+    # load shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
-    function = getattr(lib, op_name + "_kernel")
+    kernel_func = getattr(lib, op_name + "_kernel")
 
-    # Define function signature
-    function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # Input array (float32)
-        ctypes.POINTER(ctypes.c_float),  # Output array (float32)
-        ctypes.c_int,  # Total number of elements
+    # ✅ Function  signature
+    kernel_func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # input
+        ctypes.POINTER(ctypes.c_float),  # output
     ]
-    function.restype = None
+    kernel_func.restype = None
 
-    # Generate input tensor using PyTorch
-    input_tensor = torch.rand(shape, dtype=torch.float32)
-    total_elements = input_tensor.numel()
-    expected_output = ref_program(input_tensor)
+    # ✅ invoke kernel
+    kernel_func(A_ptr, result_array)
 
-    # Prepare output tensor
-    output_tensor = torch.zeros_like(input_tensor).contiguous()
-
-    # Ensure input is contiguous and get raw pointers
-    input_ptr = ctypes.cast(
-        input_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
-    )
-    output_ptr = ctypes.cast(
-        output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    # ✅ Get output
+    computed_array = [result_array[i] for i in range(output_size)]
+    computed_tensor = torch.tensor(computed_array).view_as(
+        torch.from_numpy(expected_numpy)
     )
 
-    # Call the compiled GELU kernel
-    function(input_ptr, output_ptr, total_elements)
-
-    # Verify results
-    return verify_torch_tensor(output_tensor, expected_output, op_name=op_name)
+    # ✅ verification
+    return verify_torch_tensor(
+        computed_tensor, expected_tensor, op_name=op_name
+    )
 
 
 if __name__ == "__main__":

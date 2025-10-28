@@ -1,6 +1,7 @@
 import argparse
 import ctypes
 import logging
+import random
 from typing import Tuple
 
 import torch
@@ -25,62 +26,76 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-def ref_program(X_fp16, A_fp16, B_fp16):
-    """Golden reference using autocast to mimic real inference behavior.
-
-    Inputs: fp16 tensors on CUDA
-    Output: fp32 tensor on CUDA
-    """
-    with torch.amp.autocast(
-        enabled=True, device_type="cuda", dtype=torch.float16
-    ):
-        O1 = torch.nn.functional.silu(torch.matmul(X_fp16, A_fp16))
-        O2 = torch.matmul(X_fp16, B_fp16)
-        O = O1 * O2
-    return O.float()
+def element_wise_gather(params, indices, axis=0):
+    # invoke gather
+    result = torch.gather(params, dim=axis, index=indices)
+    return result
 
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
     op_name = config["op_name"]
-    batch, dim_k, dim_n = config["args"]
+    PARAMS_SHAPE = config["args"]
+    AXIS = config["axis"]
+
+    # === 2. Generate input tensors ===
+    params = torch.randn(*PARAMS_SHAPE, dtype=torch.float32, device="cpu")
+    axis_dim_size = params.size(AXIS)
+
+    # Randomly generate indices_len: between 1 and axis_dim_size * 2
+    min_len = 1
+    max_len = axis_dim_size
+    indices_len = random.randint(min_len, max_len)
+
+    # Generate indices: include valid and out-of-bound (-1 or >= axis_dim_size)
+    indices = torch.randint(
+        low=0,
+        high=axis_dim_size,
+        size=(indices_len,),
+        dtype=torch.int64,
+        device="cpu",
+    )
+
+    output_shape = list(params.shape)
+    output_shape[AXIS] = indices.size(0)  # M
+
+    indices_expanded = indices.view(
+        *[1 if i != AXIS else -1 for i in range(params.ndim)]
+    )
+    indices = indices_expanded.expand(*output_shape)
+    # === 3. Golden reference using PyTorch ===
+    expected = element_wise_gather(params, indices, axis=AXIS)
+
+    # === 4. Prepare ctypes pointers ===
+
+    def to_ptr(tensor, dtype):
+        return tensor.numpy().ctypes.data_as(ctypes.POINTER(dtype))
+
+    params_ptr = to_ptr(params, ctypes.c_float)
+    indices_ptr = to_ptr(indices, ctypes.c_int64)
+    result_ctypes = torch.zeros_like(expected, dtype=torch.float32)
+    output_ptr = to_ptr(result_ctypes, ctypes.c_float)
+
+    # === 8. Load shared library ===
     lib = ctypes.CDLL(so_path)
+
+    # Look for 'gather' function
     kernel_func = getattr(lib, op_name + "_kernel")
+
+    # === 9. Set function signature ===
     kernel_func.argtypes = [
-        ctypes.POINTER(ctypes.c_uint16),  # X (fp16)
-        ctypes.POINTER(ctypes.c_uint16),  # A (fp16)
-        ctypes.POINTER(ctypes.c_uint16),  # B (fp16)
-        ctypes.POINTER(ctypes.c_float),  # O (fp32)
-        ctypes.c_int,
-        ctypes.c_int,
-        ctypes.c_int,
+        ctypes.POINTER(ctypes.c_float),  # input
+        ctypes.POINTER(ctypes.c_int64),  # indices
+        ctypes.POINTER(ctypes.c_float),  # output
+        ctypes.c_int,  # N (number of indices)
     ]
     kernel_func.restype = None
-    torch.manual_seed(1234)
-    device = torch.device("mlu")
 
-    # Generate fp16 inputs
-    X_fp16 = torch.ones(batch, dim_k, dtype=torch.float16, device=device) / 16
-    A_fp16 = torch.ones(dim_k, dim_n, dtype=torch.float16, device=device) / 16
-    B_fp16 = torch.ones(dim_k, dim_n, dtype=torch.float16, device=device) / 16
+    # === 10. Call C++ kernel ===
+    kernel_func(params_ptr, indices_ptr, output_ptr, indices_len)
 
-    # Reference output (fp32 on CUDA)
-    O_ref = ref_program(X_fp16, A_fp16, B_fp16)
-
-    # Output buffer: allocate fp32 tensor on CUDA
-    O = torch.zeros(batch, dim_n, dtype=torch.float32, device=device)
-
-    X_fp16 = X_fp16.contiguous()
-    A_fp16 = A_fp16.contiguous()
-    B_fp16 = B_fp16.contiguous()
-    O = O.contiguous()
-
-    X_ptr = ctypes.cast(X_fp16.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
-    A_ptr = ctypes.cast(A_fp16.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
-    B_ptr = ctypes.cast(B_fp16.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
-    O_ptr = ctypes.cast(O.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    kernel_func(X_ptr, A_ptr, B_ptr, O_ptr, batch, dim_k, dim_n)
-    return verify_torch_tensor(O, O_ref, op_name=op_name)
+    # === 11. Verify result ===
+    return verify_torch_tensor(result_ctypes, expected, op_name=op_name)
 
 
 if __name__ == "__main__":

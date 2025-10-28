@@ -1,73 +1,130 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
-import numpy as np
-from benchmark.template.mlu_host_template import create_mlu_func
+import torch
 
-from evaluation.utils import run_mlu_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+    verify_torch_tensor,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 def ref_program(x):
-    # Perform a softmax operation on the last dimension.
-    e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
-    return e_x / np.sum(e_x, axis=-1, keepdims=True)
+    """Reference Softmax function using PyTorch.
+
+    Applies softmax along the last dimension. Numerically stable (uses log-sum-
+    exp trick internally).
+    """
+    return torch.softmax(x, dim=-1)
 
 
-def verify_softmax(base_name, file, shape):
-    A = np.random.rand(*shape).astype("float32")
-    # Convert the matrices to contiguous memory for ctypes
-    A_ptr = A.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    result_np = ref_program(A)
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]
 
-    so_name = file.replace(".mlu", ".so")
+    shape = config["args"]  # e.g., [32, 100], [2, 8, 64]
+    # Total number of rows
+    batch_size = int(torch.prod(torch.tensor(shape[:-1])))
+    # Size of last dimension
+    hidden_size = shape[-1]
 
-    file_name = create_mlu_func(file)
-    success, output = run_compilation(so_name, file_name)
-    os.remove(file_name)
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    base_name.split("_")[0]
+    # Load the compiled shared library
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
     function = getattr(lib, op_name + "_kernel")
-    # Define the function parameters and return types.
+
+    # Define function signature
     function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.POINTER(ctypes.c_float),
-        ctypes.c_int,
+        ctypes.POINTER(ctypes.c_float),  # input array
+        ctypes.POINTER(ctypes.c_float),  # output array
+        ctypes.c_int,  # batch_size (number of rows)
+        ctypes.c_int,  # hidden_size (softmax dimension)
     ]
     function.restype = None
-    # Call the function with the matrices and dimensions
-    result_ctypes = np.zeros(shape, dtype=np.float32)
-    output_ptr = result_ctypes.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    function(A_ptr, output_ptr, np.prod(shape))
-    # Check if the results match
-    np.testing.assert_allclose(
-        result_ctypes,
-        result_np,
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
-        err_msg="",
-        verbose=True,
+
+    # Create input tensor
+    dtype = torch.float32
+    # Use a wider range to test numerical stability
+    # Larger values to stress-test exp overflow
+    input_tensor = torch.randn(shape, dtype=dtype) * 10
+
+    # Compute reference output using PyTorch
+    expected_output = ref_program(input_tensor)
+
+    # Output tensor
+    output_tensor = torch.zeros_like(input_tensor)
+
+    # Ensure contiguous memory layout for ctypes access
+    input_tensor = input_tensor.contiguous()
+    output_tensor = output_tensor.contiguous()
+
+    # Get raw pointers
+    input_ptr = ctypes.cast(
+        input_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
     )
-    print("Verification successful!")
-    subprocess.run(["rm", so_name])
+    output_ptr = ctypes.cast(
+        output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
+
+    # Call the Softmax kernel
+    function(input_ptr, output_ptr, batch_size, hidden_size)
+
+    # Verify results
+    return verify_torch_tensor(output_tensor, expected_output, op_name=op_name)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
+    parser = argparse.ArgumentParser(description="Test kernels (MLU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .mlu files"
     )
     parser.add_argument(
         "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
         help="Target platform",
     )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
     args = parser.parse_args()
-    base_name = os.path.basename(args.file)
-    shapes = base_name.split(".")[0]
-    shape = [int(intg) for intg in shapes.split("_")[1:]]
-    verify_softmax(base_name, args.file, shape)
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="mlu")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)
