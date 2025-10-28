@@ -25,48 +25,66 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-def concat_reference(tensors, axis):
-    return torch.cat(tensors, dim=axis)
+# --- Golden Reference: reduce min along axis ---
+def reduce_min(input_tensor, axis):
+    return torch.min(input_tensor, dim=axis)[0]  # 返回 values，忽略 indices
 
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
     op_name = config["op_name"]
+    shape = config["args"]
     axis = config["axis"]
+    dtype_str = config.get("dtype", "float32")
 
-    N, C, H, W = config["args"]
+    dtype_map = {
+        "float32": torch.float32,
+        "float16": torch.float16,
+    }
+    dtype = dtype_map.get(dtype_str, torch.float32)
 
-    input1 = torch.rand(N, C, H, W, dtype=torch.float32)
-    input2 = torch.rand(N, C, H, W, dtype=torch.float32)
+    # --- Generate input tensors on CPU (for ctypes) ---
+    A = torch.randn(*shape, dtype=dtype, device="cpu") * 10
+    expected = reduce_min(A, axis)
 
-    expected = concat_reference([input1, input2], axis=axis)
+    # --- Flatten and get ctypes pointers ---
+    A_flat = A.flatten().numpy()
+    result_flat = torch.zeros_like(expected).flatten().numpy()
 
-    input1_ptr = (
-        input1.flatten().numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    )
-    input2_ptr = (
-        input2.flatten().numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    )
+    ctype = ctypes.c_float if dtype_str == "float32" else ctypes.c_ushort
+    A_ptr = A_flat.ctypes.data_as(ctypes.POINTER(ctype))
+    out_ptr = result_flat.ctypes.data_as(ctypes.POINTER(ctype))
 
-    output_flat = torch.zeros_like(expected.flatten())
-    output_ptr = output_flat.numpy().ctypes.data_as(
-        ctypes.POINTER(ctypes.c_float)
-    )
+    # ========================================================
+    # ✅ Step 2: Load the .so library
+    # ========================================================
 
     lib = ctypes.CDLL(so_path)
-    kernel_func = getattr(lib, op_name + "_kernel")
-    kernel_func.argtypes = [ctypes.POINTER(ctypes.c_float)] * 3
+    kernel_func = lib[op_name + "_kernel"]  # Get function by name
+
+    # ========================================================
+    # ✅ Step 3: Set function signature
+    # ========================================================
+    kernel_func.argtypes = [
+        ctypes.POINTER(ctype),  # A
+        ctypes.POINTER(ctype),  # out
+    ]
     kernel_func.restype = None
 
-    kernel_func(input1_ptr, input2_ptr, output_ptr)
+    # ========================================================
+    # ✅ Step 4: Call the kernel
+    # ========================================================
+    kernel_func(A_ptr, out_ptr)
 
-    result_reshaped = output_flat.reshape(expected.shape)
-
-    is_correct = torch.allclose(
-        result_reshaped, expected, rtol=1e-4, atol=1e-4
+    # ========================================================
+    # ✅ Step 5: Reshape and verify
+    # ========================================================
+    result_tensor = (
+        torch.from_numpy(result_flat).reshape(expected.shape).to("cpu")
     )
 
-    return verify_torch_tensor(result_reshaped, expected, op_name=op_name)
+    # Verification
+    return verify_torch_tensor(result_tensor, expected, op_name=op_name)
 
 
 if __name__ == "__main__":

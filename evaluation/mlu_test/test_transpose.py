@@ -26,53 +26,64 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-def ref_program(x: torch.Tensor) -> torch.Tensor:
-    """GELU activation function reference implementation using PyTorch.
-
-    Approximation: 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))
-    """
-    gelu = torch.nn.GELU()
-    return gelu(x)
-
-
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
+    # ✅ Get the actual shape and perm from config
+    input_shape, perm = config["args"], config["perm"]
     op_name = config["op_name"]
+    output_shape = [input_shape[i] for i in perm]  # permuted shape
 
-    shape = config["args"]
+    # ✅ Generate input tensor
+    input_tensor = torch.rand(
+        input_shape, dtype=torch.float32, requires_grad=False
+    )
+    input_flat = input_tensor.numpy()  # C-order
+    input_ptr = input_flat.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
+    # ✅ Reference：PyTorch permute
+    expected = input_tensor.permute(*perm).contiguous()
+    expected_flat = expected.numpy()
+
+    # ✅ output buffer
+    output_numel = expected_flat.size
+    result_array = (ctypes.c_float * output_numel)()  # 分配空间
+
+    # load shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
-    function = getattr(lib, op_name + "_kernel")
+    kernel_func = getattr(lib, op_name + "_kernel")
 
-    # Define function signature
-    function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # Input array (float32)
-        ctypes.POINTER(ctypes.c_float),  # Output array (float32)
-        ctypes.c_int,  # Total number of elements
+    rank = len(input_shape)
+
+    if rank not in [2, 3, 4]:
+        raise NotImplementedError(
+            f"Rank {rank} not supported. Only 2D, 3D, and 4D are supported."
+        )
+
+    # Construct argtypes: [float*, float*, d0, d1, ..., p0, p1, ...]
+    argtypes = [
+        ctypes.POINTER(ctypes.c_float),  # input
+        ctypes.POINTER(ctypes.c_float),  # output
     ]
-    function.restype = None
+    # Add shape dim (d0, d1, ...)
+    argtypes += [ctypes.c_int] * rank
+    # Add perm dim (p0, p1, ...)
+    argtypes += [ctypes.c_int] * rank
 
-    # Generate input tensor using PyTorch
-    input_tensor = torch.rand(shape, dtype=torch.float32)
-    total_elements = input_tensor.numel()
-    expected_output = ref_program(input_tensor)
+    kernel_func.argtypes = argtypes
 
-    # Prepare output tensor
-    output_tensor = torch.zeros_like(input_tensor).contiguous()
+    # ✅ Construct input arguments
+    args_list = [input_ptr, result_array] + input_shape + perm
 
-    # Ensure input is contiguous and get raw pointers
-    input_ptr = ctypes.cast(
-        input_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    kernel_func(*args_list)
+
+    # ✅ Get output并 reshape
+    computed_flat = torch.tensor(
+        [result_array[i] for i in range(output_numel)]
     )
-    output_ptr = ctypes.cast(
-        output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
-    )
+    computed_tensor = computed_flat.view(output_shape)
 
-    # Call the compiled GELU kernel
-    function(input_ptr, output_ptr, total_elements)
-
-    # Verify results
-    return verify_torch_tensor(output_tensor, expected_output, op_name=op_name)
+    # ✅ verification
+    return verify_torch_tensor(computed_tensor, expected, op_name=op_name)
 
 
 if __name__ == "__main__":

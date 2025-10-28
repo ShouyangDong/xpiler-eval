@@ -26,53 +26,68 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-def ref_program(x: torch.Tensor) -> torch.Tensor:
-    """GELU activation function reference implementation using PyTorch.
-
-    Approximation: 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))
-    """
-    gelu = torch.nn.GELU()
-    return gelu(x)
-
-
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
-    op_name = config["op_name"]
-
     shape = config["args"]
+    op_name = config["op_name"]
+    batch_size, in_features, out_features = shape
+
+    device = torch.device("cuda" if torch.mluda.is_available() else "cpu")
+
+    x = torch.ones(batch_size, in_features, dtype=torch.float16, device=device)
+    weight = torch.ones(
+        in_features, out_features, dtype=torch.float16, device=device
+    )
+    bias = torch.zeros(out_features, dtype=torch.float32, device=device)
+
+    with torch.amp.autocast(
+        enabled=True, device_type="cuda", dtype=torch.float16
+    ):
+        matmul_out = x @ weight
+        y_torch = matmul_out + bias
+    y_torch = y_torch.float()  # ensure output is fp32 for comparison
+    y_torch_cpu = y_torch.cpu().contiguous()
+
+    x_host = x.cpu().contiguous()  # fp16
+
+    weight_host = weight.cpu().contiguous()
+    bias_host = bias.cpu().contiguous()  # fp32
+    y_kernel = torch.zeros(
+        batch_size, out_features, dtype=torch.float32
+    ).contiguous()
+
+    x_ptr = ctypes.cast(x_host.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
+    weight_ptr = ctypes.cast(
+        weight_host.data_ptr(), ctypes.POINTER(ctypes.c_uint16)
+    )
+    bias_ptr = ctypes.cast(
+        bias_host.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
+    y_ptr = ctypes.cast(y_kernel.data_ptr(), ctypes.POINTER(ctypes.c_float))
 
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
-    function = getattr(lib, op_name + "_kernel")
+    kernel_func = getattr(lib, op_name + "_kernel")
 
-    # Define function signature
-    function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # Input array (float32)
-        ctypes.POINTER(ctypes.c_float),  # Output array (float32)
-        ctypes.c_int,  # Total number of elements
+    kernel_func.argtypes = [
+        ctypes.POINTER(ctypes.c_uint16),
+        ctypes.POINTER(ctypes.c_uint16),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
     ]
-    function.restype = None
-
-    # Generate input tensor using PyTorch
-    input_tensor = torch.rand(shape, dtype=torch.float32)
-    total_elements = input_tensor.numel()
-    expected_output = ref_program(input_tensor)
-
-    # Prepare output tensor
-    output_tensor = torch.zeros_like(input_tensor).contiguous()
-
-    # Ensure input is contiguous and get raw pointers
-    input_ptr = ctypes.cast(
-        input_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    kernel_func.restype = None
+    kernel_func(
+        x_ptr,
+        weight_ptr,
+        bias_ptr,
+        y_ptr,
+        batch_size,
+        in_features,
+        out_features,
     )
-    output_ptr = ctypes.cast(
-        output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
-    )
-
-    # Call the compiled GELU kernel
-    function(input_ptr, output_ptr, total_elements)
-
-    # Verify results
-    return verify_torch_tensor(output_tensor, expected_output, op_name=op_name)
+    return verify_torch_tensor(y_kernel, y_torch_cpu, op_name=op_name)
 
 
 if __name__ == "__main__":

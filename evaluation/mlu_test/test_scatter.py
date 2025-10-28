@@ -1,13 +1,28 @@
 import argparse
 import ctypes
-import json
-import os
-import subprocess
+import logging
+from typing import Tuple
 
 import torch
 
-from evaluation.macros import MLU_MACROS as macro
-from evaluation.utils import run_mlu_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+    verify_torch_tensor,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 def scatter_reference(self_tensor, indices_tensor, src_tensor, dim):
@@ -17,40 +32,17 @@ def scatter_reference(self_tensor, indices_tensor, src_tensor, dim):
     return result
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--file", type=str, required=True, help="Path to C++ source file"
-    )
-    parser.add_argument("--config", required=True)
-    parser.add_argument(
-        "--target", choices=["cuda", "hip", "mlu", "cpu"], required=True
-    )
-    args = parser.parse_args()
-
-    base_name = os.path.basename(args.file)
-    kernel_name = base_name.split("_")[0]
-    config = json.loads(args.config)
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]
     dim = config["axis"]
-    try:
-        shape_str = base_name.replace(f".mlu", "")
-        N, C, H, W = map(int, shape_str.split("_")[1:5])
-    except Exception as e:
-        raise ValueError(f"Invalid filename format: {base_name}") from e
-
-    print(
-        f"Testing {
-            kernel_name.upper()} | Shape: [{N},{C},{H},{W}] | Dim: {dim}"
-    )
-
+    shape = config["args"]
     # Create tensors
-    self_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
-    src_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
+    self_tensor = torch.rand(*shape, dtype=torch.float32)
+    src_tensor = torch.rand(*shape, dtype=torch.float32)
     # indices must be within valid range for the target dimension
-    size_dim = [N, C, H, W][dim]
-    indices_tensor = torch.randint(
-        0, size_dim, (N, C, H, W), dtype=torch.int32
-    )
+    size_dim = shape[dim]
+    indices_tensor = torch.randint(0, size_dim, shape, dtype=torch.int64)
 
     # Golden reference
     expected = scatter_reference(self_tensor, indices_tensor, src_tensor, dim)
@@ -76,29 +68,9 @@ if __name__ == "__main__":
         ctypes.POINTER(ctypes.c_float)
     )
 
-    so_name = args.file.replace(".mlu", ".so")
-
-    # Inject macros and save temp file
-    with open(args.file, "r") as f:
-        code = f.read()
-    code = macro + code
-
-    temp_file = args.file.replace(".mlu", "_bak.mlu")
-    with open(temp_file, "w") as f:
-        f.write(code)
-
-    print(f"Compiling {temp_file} -> {so_name}")
-    success, log = run_compilation(so_name, temp_file)
-    if not success:
-        print("Compilation failed:")
-        print(log)
-        exit(1)
-
-    os.remove(temp_file)
-
     # Load shared library
-    lib = ctypes.CDLL(so_name)
-    kernel_func = getattr(lib, kernel_name)
+    lib = ctypes.CDLL(so_path)
+    kernel_func = getattr(lib, op_name + "_kernel")
     kernel_func.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # self
         ctypes.POINTER(ctypes.c_int),  # indices
@@ -112,18 +84,45 @@ if __name__ == "__main__":
     result_reshaped = output_flat.reshape(expected.shape)
 
     # Verify
-    is_correct = torch.allclose(
-        result_reshaped, expected, rtol=1e-4, atol=1e-4
+    return verify_torch_tensor(result_reshaped, expected, op_name=op_name)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (MLU)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .mlu files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
     )
 
-    if is_correct:
-        print("Verification successful!")
-    else:
-        print("Verification failed!")
-        diff = (result_reshaped - expected).abs()
-        print("Max error:", diff.max().item())
-        print("Sample expected (top-left):", expected[0, 0, :2, :2])
-        print("Sample got (top-left):     ", result_reshaped[0, 0, :2, :2])
+    args = parser.parse_args()
 
-    # Cleanup
-    subprocess.run(["rm", so_name], check=False)
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="mlu")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

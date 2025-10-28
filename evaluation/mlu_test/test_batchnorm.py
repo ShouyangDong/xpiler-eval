@@ -27,45 +27,57 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-def instancenorm_inference(input, weight, bias, eps=1e-5):
+def batchnorm_inference(
+    input, weight, bias, running_mean, running_var, eps=1e-5
+):
     """
-    PyTorch golden reference for InstanceNorm2d inference
+    PyTorch golden reference for BatchNorm inference
     input: (N, C, H, W)
-    weight (gamma), bias (beta): (C,)
+    weight (gamma), bias (beta), running_mean, running_var: (C,)
     """
-    return F.instance_norm(
+    return F.batch_norm(
         input,
-        running_mean=None,
-        running_var=None,
+        running_mean,
+        running_var,
         weight=weight,
         bias=bias,
-        momentum=0,
+        training=False,
         eps=eps,
     )
 
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
-    op_name = config["op_name"]  # "instancenorm"
     N, C, H, W = config["args"]
+    op_name = config["op_name"]
     # Generate random input
     input_tensor = torch.rand(N, C, H, W, dtype=torch.float32)
 
-    # Parameters: gamma (weight), beta (bias)
+    # Fixed parameters (from training)
+    running_mean = torch.rand(C, dtype=torch.float32)
+    running_var = torch.rand(C, dtype=torch.float32) + 0.5
     weight = torch.rand(C, dtype=torch.float32)  # gamma
     bias = torch.rand(C, dtype=torch.float32)  # beta
     eps = 1e-5
 
     # Golden reference
-    expected = instancenorm_inference(input_tensor, weight, bias, eps)
+    expected = batchnorm_inference(
+        input_tensor, weight, bias, running_mean, running_var, eps
+    )
 
     # Flatten input for C++ (row-major)
-    input_flat = input_tensor.flatten()
+    input_flat = input_tensor.flatten()  # (N*C*H*W,)
     input_ptr = input_flat.numpy().ctypes.data_as(
         ctypes.POINTER(ctypes.c_float)
     )
 
     # Prepare parameter pointers
+    mean_ptr = running_mean.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
+    var_ptr = running_var.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
     weight_ptr = weight.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     bias_ptr = bias.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
@@ -74,21 +86,24 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     output_ptr = result_ctypes.numpy().ctypes.data_as(
         ctypes.POINTER(ctypes.c_float)
     )
+
     # Load library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
-    kernel_func = getattr(lib, op_name + "_kernel")  # e.g., instancenorm
+    kernel_func = getattr(lib, op_name + "_kernel")  # batchnorm
 
     # Function signature
     kernel_func.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # input     (N*C*H*W)
-        ctypes.POINTER(ctypes.c_float),  # output    (N*C*H*W)
-        ctypes.POINTER(ctypes.c_float),  # weight    (C,)
-        ctypes.POINTER(ctypes.c_float),  # bias      (C,)
+        ctypes.POINTER(ctypes.c_float),  # input
+        ctypes.POINTER(ctypes.c_float),  # output
+        ctypes.POINTER(ctypes.c_float),  # mean     (C,)
+        ctypes.POINTER(ctypes.c_float),  # var      (C,)
+        ctypes.POINTER(ctypes.c_float),  # weight   (C,)
+        ctypes.POINTER(ctypes.c_float),  # bias     (C,)
         ctypes.c_int,  # N
         ctypes.c_int,  # C
         ctypes.c_int,  # H
         ctypes.c_int,  # W
-        ctypes.c_float,  # eps
+        ctypes.c_float,  # epsilon
     ]
     kernel_func.restype = None
 
@@ -97,6 +112,8 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     kernel_func(
         input_ptr,
         output_ptr,
+        mean_ptr,
+        var_ptr,
         weight_ptr,
         bias_ptr,
         N,

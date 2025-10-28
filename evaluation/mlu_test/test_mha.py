@@ -1,16 +1,32 @@
 import argparse
 import ctypes
+import logging
 import math
 import os
-import subprocess
-from ctypes import CDLL
+from typing import Tuple
 
 import numpy as np
 import torch
 import torch.nn.functional as F
-from benchmark.template.mlu_host_template import create_mlu_func
 
-from evaluation.utils import run_mlu_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+    verify_numpy_tensor,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 def ref_program(q, k, v, causal=False):
@@ -27,34 +43,16 @@ def ref_program(q, k, v, causal=False):
     return output
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
-    parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
-    )
-    parser.add_argument(
-        "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
-        help="Target platform",
-    )
-    args = parser.parse_args()
-    base_name = os.path.basename(args.file)
-    name = "mha"
-    causal = False
-    shapes = base_name.split(".")[0]
-    shape = [int(intg) for intg in shapes.split("_")[1:]]
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]
+    shape = config["args"]
     dtype = torch.float32
 
     query = torch.randn(shape).to(dtype).contiguous()
     key = torch.randn(shape).to(dtype).contiguous()
     value = torch.randn(shape).to(dtype).contiguous()
-    file_name = create_mlu_func(args.file)
-    so_name = args.file.replace(".mlu", ".so")
-    success, output = run_compilation(so_name, file_name)
-    os.remove(file_name)
-    lib = CDLL(os.path.join(os.getcwd(), so_name))
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
     # Obtain function handle
     function = getattr(lib, op_name + "_kernel")
     # Define the function's parameters and return types.
@@ -63,6 +61,9 @@ if __name__ == "__main__":
         ctypes.POINTER(ctypes.c_float),
         ctypes.POINTER(ctypes.c_float),
         ctypes.POINTER(ctypes.c_float),
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
         ctypes.c_int,
     ]
     function.restype = None
@@ -76,20 +77,50 @@ if __name__ == "__main__":
     input_ptr_v = value.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     output_ptr = output_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
-    # Invoke the CUDA kernel.
-    function(input_ptr_q, input_ptr_k, input_ptr_v, output_ptr, np.prod(shape))
+    # Invoke the HIP kernel.
+    function(input_ptr_q, input_ptr_k, input_ptr_v, output_ptr, *shape)
     # Verification results
-
-    # Verification results
-    np.testing.assert_allclose(
-        output_array,
-        expected_output.numpy(),
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
-        err_msg="",
-        verbose=True,
+    return verify_numpy_tensor(
+        output_array, expected_output.numpy(), op_name=op_name
     )
 
-    print("Verification successful!")
-    result = subprocess.run(["rm", so_name])
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test kernels (MLU)")
+    parser.add_argument(
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .mlu files"
+    )
+    parser.add_argument(
+        "--target",
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
+    args = parser.parse_args()
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="mlu")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

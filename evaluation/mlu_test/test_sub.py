@@ -26,50 +26,56 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-def ref_program(x: torch.Tensor) -> torch.Tensor:
-    """GELU activation function reference implementation using PyTorch.
-
-    Approximation: 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))
+def ref_program(A, B):
     """
-    gelu = torch.nn.GELU()
-    return gelu(x)
+    Reference implementation of element-wise subtraction: A - B
+    """
+    return torch.sub(A, B)
 
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on a successfully compiled kernel."""
-    op_name = config["op_name"]
-
     shape = config["args"]
+    total_elements = torch.prod(torch.tensor(shape))
+    op_name = config["op_name"]
+    # Generate random input tensors
+    dtype = torch.float32
+    A = torch.rand(shape, dtype=dtype)
+    B = torch.rand(shape, dtype=dtype)
 
+    # Compute reference result using PyTorch
+    expected_output = ref_program(A, B)
+
+    # Output tensor
+    output_tensor = torch.zeros_like(A)
+
+    # Ensure contiguous memory layout for ctypes access
+    A = A.contiguous()
+    B = B.contiguous()
+    output_tensor = output_tensor.contiguous()
+
+    # Get raw pointers
+    A_ptr = ctypes.cast(A.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    B_ptr = ctypes.cast(B.data_ptr(), ctypes.POINTER(ctypes.c_float))
+    output_ptr = ctypes.cast(
+        output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
+    )
+
+    # Load the compiled shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
     function = getattr(lib, op_name + "_kernel")
 
     # Define function signature
     function.argtypes = [
-        ctypes.POINTER(ctypes.c_float),  # Input array (float32)
-        ctypes.POINTER(ctypes.c_float),  # Output array (float32)
+        ctypes.POINTER(ctypes.c_float),  # A
+        ctypes.POINTER(ctypes.c_float),  # B
+        ctypes.POINTER(ctypes.c_float),  # Output
         ctypes.c_int,  # Total number of elements
     ]
     function.restype = None
 
-    # Generate input tensor using PyTorch
-    input_tensor = torch.rand(shape, dtype=torch.float32)
-    total_elements = input_tensor.numel()
-    expected_output = ref_program(input_tensor)
-
-    # Prepare output tensor
-    output_tensor = torch.zeros_like(input_tensor).contiguous()
-
-    # Ensure input is contiguous and get raw pointers
-    input_ptr = ctypes.cast(
-        input_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
-    )
-    output_ptr = ctypes.cast(
-        output_tensor.data_ptr(), ctypes.POINTER(ctypes.c_float)
-    )
-
-    # Call the compiled GELU kernel
-    function(input_ptr, output_ptr, total_elements)
+    # Call the subtraction kernel
+    function(A_ptr, B_ptr, output_ptr, total_elements)
 
     # Verify results
     return verify_torch_tensor(output_tensor, expected_output, op_name=op_name)

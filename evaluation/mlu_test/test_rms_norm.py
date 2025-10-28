@@ -1,72 +1,103 @@
 import argparse
 import ctypes
+import logging
 import os
-import subprocess
+from typing import Tuple
 
 import numpy as np
 import torch
-from benchmark.template.mlu_host_template import create_mlu_func
 
-from evaluation.utils import run_mlu_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+    verify_numpy_tensor,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 def ref_program(x):
     return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + 1e-5)
 
 
-def verify_rms_norm(base_name, file, shape):
-    A = np.random.rand(*shape).astype("float32")
-    # Convert the matrices to contiguous memory for ctypes
-    A_ptr = A.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    result_np = ref_program(torch.from_numpy(A))
-
-    so_name = file.replace(".mlu", ".so")
-
-    file_name = create_mlu_func(file)
-    success, output = run_compilation(so_name, file_name)
-    os.remove(file_name)
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
-    base_name.split("_")[0]
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]
+    shape = config["args"]
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
     function = getattr(lib, op_name + "_kernel")
-    # Define the function's parameters and return types.
+    # Define the function parameters and return types.
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),
         ctypes.POINTER(ctypes.c_float),
         ctypes.c_int,
+        ctypes.c_int,
     ]
     function.restype = None
-    # Call the function with the matrices and dimensions
-    result_ctypes = np.zeros(shape, dtype=np.float32)
-    output_ptr = result_ctypes.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    function(A_ptr, output_ptr, np.prod(shape))
-    # Check if the results match
-    np.testing.assert_allclose(
-        result_ctypes,
-        result_np,
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
-        err_msg="",
-        verbose=True,
-    )
-    print("Verification successful!")
-    subprocess.run(["rm", so_name])
+    # Create the input array.
+    dtype = "float32"
+    input_array = np.random.uniform(size=shape).astype(dtype)
+    expected_output = ref_program(torch.from_numpy(input_array))
+
+    # Create the output array.
+    output_array = np.zeros_like(input_array)
+
+    # Convert the input and output arrays into C pointer types.
+    input_ptr = input_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    output_ptr = output_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    # Invoke the C function
+    function(input_ptr, output_ptr, shape[0], shape[1])
+    # Verification results
+    return verify_numpy_tensor(output_array, expected_output, op_name=op_name)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
+    parser = argparse.ArgumentParser(description="Test kernels (MLU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .mlu files"
     )
     parser.add_argument(
         "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
         help="Target platform",
     )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
     args = parser.parse_args()
-    base_name = os.path.basename(args.file)
-    shapes = base_name.split(".")[0]
-    shape = [int(intg) for intg in shapes.split("_")[1:]]
-    verify_rms_norm(base_name, args.file, shape)
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="mlu")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)

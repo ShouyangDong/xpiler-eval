@@ -1,13 +1,31 @@
 import argparse
 import ctypes
+import logging
 import os
+from typing import Tuple
 
 import numpy as np
 import torch
 import torch.nn.functional as F
 
-from evaluation.macros import MLU_MACROS as macro
-from evaluation.utils import run_mlu_compilation as run_compilation
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+    verify_numpy_tensor,
+)
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 @torch.no_grad()
@@ -18,7 +36,7 @@ def deformable_attention_pytorch(
     https://github.com/fundamentalvision/Deformable-DETR/blob/main/models/ops/functions/ms_deform_attn_func.py
     """
     # for debug and test only,
-    # need to use cuda version instead
+    # need to use hip version instead
     N_, S_, M_, D_ = value.shape
     _, Lq_, M_, L_, P_, _ = sampling_locations.shape
     value_list = value.split(
@@ -63,39 +81,37 @@ def deformable_attention_pytorch(
     return output.transpose(1, 2).contiguous()
 
 
-def verify_deformable(name, file, shape):
+def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
+    """Run correctness test on a successfully compiled kernel."""
+    op_name = config["op_name"]
+    shape = config["args"]
     N, M, D = shape[:3]
     Lq, L, P = shape[3:]
     shapes = torch.as_tensor(
         [[84, 117], [42, 59], [21, 30], [11, 15]], dtype=torch.long
     )
+    level_start_index = torch.cat(
+        (shapes.new_zeros((1,)), shapes.prod(1).mlumsum(0)[:-1])
+    )
     S = sum([(H * W).item() for H, W in shapes])
+
     value = torch.rand(N, S, M, D) * 0.01
     sampling_locations = torch.rand(N, Lq, M, L, P, 2)
     attention_weights = torch.rand(N, Lq, M, L, P) + 1e-5
     attention_weights /= attention_weights.sum(-1, keepdim=True).sum(
         -2, keepdim=True
     )
-
-    so_name = args.file.replace(".cpp", ".so")
-    with open(args.file, "r") as f:
-        code = f.read()
-
-    code = macro + code
-
-    file_name = args.file.replace(
-        base_name.replace(".cpp", ""), base_name + "_bak.cpp"
+    # Check for correctness
+    torch_da = deformable_attention_pytorch(
+        value, shapes, sampling_locations, attention_weights
     )
-    with open(file_name, mode="w") as f:
-        f.write(code)
 
-    success, output = run_compilation(so_name, file_name)
-    os.remove(file_name)
-    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_name))
+    lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
     function = getattr(lib, op_name + "_kernel")
     # Define the function parameters and return types.
     function.argtypes = [
         ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_int),
         ctypes.POINTER(ctypes.c_int),
         ctypes.POINTER(ctypes.c_float),
         ctypes.POINTER(ctypes.c_float),
@@ -103,7 +119,7 @@ def verify_deformable(name, file, shape):
     ]
     function.restype = None
 
-    # Create the output array.
+    # Create an output array.
     output_array = np.zeros(
         (
             value.shape[0],
@@ -124,39 +140,61 @@ def verify_deformable(name, file, shape):
     attention_weights_ptr = attention_weights.numpy().ctypes.data_as(
         ctypes.POINTER(ctypes.c_float)
     )
+    level_start_index_ptr = (
+        level_start_index.int()
+        .numpy()
+        .ctypes.data_as(ctypes.POINTER(ctypes.c_int))
+    )
     output_ptr = output_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     # Calling a C function
     function(
         value_ptr,
         shapes_ptr,
+        level_start_index_ptr,
         sampling_locations_ptr,
         attention_weights_ptr,
         output_ptr,
     )
-    torch.allclose(
-        output_array.numpy(),
-        torch_da.numpy(),
-        rtol=1e-03,
-        atol=1e-03,
-        equal_nan=True,
-    )
+    # Verification results
+    return verify_numpy_tensor(output_array, torch_da.numpy(), op_name=op_name)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="the source file")
+    parser = argparse.ArgumentParser(description="Test kernels (MLU)")
     parser.add_argument(
-        "--config", required=True, help="JSON string or path to kernel config"
+        "--name",
+        required=True,
+        help="Name of the operator to test (used to filter configs).",
+    )
+    parser.add_argument(
+        "--config", required=True, help="JSON string or path to config file"
+    )
+    parser.add_argument(
+        "--source_dir", default="./", help="Directory with .mlu files"
     )
     parser.add_argument(
         "--target",
-        required=True,
-        choices=["cuda", "hip", "mlu", "cpu"],
+        default="cpu",
+        choices=["cuda", "cpu", "mlu", "hip"],
         help="Target platform",
     )
+    parser.add_argument(
+        "--jobs", type=int, default=4, help="Number of parallel workers"
+    )
+
     args = parser.parse_args()
-    base_name = os.path.basename(args.file)
-    shapes = base_name.split(".")[0]
-    shape = [int(intg) for intg in shapes.split("_")[1:]]
-    verify_deformable(base_name, args.file, shape)
-    print("Verification successful!")
+
+    # Parse config
+    configs = parse_op_json(args.config, args.name, file_type="mlu")
+
+    if not configs:
+        logger.warning(f"No {args.name} kernels found in config.")
+        exit(0)
+
+    # Run two-phase test
+    results = run_tests(
+        args.name, configs, args.source_dir, args.target, num_workers=args.jobs
+    )
+
+    # Summary
+    log_test_results_and_exit(results, op_name=args.name)
