@@ -1,0 +1,49 @@
+#include "hip/hip_runtime.h"
+__global__ void bmm(half *A, half *B, float *C) {
+  wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::row_major> a_frag;
+  wmma::fragment<wmma::matrix_b, 16, 16, 16, half, wmma::col_major> b_frag;
+  wmma::fragment<wmma::accumulator, 16, 16, 16, float> c_frag;
+
+  int blockRow = blockIdx.y * 16;
+  int blockCol = blockIdx.x * 16;
+
+  if (blockRow < 128 && blockCol < 512) {
+
+    wmma::fill_fragment(c_frag, 0.0f);
+
+    for (int k = 0; k < 256; k += 16) {
+
+      wmma::load_matrix_sync(a_frag, A + blockRow * 256 + k, 256);
+      wmma::load_matrix_sync(b_frag, B + k * 512 + blockCol, 512);
+
+      wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);
+    }
+
+    wmma::store_matrix_sync(C + blockRow * 512 + blockCol, c_frag, 512,
+                            wmma::mem_row_major);
+  }
+}
+
+extern "C" void bmm_kernel(half *A, half *B, float *C, int b, int m, int k,
+                           int n) {
+  half *d_A;
+  half *d_B;
+  float *d_C;
+
+  hipMalloc(&d_A, m * k * sizeof(half));
+  hipMalloc(&d_B, k * n * sizeof(half));
+  hipMalloc(&d_C, m * n * sizeof(float));
+
+  hipMemcpy(d_A, A, m * k * sizeof(half), hipMemcpyHostToDevice);
+  hipMemcpy(d_B, B, k * n * sizeof(half), hipMemcpyHostToDevice);
+
+  dim3 blockSize(32);
+  dim3 numBlocks((n + 16 - 1) / 16, (m + 16 - 1) / 16);
+  bmm<<<numBlocks, blockSize>>>(d_A, d_B, d_C);
+
+  hipMemcpy(C, d_C, m * n * sizeof(float), hipMemcpyDeviceToHost);
+
+  hipFree(d_A);
+  hipFree(d_B);
+  hipFree(d_C);
+}
