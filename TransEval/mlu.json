@@ -1876,7 +1876,7 @@
     "op_name": "dense",
     "dtype": "float32",
     "args": [
-      1,
+      16,
       64,
       64
     ]
@@ -1885,7 +1885,7 @@
     "op_name": "dense",
     "dtype": "float32",
     "args": [
-      1,
+      16,
       128,
       128
     ]
@@ -1894,7 +1894,7 @@
     "op_name": "dense",
     "dtype": "float32",
     "args": [
-      1,
+      16,
       256,
       256
     ]
@@ -1903,7 +1903,7 @@
     "op_name": "dense",
     "dtype": "float32",
     "args": [
-      1,
+      16,
       512,
       512
     ]
@@ -1912,7 +1912,7 @@
     "op_name": "dense",
     "dtype": "float32",
     "args": [
-      1,
+      32,
       768,
       768
     ]
@@ -1921,7 +1921,7 @@
     "op_name": "dense",
     "dtype": "float32",
     "args": [
-      1,
+      32,
       1024,
       1024
     ]
@@ -1930,7 +1930,7 @@
     "op_name": "dense",
     "dtype": "float32",
     "args": [
-      4,
+      32,
       512,
       512
     ]
@@ -1939,7 +1939,7 @@
     "op_name": "dense",
     "dtype": "float32",
     "args": [
-      8,
+      32,
       768,
       3072
     ]
