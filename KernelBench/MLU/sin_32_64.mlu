@@ -1,9 +1,11 @@
 extern "C" __mlu_global__ void sin(float *lhs, float *sin_135) {
   __nram__ float lhs_local_nram[128];
-  __memcpy(((float *)lhs_local_nram + (0)),
-           ((float *)lhs + (((((int)clusterId) * 512) + (((int)coreId) * 128)))),
-           512, GDRAM2NRAM);
-  __bang_sin(((float *)lhs_local_nram + (0)), ((float *)lhs_local_nram + (0)), 128);
+  __memcpy(
+      ((float *)lhs_local_nram + (0)),
+      ((float *)lhs + (((((int)clusterId) * 512) + (((int)coreId) * 128)))),
+      512, GDRAM2NRAM);
+  __bang_sin(((float *)lhs_local_nram + (0)), ((float *)lhs_local_nram + (0)),
+             128);
   __memcpy(
       ((float *)sin_135 + (((((int)clusterId) * 512) + (((int)coreId) * 128)))),
       ((float *)lhs_local_nram + (0)), 512, NRAM2GDRAM);

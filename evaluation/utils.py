@@ -459,7 +459,7 @@ def run_tests(
                 failed_results.append(result)
 
         passed_count = sum(
-            1 for r in failed_results[-len(test_configs) :] if r[0]
+            1 for r in failed_results[-len(test_configs):] if r[0]
         )
         logger.info(
             f"[{op_name}] Testing: {passed_count} passed, {len(test_configs) -

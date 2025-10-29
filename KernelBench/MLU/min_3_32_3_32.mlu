@@ -1,2 +1,2 @@
-# MLU kernel for min with shape [3, 32, 3, 32]
-# TODO: Implement kernel here
+#MLU kernel for min with shape[3, 32, 3, 32]
+#TODO : Implement kernel here

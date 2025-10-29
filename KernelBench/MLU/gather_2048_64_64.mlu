@@ -1,2 +1,2 @@
-# MLU kernel for gather with shape [2048, 64, 64]
-# TODO: Implement kernel here
+#MLU kernel for gather with shape[2048, 64, 64]
+#TODO : Implement kernel here

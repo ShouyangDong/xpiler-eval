@@ -1,2 +1,2 @@
-# MLU kernel for batchnorm with shape [1, 512, 1, 1]
-# TODO: Implement kernel here
+#MLU kernel for batchnorm with shape[1, 512, 1, 1]
+#TODO : Implement kernel here

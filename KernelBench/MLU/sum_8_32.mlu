@@ -1,2 +1,2 @@
-# MLU kernel for sum with shape [8, 32]
-# TODO: Implement kernel here
+#MLU kernel for sum with shape[8, 32]
+#TODO : Implement kernel here
