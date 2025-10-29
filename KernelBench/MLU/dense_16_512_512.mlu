@@ -1,0 +1,44 @@
+__mlu_func__ void dense_kernel(half *A, half *B, half *bias, half *output) {
+    
+    const uint32_t M = 16;
+    const uint32_t K = 512;
+    const uint32_t N = 512;
+    
+    
+    uint32_t core_id = coreId;
+    uint32_t cluster_id = clusterId;
+    uint32_t core_num = 4;  
+    
+    
+    uint32_t rows_per_core = M / core_num;
+    uint32_t rem = M % core_num;
+    uint32_t start_row = core_id * rows_per_core + (core_id < rem ? core_id : rem);
+    uint32_t end_row = start_row + rows_per_core + (core_id < rem ? 1 : 0);
+    uint32_t my_rows = end_row - start_row;
+    
+    if (my_rows == 0) return;
+
+    
+    __nram__ half nram_A[my_rows * K];
+    __nram__ half nram_output[my_rows * N];
+    __nram__ half nram_bias[N];
+    
+    
+    __wram__ half wram_B[K * N];
+
+    
+    __memcpy(nram_A, A + start_row * K, my_rows * K * sizeof(half), GDRAM2NRAM);
+    __memcpy(wram_B, B, K * N * sizeof(half), GDRAM2WRAM);
+    __memcpy(nram_bias, bias, N * sizeof(half), GDRAM2NRAM);
+
+    
+    __bang_matmul(nram_output, nram_A, wram_B, my_rows, K, N);
+
+    
+    for (uint32_t i = 0; i < my_rows; i++) {
+        __bang_add(nram_output + i * N, nram_output + i * N, nram_bias, N);
+    }
+
+    
+    __memcpy(output + start_row * N, nram_output, my_rows * N * sizeof(half), NRAM2GDRAM);
+}

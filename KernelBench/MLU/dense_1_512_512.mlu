@@ -1,6 +1,0 @@
-// Auto-generated: dense with args [1, 512, 512]
-// TODO: Implement kernel for dense_1_512_512.mlu
-
-void dense_1_512_512.mlu() {
-  std::cout << "Running dense_1_512_512.mlu..." << std::endl;
-}
