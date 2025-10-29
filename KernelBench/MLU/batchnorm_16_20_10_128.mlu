@@ -1,0 +1,2 @@
+# MLU kernel for batchnorm with shape [16, 20, 10, 128]
+# TODO: Implement kernel here

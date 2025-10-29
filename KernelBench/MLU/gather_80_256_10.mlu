@@ -1,0 +1,2 @@
+# MLU kernel for gather with shape [80, 256, 10]
+# TODO: Implement kernel here
