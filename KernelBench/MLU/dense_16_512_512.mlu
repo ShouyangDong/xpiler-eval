@@ -1,4 +1,4 @@
-__mlu_func__ void dense_kernel(half *A, half *B, half *bias, half *output) {
+extern "C" __mlu_global__ void dense(half *A, half *B, half *bias, half *output) {
     
     const uint32_t M = 16;
     const uint32_t K = 512;

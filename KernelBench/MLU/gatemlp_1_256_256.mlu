@@ -1,6 +1,0 @@
-
-
-
-void gatemlp_1_256_256.mlu() {
-  std::cout << "Running gatemlp_1_256_256.mlu..." << std::endl;
-}

@@ -1,0 +1,50 @@
+#define N 16
+#define M 64
+#define K 64
+
+extern "C" __mlu_global__ void gatemlp(half *X, half *A, half *B, half *O) {
+    
+    uint32_t core_id = coreId;
+    uint32_t cluster_id = clusterId;
+    uint32_t core_num = 4;  
+    
+    
+    uint32_t rows_per_core = N / core_num;
+    uint32_t rem = N % core_num;
+    uint32_t start_row = core_id * rows_per_core + (core_id < rem ? core_id : rem);
+    uint32_t end_row = start_row + rows_per_core + (core_id < rem ? 1 : 0);
+    uint32_t my_rows = end_row - start_row;
+    
+    if (my_rows == 0) return;
+
+    
+    __nram__ half nram_X[my_rows * K];
+    __nram__ half nram_O1[my_rows * M];
+    __nram__ half nram_O2[my_rows * M];
+    __nram__ half nram_O[my_rows * M];
+    
+    
+    __wram__ half wram_A[K * M];
+    __wram__ half wram_B[K * M];
+
+    
+    __memcpy(nram_X, X + start_row * K, my_rows * K * sizeof(half), GDRAM2NRAM);
+    __memcpy(wram_A, A, K * M * sizeof(half), GDRAM2WRAM);
+    __memcpy(wram_B, B, K * M * sizeof(half), GDRAM2WRAM);
+
+    
+    __bang_matmul(nram_O1, nram_X, wram_A, my_rows, K, M);
+    
+    
+    __bang_sigmoid(nram_O, nram_O1, my_rows * M);  
+    __bang_mul(nram_O1, nram_O1, nram_O, my_rows * M);  
+
+    
+    __bang_matmul(nram_O2, nram_X, wram_B, my_rows, K, M);
+
+    
+    __bang_mul(nram_O, nram_O1, nram_O2, my_rows * M);
+
+    
+    __memcpy(O + start_row * M, nram_O, my_rows * M * sizeof(half), NRAM2GDRAM);
+}
