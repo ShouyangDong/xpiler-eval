@@ -1,0 +1,2 @@
+# MLU kernel for mean with shape [16, 128, 32]
+# TODO: Implement kernel here

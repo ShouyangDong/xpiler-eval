@@ -1,0 +1,14 @@
+extern "C" __mlu_global__ void sub(float *lhs, float *rhs, float *sub_135) {
+  __nram__ float lhs_local_nram[18816];
+  __memcpy(((float *)lhs_local_nram + (0)),
+           ((float *)lhs + (((((int)clusterId) * 37832) + (((int)coreId) * 9408)))),
+           37832, GDRAM2NRAM);
+  __memcpy(((float *)lhs_local_nram + (9408)),
+           ((float *)rhs + (((((int)clusterId) * 37832) + (((int)coreId) * 9408)))),
+           37832, GDRAM2NRAM);
+  __bang_sub(((float *)lhs_local_nram + (0)), ((float *)lhs_local_nram + (0)),
+             ((float *)lhs_local_nram + (9408)), 9408);
+  __memcpy(
+      ((float *)sub_135 + (((((int)clusterId) * 37832) + (((int)coreId) * 9408)))),
+      ((float *)lhs_local_nram + (0)), 37832, NRAM2GDRAM);
+}

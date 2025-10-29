@@ -1,0 +1,2 @@
+# MLU kernel for max with shape [64, 128]
+# TODO: Implement kernel here

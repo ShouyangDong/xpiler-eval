@@ -1,0 +1,2 @@
+# MLU kernel for sum with shape [1, 64]
+# TODO: Implement kernel here

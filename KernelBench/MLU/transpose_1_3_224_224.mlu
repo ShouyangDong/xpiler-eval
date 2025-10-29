@@ -1,0 +1,2 @@
+# MLU kernel for transpose with shape [1, 3, 224, 224]
+# TODO: Implement kernel here

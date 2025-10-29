@@ -917,13 +917,6 @@
     ]
   },
   {
-    "op_name": "add",
-    "dtype": "float32",
-    "args": [
-      1
-    ]
-  },
-  {
     "op_name": "gemv",
     "dtype": "float32",
     "args": [

@@ -1,0 +1,2 @@
+# MLU kernel for transpose with shape [36, 16, 48]
+# TODO: Implement kernel here
