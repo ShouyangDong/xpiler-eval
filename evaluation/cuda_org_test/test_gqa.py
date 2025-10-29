@@ -54,9 +54,15 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     torch.manual_seed(1234)
 
     # Generate Q, K, V
-    Q = torch.rand([batch, seq_q, seq_M, seq_K], dtype=torch.float16, device="cuda")
-    K = torch.rand([batch, seq_q, seq_K, seq_N], dtype=torch.float16, device="cuda")
-    V = torch.rand([batch, seq_q, seq_N, seq_K], dtype=torch.float16, device="cuda")
+    Q = torch.rand(
+        [batch, seq_q, seq_M, seq_K], dtype=torch.float16, device="cuda"
+    )
+    K = torch.rand(
+        [batch, seq_q, seq_K, seq_N], dtype=torch.float16, device="cuda"
+    )
+    V = torch.rand(
+        [batch, seq_q, seq_N, seq_K], dtype=torch.float16, device="cuda"
+    )
 
     # ✅ Get the referenced ouput
     with torch.no_grad():
@@ -67,7 +73,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # ---------------------------------------------
     # 5. Prepare C++ kernel and feed output buffer
     # ---------------------------------------------
-    O = torch.zeros_like(O_ref, dtype=torch.float16, device="cuda")  # host buffer for output
+    O = torch.zeros_like(
+        O_ref, dtype=torch.float16, device="cuda"
+    )  # host buffer for output
 
     Q_cpu = Q.cpu().numpy()
     K_cpu = K.cpu().numpy()

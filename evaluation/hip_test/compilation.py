@@ -65,8 +65,8 @@ def main():
     total = len(files)
     succ = sum(results)
     print(
-        f"[INFO] hip compilation success rate: {succ}/{total} = {
-            succ / total:.2%}"
+        f"[INFO] hip compilation success rate: {succ} / {total}={
+            succ / total: .2 %}"
     )
 
 

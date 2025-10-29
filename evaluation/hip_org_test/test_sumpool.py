@@ -7,10 +7,10 @@ from typing import Tuple
 import torch
 
 from evaluation.utils import (
-    sumpool_np,
     log_test_results_and_exit,
     parse_op_json,
     run_tests,
+    sumpool_np,
     verify_torch_tensor,
 )
 

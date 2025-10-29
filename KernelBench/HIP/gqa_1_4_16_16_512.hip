@@ -6,15 +6,12 @@
 #define K_outer 16
 #define N_outer 512
 
-__global__ void gqa(float *Q,
-                    float *K,
-                    float *V,
-                    float *O
-) {
+__global__ void gqa(float *Q, float *K, float *V, float *O) {
   int bid = blockIdx.z; // batch * heads
   int m_base = blockIdx.x * BLOCK_M;
   int n_base = blockIdx.y * BLOCK_N;
-  using float4 = __attribute__((__vector_size__(BLOCK_K * sizeof(float)))) float;
+  using float4 =
+      __attribute__((__vector_size__(BLOCK_K * sizeof(float)))) float;
   float4 dmn = {0};
   __shared__ float temp[M_outer * N_outer];
   __shared__ float sum_array[N_outer];
@@ -99,8 +96,7 @@ extern "C" void gqa_kernel(float *Q, float *K, float *V, float *O, int batch,
   hipMemset(d_O, 0, o_sz); // zero out
 
   // Grid: M_blocks x N_blocks x (batch * heads)
-  dim3 grid((M + BLOCK_M - 1) / BLOCK_M,
-            (N + BLOCK_K - 1) / BLOCK_K,
+  dim3 grid((M + BLOCK_M - 1) / BLOCK_M, (N + BLOCK_K - 1) / BLOCK_K,
             batch * heads);
   dim3 block(16, 4, 1);
 

@@ -1,2 +1,2 @@
-# MLU kernel for max with shape [16, 32]
-# TODO: Implement kernel here
+#MLU kernel for max with shape[16, 32]
+#TODO : Implement kernel here

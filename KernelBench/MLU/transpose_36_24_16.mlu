@@ -1,2 +1,2 @@
-# MLU kernel for transpose with shape [36, 24, 16]
-# TODO: Implement kernel here
+#MLU kernel for transpose with shape[36, 24, 16]
+#TODO : Implement kernel here

@@ -65,7 +65,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     kernel_np = kernel.cpu().contiguous().numpy()
     input_ptr = input_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     kernel_ptr = kernel_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-    output_ptr = output_ctypes.numpy().ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+    output_ptr = output_ctypes.numpy().ctypes.data_as(
+        ctypes.POINTER(ctypes.c_float)
+    )
     output_torch = depthwise_conv2d(input_tensor, kernel)
 
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
