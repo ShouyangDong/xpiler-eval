@@ -98,22 +98,20 @@ def generate_hip_host(hip_file: str, block_size: int = 256) -> str:
     )
 
     d2h_transfer = (
-        f"  hipMemcpy({output['name']}, {dev_names[output['name']]}, "
+        f"hipMemcpy({output['name']}, {dev_names[output['name']]}, "
         f"{size_param} * sizeof({output['type']}), hipMemcpyDeviceToHost);\n"
         if output
         else ""
     )
 
     # Grid setup
-    grid_setup = f"  dim3 blockSize({block_size});"
+    grid_setup = f"dim3 blockSize({block_size});"
     grid_calc = (
-        f"  dim3 numBlocks(({size_param} + {block_size} - 1) / {block_size});"
+        f"dim3 numBlocks(({size_param} + {block_size} - 1) / {block_size});"
     )
 
     # Use hipLaunchKernelGGL (recommended in HIP)
-    kernel_launch = f"  {kernel_name}<<<numBlocks, blockSize>>>({', '.join(dev_names[p['name']] for p in params)});"
-
-    sync = "  hipDeviceSynchronize();"
+    kernel_launch = f"{kernel_name}<<<numBlocks, blockSize>>>({', '.join(dev_names[p['name']] for p in params)});"
 
     frees = "\n  ".join(
         f"hipFree({dev_names[p['name']]});" for p in ptr_params
@@ -137,7 +135,6 @@ extern "C" void {host_func_name}({host_params}) {{
 
   // Launch kernel
   {kernel_launch}
-  {sync}
 
   // Copy result back to host
   {d2h_transfer}
