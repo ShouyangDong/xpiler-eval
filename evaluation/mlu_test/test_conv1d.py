@@ -56,10 +56,18 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.POINTER(ctypes.c_float),
         ctypes.c_int,
         ctypes.c_int,
+        ctypes.c_int,
     ]
     function.restype = None
     # Call the function with the matrices and dimensions
-    function(input_ptr, kernel_ptr, output_ptr, shape[1], shape[0])
+    function(
+        input_ptr,
+        kernel_ptr,
+        output_ptr,
+        input_array.size(),
+        kernel.size(),
+        output_np.size(),
+    )
     # Check if the results match
     return verify_numpy_tensor(output_ctypes, output_np, op_name)
 

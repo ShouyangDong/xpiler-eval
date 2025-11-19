@@ -51,11 +51,13 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     kernel_func.argtypes = [
         ctypes.POINTER(ctypes.c_float),  # input
         ctypes.POINTER(ctypes.c_float),  # output
+        ctypes.c_int,
+        ctyeps.c_int,
     ]
     kernel_func.restype = None
 
     # ✅ invoke kernel
-    kernel_func(A_ptr, result_array)
+    kernel_func(A_ptr, result_array, A.numel(), output_size)
 
     # ✅ Get output
     computed_array = [result_array[i] for i in range(output_size)]

@@ -54,6 +54,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.c_int,
         ctypes.c_int,
         ctypes.c_int,
+        ctypes.c_int,
     ]
     kernel_func.restype = None
     torch.manual_seed(1234)
@@ -79,7 +80,16 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     A_ptr = ctypes.cast(A_fp16.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
     B_ptr = ctypes.cast(B_fp16.data_ptr(), ctypes.POINTER(ctypes.c_uint16))
     O_ptr = ctypes.cast(O.data_ptr(), ctypes.POINTER(ctypes.c_float))
-    kernel_func(X_ptr, A_ptr, B_ptr, O_ptr, batch, dim_k, dim_n)
+    kernel_func(
+        X_ptr,
+        A_ptr,
+        B_ptr,
+        O_ptr,
+        X_fp16.numel(),
+        A_fp16.numel(),
+        B_fp16.numel(),
+        O_ref.numel(),
+    )
     return verify_torch_tensor(O, O_ref, op_name=op_name)
 
 

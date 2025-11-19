@@ -62,6 +62,8 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.POINTER(ctypes.c_float),  # Input B
         ctypes.POINTER(ctypes.c_float),  # Output
         ctypes.c_int,  # Total number of elements
+        ctypes.c_int,
+        ctypes.c_int,
     ]
     function.restype = None
 
@@ -73,7 +75,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
     # Call the HIP kernel function
     # Use .numel() for total elements
-    function(A_ptr, B_ptr, output_ptr, A.numel())
+    function(A_ptr, B_ptr, output_ptr, A.numel(), B.numel(), C.numel())
 
     # Compare kernel output with PyTorch result
     return verify_torch_tensor(

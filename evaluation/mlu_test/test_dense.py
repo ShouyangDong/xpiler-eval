@@ -76,6 +76,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.c_int,
         ctypes.c_int,
         ctypes.c_int,
+        ctypes.c_int,
     ]
     kernel_func.restype = None
     kernel_func(
@@ -83,9 +84,10 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         weight_ptr,
         bias_ptr,
         y_ptr,
-        batch_size,
-        in_features,
-        out_features,
+        x.numel(),
+        weight.numel(),
+        bias.numel(),
+        y_torch.numel(),
     )
     return verify_torch_tensor(y_kernel, y_torch_cpu, op_name=op_name)
 

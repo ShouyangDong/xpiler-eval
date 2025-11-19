@@ -78,7 +78,16 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     output_ptr = output_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
     # Invoke the HIP kernel.
-    function(input_ptr_q, input_ptr_k, input_ptr_v, output_ptr, *shape)
+    function(
+        input_ptr_q,
+        input_ptr_k,
+        input_ptr_v,
+        output_ptr,
+        np.prod(shape),
+        np.prod(shape),
+        np.prod(shape),
+        np.prod(shape),
+    )
     # Verification results
     return verify_numpy_tensor(
         output_array, expected_output.numpy(), op_name=op_name

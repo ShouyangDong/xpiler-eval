@@ -61,12 +61,13 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.POINTER(ctypes.c_float),  # input
         ctypes.POINTER(ctypes.c_float),  # output
         ctypes.c_int,
+        ctypes.c_int,
     ]
     kernel_func.restype = None
 
     # Call the C++ kernel
 
-    kernel_func(A_ptr, output_ptr, np.prod(shape))
+    kernel_func(A_ptr, output_ptr, np.prod(shape), np.prod(shape))
 
     # Verify result
     return verify_torch_tensor(result_ctypes, expected, op_name=op_name)

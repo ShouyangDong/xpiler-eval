@@ -54,21 +54,10 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.POINTER(ctypes.c_float),
         ctypes.c_int,
         ctypes.c_int,
-        ctypes.c_int,
-        ctypes.c_int,
-        ctypes.c_int,
     ]
     function.restype = None
     # Call the function with the matrices and dimensions
-    function(
-        input_ptr,
-        output_ptr,
-        shape[0],
-        shape[3],
-        shape[1],
-        kernel_stride[0],
-        kernel_stride[2],
-    )
+    function(input_ptr, output_ptr, input_array.numel(), output_array.numel())
     # Check if the results match
     return verify_torch_tensor(output_array, output_np, op_name=op_name)
 

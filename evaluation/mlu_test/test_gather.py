@@ -88,6 +88,8 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.POINTER(ctypes.c_int64),  # indices
         ctypes.POINTER(ctypes.c_float),  # output
         ctypes.c_int,  # N (number of indices)
+        ctypes.c_int,
+        ctypes.c_int,
     ]
     kernel_func.restype = None
 

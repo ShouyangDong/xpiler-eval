@@ -47,6 +47,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.POINTER(ctypes.c_float),  # input array
         ctypes.POINTER(ctypes.c_float),  # output array
         ctypes.c_int,  # total number of elements
+        ctypes.c_int,  # total number of elements
     ]
     function.restype = None
 
@@ -77,7 +78,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     )
 
     # Call the Sign kernel
-    function(input_ptr, output_ptr, total_elements)
+    function(input_ptr, output_ptr, total_elements, total_elements)
 
     # Verify results
     return verify_torch_tensor(output_tensor, expected_output, op_name=op_name)

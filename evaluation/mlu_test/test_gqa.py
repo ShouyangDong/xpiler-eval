@@ -44,7 +44,6 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.c_int,  # num_heads
         ctypes.c_int,  # seq_q
         ctypes.c_int,  # seq_kv
-        ctypes.c_int,  # head_dim
     ]
     gqa_func.restype = None
 
@@ -89,7 +88,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # ---------------------------------------------
     # 6. invoke C++/CUDA kernel
     # ---------------------------------------------
-    gqa_func(Q_ptr, K_ptr, V_ptr, O_ptr, batch, seq_q, seq_M, seq_K, seq_N)
+    gqa_func(
+        Q_ptr, K_ptr, V_ptr, O_ptr, Q.numel(), K.numel(), V.numel(), O.numel()
+    )
 
     # ---------------------------------------------
     # 7. Verification

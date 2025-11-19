@@ -65,10 +65,11 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.POINTER(ctypes.c_float),
         ctypes.c_int,
         ctypes.c_int,
+        ctypes.c_int,
     ]
     kernel_func.restype = None
 
-    kernel_func(A_ptr, x_ptr, y_ptr, M, N)
+    kernel_func(A_ptr, x_ptr, y_ptr, M * N, N, M)
 
     # Verify results
     return verify_torch_tensor(y_ctypes, y_torch_cpu, op_name=op_name)
