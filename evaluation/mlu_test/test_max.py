@@ -68,13 +68,15 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     kernel_func.argtypes = [
         ctypes.POINTER(ctype),  # A
         ctypes.POINTER(ctype),  # out
+        ctypes.c_int,
+        ctypes.c_int,
     ]
     kernel_func.restype = None
 
     # ========================================================
     # ✅ Step 4: Call the kernel
     # ========================================================
-    kernel_func(A_ptr, out_ptr)
+    kernel_func(A_ptr, out_ptr, A_flat.numel(), expected.numel())
 
     # ========================================================
     # ✅ Step 5: Reshape and verify

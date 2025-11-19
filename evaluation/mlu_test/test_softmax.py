@@ -43,7 +43,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     # Total number of rows
     batch_size = int(torch.prod(torch.tensor(shape[:-1])))
     # Size of last dimension
-    hidden_size = shape[-1]
+    shape[-1]
 
     # Load the compiled shared library
     lib = ctypes.CDLL(os.path.join(os.getcwd(), so_path))
@@ -83,7 +83,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     )
 
     # Call the Softmax kernel
-    function(input_ptr, output_ptr, batch_size, hidden_size)
+    function(
+        input_ptr, output_ptr, input_tensor.numel(), expected_output.numel()
+    )
 
     # Verify results
     return verify_torch_tensor(output_tensor, expected_output, op_name=op_name)

@@ -55,10 +55,24 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
 
     lib = ctypes.CDLL(so_path)
     kernel_func = getattr(lib, op_name + "_kernel")
-    kernel_func.argtypes = [ctypes.POINTER(ctypes.c_float)] * 3
+    kernel_func.argtypes = [
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+    ]
     kernel_func.restype = None
 
-    kernel_func(input1_ptr, input2_ptr, output_ptr)
+    kernel_func(
+        input1_ptr,
+        input2_ptr,
+        output_ptr,
+        input1.numel(),
+        input2.numel(),
+        output_flat.numel(),
+    )
 
     result_reshaped = output_flat.reshape(expected.shape)
 

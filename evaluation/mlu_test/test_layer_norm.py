@@ -49,6 +49,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.c_int,
         ctypes.c_int,
         ctypes.c_int,
+        ctypes.c_int,
     ]
     function.restype = None
     # Create the input array.
@@ -67,7 +68,16 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     beta_ptr = beta_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     output_ptr = output_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
     # Calling a C function
-    function(input_ptr, gamma_ptr, beta_ptr, output_ptr, *shape)
+    function(
+        input_ptr,
+        gamma_ptr,
+        beta_ptr,
+        output_ptr,
+        input_array.size(),
+        gamma_array.size(),
+        beta_array.size(),
+        expected_output.size(),
+    )
     # Verification results
     return verify_numpy_tensor(output_array, expected_output, op_name=op_name)
 

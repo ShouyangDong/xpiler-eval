@@ -58,9 +58,6 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.c_int,
         ctypes.c_int,
         ctypes.c_int,
-        ctypes.c_int,
-        ctypes.c_int,
-        ctypes.c_int,
     ]
     function.restype = None
     # Convert the matrices to contiguous memory for ctypes
@@ -77,12 +74,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         input_ptr,
         kernel_ptr,
         output_ptr,
-        data_shape[0],
-        data_shape[2],
-        data_shape[1],
-        kernel_shape[0],
-        kernel_shape[2],
-        stride_h,
+        data_np.numel(),
+        kernel_np.numel(),
+        result_cpu.numel(),
     )
     # Check if the results match
     return verify_torch_tensor(result_ctypes, result_cpu, op_name=op_name)

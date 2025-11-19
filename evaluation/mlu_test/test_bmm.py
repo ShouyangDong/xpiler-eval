@@ -85,18 +85,11 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.c_int,
         ctypes.c_int,
         ctypes.c_int,
-        ctypes.c_int,
     ]
     kernel_func.restype = None
 
     kernel_func(
-        A_ptr,
-        B_ptr,
-        output_ptr,
-        batch_size,
-        matrix_dim_i,
-        matrix_dim_j,
-        matrix_dim_k,
+        A_ptr, B_ptr, output_ptr, A.numel(), B.numel(), result_torch.numel()
     )
 
     # Verify results

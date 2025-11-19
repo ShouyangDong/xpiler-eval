@@ -88,7 +88,6 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.c_int,  # C
         ctypes.c_int,  # H
         ctypes.c_int,  # W
-        ctypes.c_float,  # eps
     ]
     kernel_func.restype = None
 
@@ -99,11 +98,10 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         output_ptr,
         weight_ptr,
         bias_ptr,
-        N,
-        C,
-        H,
-        W,
-        eps,
+        input_flat.numel(),
+        expected.numel(),
+        weight.numel(),
+        bias.numel(),
     )
 
     # Reshape result for comparison

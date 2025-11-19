@@ -86,9 +86,9 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         input_ptr,
         kernel_ptr,
         output_ptr,
-        input_height,
-        kernel_size,
-        input_channels,
+        input_tensor.numel(),
+        kernel.numel(),
+        output_ctypes.numel(),
     )
     return verify_torch_tensor(
         output_ctypes, output_torch.cpu(), op_name=op_name

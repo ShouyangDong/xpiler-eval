@@ -71,11 +71,20 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.POINTER(ctypes.c_float),  # B
         ctypes.POINTER(ctypes.c_float),  # Output
         ctypes.c_int,  # Total number of elements
+        ctypes.c_int,  # Total number of elements,
+        ctypes.c_int,  # Total number of elements
     ]
     function.restype = None
 
     # Call the subtraction kernel
-    function(A_ptr, B_ptr, output_ptr, total_elements)
+    function(
+        A_ptr,
+        B_ptr,
+        output_ptr,
+        total_elements,
+        total_elements,
+        total_elements,
+    )
 
     # Verify results
     return verify_torch_tensor(output_tensor, expected_output, op_name=op_name)

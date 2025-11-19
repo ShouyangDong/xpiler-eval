@@ -1,5 +1,3 @@
-# hip_host_generator.py
-
 import re
 import sys
 

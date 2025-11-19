@@ -103,7 +103,8 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         ctypes.c_int,  # C
         ctypes.c_int,  # H
         ctypes.c_int,  # W
-        ctypes.c_float,  # epsilon
+        ctypes.c_int,  # epsilon
+        ctypes.c_int,
     ]
     kernel_func.restype = None
 
@@ -116,13 +117,13 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
         var_ptr,
         weight_ptr,
         bias_ptr,
-        N,
-        C,
-        H,
-        W,
-        eps,
+        input_tensor.numel(),
+        weight.numel(),
+        bias.numel(),
+        running_mean.numel(),
+        running_var.numel(),
+        expected.numel(),
     )
-
     # Reshape result for comparison
     result_reshaped = result_ctypes.reshape(N, C, H, W)
 
