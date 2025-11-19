@@ -1,7 +1,6 @@
-# mlu_host_generator.py
-
 import re
 import sys
+import textwrap
 
 
 def generate_mlu_host(mlu_file: str, cluster_mode: bool = False) -> str:
@@ -55,18 +54,16 @@ def generate_mlu_host(mlu_file: str, cluster_mode: bool = False) -> str:
     # Classify
     ptr_params = [p for p in params if p["is_ptr"]]
     val_params = [p for p in params if not p["is_ptr"]]
+
+    if not ptr_params:
+        raise ValueError(
+            "Kernel must have at least one pointer parameter (buffer)."
+        )
+
+    size_params = [f"size_{i}" for i in range(len(ptr_params))]
+
     inputs = ptr_params[:-1] if len(ptr_params) > 1 else []
     output = ptr_params[-1] if ptr_params else None
-
-    # Find size parameter
-    size_param = next(
-        (
-            p["name"]
-            for p in val_params
-            if p["name"].lower() in ["size", "n", "len"]
-        ),
-        "size",
-    )
 
     # Device names
     dev_names = {p["name"]: f"d_{p['name']}" for p in ptr_params}
@@ -74,9 +71,10 @@ def generate_mlu_host(mlu_file: str, cluster_mode: bool = False) -> str:
     # Function name
     host_func_name = f"{kernel_name}_kernel"
 
-    # Host signature
+    # 🔥 Host signature: pointers + size_0, size_1, ... + other value params
     host_params = ", ".join(
         [f"{p['type']} *{p['name']}" for p in ptr_params]
+        + [f"int {s}" for s in size_params]
         + [f"{p['type']} {p['name']}" for p in val_params]
     )
 
@@ -86,19 +84,19 @@ def generate_mlu_host(mlu_file: str, cluster_mode: bool = False) -> str:
     )
 
     mallocs = "\n  ".join(
-        f"CNRT_CHECK(cnrtMalloc((void**)&{dev_names[p['name']]}, {size_param} * sizeof({p['type']})));"
-        for p in ptr_params
+        f"CNRT_CHECK(cnrtMalloc((void**)&{dev_names[p['name']]}, {size_params[i]} * sizeof({p['type']})));"
+        for i, p in enumerate(ptr_params)
     )
 
     h2d_transfers = "\n  ".join(
         f"CNRT_CHECK(cnrtMemcpy({dev_names[p['name']]}, {p['name']}, "
-        f"{size_param} * sizeof({p['type']}), cnrtMemcpyHostToDev));"
-        for p in inputs
+        f"{size_params[i]} * sizeof({p['type']}), cnrtMemcpyHostToDev));"
+        for i, p in enumerate(inputs)
     )
 
     d2h_transfer = (
         f"CNRT_CHECK(cnrtMemcpy({output['name']}, {dev_names[output['name']]}, "
-        f"{size_param} * sizeof({output['type']}), cnrtMemcpyDevToHost));\n"
+        f"{size_params[len(ptr_params)-1]} * sizeof({output['type']}), cnrtMemcpyDevToHost));"
         if output
         else ""
     )
@@ -115,10 +113,13 @@ def generate_mlu_host(mlu_file: str, cluster_mode: bool = False) -> str:
         )
     )
 
-    launch_config = f"""cnrtQueue_t queue;
-    CNRT_CHECK(cnrtCreateQueue(&queue));
-    cnrtDim3_t kDim = {{{dim_str}}};
-    cnrtFunctionType_t kType = {func_type};"""
+    launch_config = textwrap.dedent(
+        f"""\
+        cnrtQueue_t queue;
+          CNRT_CHECK(cnrtCreateQueue(&queue));
+          cnrtDim3_t kDim = {{{dim_str}}};
+          cnrtFunctionType_t kType = {func_type};"""
+    )
 
     # Kernel launch
     kernel_launch = f"{kernel_name}<<<numBlocks, blockSize>>>({', '.join(dev_names[p['name']] for p in params)});"
@@ -153,9 +154,13 @@ extern "C" void {host_func_name}({host_params}) {{
 """
 
     # Output file
-    output_file = mlu_file.replace(".mlu", "_kernel.cpp").replace(
-        ".cu", "_kernel.cpp"
-    )
+    output_file = mlu_file.replace(".mlu", "_op.mlu")
+    # After reading 'code' and before generating output:
+    # Remove extern "C" before __mlu_global__ functions
+    code = re.sub(r'extern\s+"C"\s+(?=__mlu_global__\s+void)', "", code)
+
+    # Then combine
+    generated_code = code + "\n" + generated_code
     with open(output_file, "w") as f:
         f.write(generated_code)
 
