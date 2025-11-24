@@ -1,6 +1,0 @@
-
-
-
-void gatemlp_4_512_512.mlu() {
-  std::cout << "Running gatemlp_4_512_512.mlu..." << std::endl;
-}
