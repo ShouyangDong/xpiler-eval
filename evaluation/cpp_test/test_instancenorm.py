@@ -110,5 +110,12 @@ if __name__ == "__main__":
         logger.warning("No valid instancenorm kernels found.")
         exit(0)
 
-    results = run_tests(configs, args.source_dir, args.target, jobs=args.jobs)
+    results = run_tests(
+        args.name,
+        configs,
+        args.source_dir,
+        __file__,
+        args.target,
+        num_workers=args.jobs,
+    )
     log_test_results_and_exit(results, op_name=args.name)
