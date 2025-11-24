@@ -13,7 +13,6 @@ __global__ void scatter(const float *__restrict__ input,
   if (tid >= TOTAL_ELEMENTS)
     return;
 
-  // Decode thread index
   int n = tid / (C * H * W);
   int rem = tid % (C * H * W);
   int c_idx = rem / (H * W);
@@ -21,13 +20,10 @@ __global__ void scatter(const float *__restrict__ input,
   int h = rem / W;
   int w = rem % W;
 
-  // Get target index from indices tensor for axis=1 (channel)
   int target_c = indices[tid];
 
-  // Bounds check
   if (target_c >= 0 && target_c < 32) {
-    // Calculate output index: scatter input[n][c_idx][h][w] ->
-    // output[n][target_c][h][w]
+
     int output_idx = n * 32 * H * W + target_c * H * W + h * W + w;
     output[output_idx] = input[tid];
   }
@@ -37,8 +33,7 @@ extern "C" void scatter_kernel(const float *h_input, const int *h_indices,
                                float *h_output) {
   size_t input_bytes = TOTAL_ELEMENTS * sizeof(float);
   size_t indices_bytes = TOTAL_ELEMENTS * sizeof(int);
-  size_t output_bytes =
-      N * 32 * H * W * sizeof(float); // output has shape [4,32,112,112]
+  size_t output_bytes = N * 32 * H * W * sizeof(float);
 
   float *d_input;
   int *d_indices;
@@ -48,11 +43,9 @@ extern "C" void scatter_kernel(const float *h_input, const int *h_indices,
   cudaMalloc(&d_indices, indices_bytes);
   cudaMalloc(&d_output, output_bytes);
 
-  // Copy input data (acts as base for output)
   cudaMemcpy(d_input, h_input, input_bytes, cudaMemcpyHostToDevice);
   cudaMemcpy(d_indices, h_indices, indices_bytes, cudaMemcpyHostToDevice);
 
-  // Initialize output with input values
   cudaMemcpy(d_output, d_input, input_bytes, cudaMemcpyDeviceToDevice);
 
   const int block_size = 1024;

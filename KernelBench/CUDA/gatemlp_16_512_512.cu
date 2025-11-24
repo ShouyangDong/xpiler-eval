@@ -41,7 +41,7 @@ __global__ void gatemlp(const half *X, const half *A, const half *B, float *O) {
 extern "C" void gatemlp_kernel(const half *h_X, const half *h_A,
                                const half *h_B, float *h_O, int batch, int K,
                                int N) {
-  // sizes
+
   size_t sizeX = (size_t)batch * (size_t)K * sizeof(half);
   size_t sizeA = (size_t)K * (size_t)N * sizeof(half);
   size_t sizeB = sizeA;
@@ -70,7 +70,6 @@ extern "C" void gatemlp_kernel(const half *h_X, const half *h_A,
 
   cudaMemcpy(h_O, d_O, sizeO, cudaMemcpyDeviceToHost);
 
-  // free
   cudaFree(d_X);
   cudaFree(d_A);
   cudaFree(d_B);

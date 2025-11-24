@@ -5,8 +5,7 @@ constexpr int C = 64;
 constexpr int H = 112;
 constexpr int W = 56;
 constexpr int TOTAL_ELEMENTS = N * C * H * W;
-constexpr int OUTPUT_H =
-    H * 2; // Concatenating two tensors along height axis -> 224 height
+constexpr int OUTPUT_H = H * 2;
 constexpr int OUTPUT_TOTAL_ELEMENTS = N * C * OUTPUT_H * W;
 
 __global__ void concat(const float *__restrict__ input1,
@@ -16,7 +15,6 @@ __global__ void concat(const float *__restrict__ input1,
   if (tid >= OUTPUT_TOTAL_ELEMENTS)
     return;
 
-  // Decode output index
   int n = tid / (C * OUTPUT_H * W);
   int rem = tid % (C * OUTPUT_H * W);
   int c = rem / (OUTPUT_H * W);
@@ -25,10 +23,10 @@ __global__ void concat(const float *__restrict__ input1,
   int w = rem % W;
 
   if (h < H) {
-    // First half (original height) comes from input1
+
     output[tid] = input1[n * C * H * W + c * H * W + h * W + w];
   } else {
-    // Second half comes from input2
+
     int h2 = h - H;
     output[tid] = input2[n * C * H * W + c * H * W + h2 * W + w];
   }

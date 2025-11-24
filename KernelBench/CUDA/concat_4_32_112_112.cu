@@ -5,8 +5,7 @@ constexpr int C = 32;
 constexpr int H = 112;
 constexpr int W = 112;
 constexpr int TOTAL_ELEMENTS = N * C * H * W;
-constexpr int OUTPUT_C =
-    C * 2; // Concatenating two tensors of 32 channels -> 64 channels
+constexpr int OUTPUT_C = C * 2;
 constexpr int OUTPUT_TOTAL_ELEMENTS = N * OUTPUT_C * H * W;
 
 __global__ void concat(const float *__restrict__ input1,
@@ -16,7 +15,6 @@ __global__ void concat(const float *__restrict__ input1,
   if (tid >= OUTPUT_TOTAL_ELEMENTS)
     return;
 
-  // Decode output index
   int n = tid / (OUTPUT_C * H * W);
   int rem = tid % (OUTPUT_C * H * W);
   int c = rem / (H * W);
@@ -25,10 +23,10 @@ __global__ void concat(const float *__restrict__ input1,
   int w = rem % W;
 
   if (c < C) {
-    // First half comes from input1
+
     output[tid] = input1[n * C * H * W + c * H * W + h * W + w];
   } else {
-    // Second half comes from input2
+
     int c2 = c - C;
     output[tid] = input2[n * C * H * W + c2 * H * W + h * W + w];
   }
