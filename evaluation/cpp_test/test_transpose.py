@@ -35,7 +35,7 @@ def ref_program(input_tensor: torch.Tensor, perm: List[int]) -> torch.Tensor:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled transpose kernel."""
-    config["file"]
+
     input_shape = config["args"]
     perm = config["perm"]
     dtype_str = config["dtype"]

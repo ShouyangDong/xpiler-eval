@@ -89,7 +89,10 @@ def main():
 
     # Load kernels.json
     if not os.path.exists(args.json_path):
-        print(f"[ERROR] kernels.json not found: {args.json_path}", file=sys.stderr)
+        print(
+            f"[ERROR] kernels.json not found: {args.json_path}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     try:

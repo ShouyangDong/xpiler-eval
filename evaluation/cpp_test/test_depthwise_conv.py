@@ -40,7 +40,7 @@ def depthwise_conv2d(input, w):
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled depthwise_conv2d kernel."""
     input_height, kernel_size, input_channels = config["args"][:3]
-    config["file"]
+
     op_name = config["op_name"]
     # Define the input tensor, kernel, and parameters
     input_tensor = torch.rand(

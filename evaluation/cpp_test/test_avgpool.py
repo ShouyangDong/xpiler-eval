@@ -41,7 +41,7 @@ def avgpool_ref(
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled avgpool kernel."""
-    config["file"]
+
     shape = config["args"][:4]
     kernel_stride = config["args"][4:8]
     kh, kw, sh, sw = kernel_stride

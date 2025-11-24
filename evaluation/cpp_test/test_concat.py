@@ -35,7 +35,7 @@ def concat_ref(tensors: List[torch.Tensor], axis: int) -> torch.Tensor:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled concat kernel."""
-    config["file"]
+
     shape = config["args"]
     axis = config["axis"]
     op_name = config["op_name"]

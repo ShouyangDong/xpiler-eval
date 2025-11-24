@@ -35,7 +35,7 @@ def reference_rmsnorm(x: torch.Tensor) -> torch.Tensor:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled RMSNorm kernel."""
-    config["file"]
+
     shape = config["args"]
     dtype_str = config["dtype"]
     op_name = config["op_name"]

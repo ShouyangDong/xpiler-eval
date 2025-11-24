@@ -1,16 +1,20 @@
 # eval_performance.py
 import json
-import torch
-import time
-import numpy as np
 import os
-from typing import List, Dict, Any
+import time
+from typing import Any, Dict, List
+
+import numpy as np
+import torch
 
 # -------------------------------
 # 1. 算子实现：PyTorch 版本
 # -------------------------------
 
-def torch_scatter(input: torch.Tensor, indices: torch.Tensor, axis: int) -> torch.Tensor:
+
+def torch_scatter(
+    input: torch.Tensor, indices: torch.Tensor, axis: int
+) -> torch.Tensor:
     # 创建输出（全零）
     output = input.clone()  # 或 torch.zeros_like(input)
     # 简化：沿 axis scatter 数值（这里只是示例，可根据需求改）
@@ -20,21 +24,28 @@ def torch_scatter(input: torch.Tensor, indices: torch.Tensor, axis: int) -> torc
     output[index_tensors] = input[index_tensors]  # 简化操作
     return output
 
-def torch_gatemlp(X: torch.Tensor, W_gate: torch.Tensor, W_up: torch.Tensor) -> torch.Tensor:
+
+def torch_gatemlp(
+    X: torch.Tensor, W_gate: torch.Tensor, W_up: torch.Tensor
+) -> torch.Tensor:
     gate = torch.nn.functional.silu(X @ W_gate)
     up = X @ W_up
     return gate * up
 
+
 # -------------------------------
 # 2. 构造输入张量
 # -------------------------------
+
 
 def create_input(op: Dict[str, Any], device: torch.device) -> Dict[str, Any]:
     op_name = op["op_name"]
     dtype_str = op["dtype"]
     dtype = torch.float32 if dtype_str == "float32" else torch.int16
     args = op["args"]
-    kwargs = {k: v for k, v in op.items() if k not in ["op_name", "dtype", "args"]}
+    kwargs = {
+        k: v for k, v in op.items() if k not in ["op_name", "dtype", "args"]
+    }
 
     if op_name == "scatter":
         batch, dim, seq_len, kv_len = args
@@ -46,7 +57,7 @@ def create_input(op: Dict[str, Any], device: torch.device) -> Dict[str, Any]:
             "inputs": [input_tensor, indices],
             "kwargs": {"axis": kwargs.get("axis")},
             "output_shape": shape,
-            "desc": f"scatter{shape}_axis{kwargs.get('axis')}"
+            "desc": f"scatter{shape}_axis{kwargs.get('axis')}",
         }
 
     elif op_name == "gatemlp":
@@ -62,17 +73,21 @@ def create_input(op: Dict[str, Any], device: torch.device) -> Dict[str, Any]:
             "inputs": [X, W_gate, W_up],
             "kwargs": {},
             "output_shape": [M, N],
-            "desc": f"gatemlp[{M},{K},{N}]"
+            "desc": f"gatemlp[{M},{K},{N}]",
         }
 
     else:
         raise ValueError(f"Unknown op: {op_name}")
 
+
 # -------------------------------
 # 3. 执行并计时
 # -------------------------------
 
-def benchmark_op(op: Dict[str, Any], device: torch.device, runs: int = 100, warmup: int = 5) -> Dict[str, Any]:
+
+def benchmark_op(
+    op: Dict[str, Any], device: torch.device, runs: int = 100, warmup: int = 5
+) -> Dict[str, Any]:
     op_name = op["op_name"]
 
     # 构造输入
@@ -87,20 +102,17 @@ def benchmark_op(op: Dict[str, Any], device: torch.device, runs: int = 100, warm
             "success": False,
             "error": str(e),
             "op_name": op_name,
-            "args": op["args"]
+            "args": op["args"],
         }
 
     # 选择函数
-    func = {
-        "scatter": torch_scatter,
-        "gatemlp": torch_gatemlp
-    }.get(op_name)
+    func = {"scatter": torch_scatter, "gatemlp": torch_gatemlp}.get(op_name)
 
     if not func:
         return {
             "success": False,
             "error": f"No PyTorch implementation for {op_name}",
-            "op_name": op_name
+            "op_name": op_name,
         }
 
     # 预热
@@ -115,7 +127,7 @@ def benchmark_op(op: Dict[str, Any], device: torch.device, runs: int = 100, warm
         torch.cuda.synchronize() if device.type == "cuda" else None
         start = time.perf_counter()
         with torch.no_grad():
-            out = func(*inputs, **kwargs)
+            func(*inputs, **kwargs)
         torch.cuda.synchronize() if device.type == "cuda" else None
         end = time.perf_counter()
         times.append((end - start) * 1000)  # ms
@@ -133,12 +145,14 @@ def benchmark_op(op: Dict[str, Any], device: torch.device, runs: int = 100, warm
         "min_ms": float(np.min(times)),
         "max_ms": float(np.max(times)),
         "runs": runs,
-        "device": str(device)
+        "device": str(device),
     }
+
 
 # -------------------------------
 # 4. 主函数
 # -------------------------------
+
 
 def main(targets: List[str], runs: int = 100):
     base_dir = "TransEval"
@@ -161,20 +175,21 @@ def main(targets: List[str], runs: int = 100):
             continue
 
         print(f"\n📁 Loading {target.upper()} operators...")
-        with open(json_path, 'r') as f:
+        with open(json_path, "r") as f:
             ops = json.load(f)
 
         target_results = []
         for op in ops:
-            print(f"  ⏱️  Running: {op['op_name']} {op['args']} ({op['dtype']})")
+            print(
+                f"  ⏱️  Running: {op['op_name']} {op['args']} ({op['dtype']})"
+            )
             result = benchmark_op(op, device, runs=runs)
             target_results.append(result)
-            results.append({
-                "target": target,
-                "result": result
-            })
+            results.append({"target": target, "result": result})
             if result["success"]:
-                print(f"    ✅ Mean: {result['mean_ms']:.4f} ms ± {result['std_ms']:.4f}")
+                print(
+                    f"    ✅ Mean: {result['mean_ms']:.4f} ms ± {result['std_ms']:.4f}"
+                )
             else:
                 print(f"    ❌ Error: {result['error']}")
 
@@ -185,14 +200,18 @@ def main(targets: List[str], runs: int = 100):
         json.dump(results, f, indent=2)
 
     # 打印汇总表
-    print("\n" + "="*80)
-    print(f"{'Platform':<8} {'Op':<12} {'Args':<20} {'Mean (ms)':<12} {'Device'}")
-    print("="*80)
+    print("\n" + "=" * 80)
+    print(
+        f"{'Platform':<8} {'Op':<12} {'Args':<20} {'Mean (ms)':<12} {'Device'}"
+    )
+    print("=" * 80)
     for item in results:
         r = item["result"]
         if r["success"]:
-            print(f"{item['target']:<8} {r['op_name']:<12} {str(r['args']):<20} {r['mean_ms']:<12.4f} {r['device']}")
-    print("="*80)
+            print(
+                f"{item['target']:<8} {r['op_name']:<12} {str(r['args']):<20} {r['mean_ms']:<12.4f} {r['device']}"
+            )
+    print("=" * 80)
     print("📊 Full results saved to 'torch_baseline_perf.json'")
 
 
@@ -202,10 +221,19 @@ def main(targets: List[str], runs: int = 100):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Evaluate PyTorch performance for operators across targets.")
-    parser.add_argument("--target", type=str, default="cuda,hip,mlu,cpu",
-                        help="Platforms to evaluate (comma-separated): cuda,hip,mlu,cpu")
-    parser.add_argument("--runs", type=int, default=100, help="Number of runs per op")
+
+    parser = argparse.ArgumentParser(
+        description="Evaluate PyTorch performance for operators across targets."
+    )
+    parser.add_argument(
+        "--target",
+        type=str,
+        default="cuda,hip,mlu,cpu",
+        help="Platforms to evaluate (comma-separated): cuda,hip,mlu,cpu",
+    )
+    parser.add_argument(
+        "--runs", type=int, default=100, help="Number of runs per op"
+    )
 
     args = parser.parse_args()
     targets = [p.strip() for p in args.target.split(",") if p.strip()]

@@ -51,7 +51,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     shape = config["args"]
     causal = config.get("causal", False)
     dtype_str = config.get("dtype", "float32")
-    config["file"]
+
     op_name = config["op_name"]
     # Load shared library
     lib = ctypes.CDLL(so_path)

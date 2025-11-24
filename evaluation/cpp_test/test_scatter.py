@@ -48,7 +48,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     dim = config["axis"]
     shape = config["args"]
     config["op_name"]
-    config["file"]
+
     op_name = config["op_name"]
     # ----------- Prepare tensors -----------
     self_tensor = torch.rand(*shape, dtype=torch.float32)

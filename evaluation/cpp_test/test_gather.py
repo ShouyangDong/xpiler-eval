@@ -46,7 +46,7 @@ def reference_gather(
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled Gather kernel."""
     B, L, I = config["args"]
-    config["file"]
+
     op_name = config["op_name"]
     # Generate inputs
     torch.manual_seed(1234)

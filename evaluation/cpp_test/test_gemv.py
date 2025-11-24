@@ -36,7 +36,7 @@ def reference_gemv(A: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled GEMV kernel."""
     M, K = config["args"]
-    config["file"]
+
     op_name = config["op_name"]
     # Load shared library
     lib = ctypes.CDLL(so_path)

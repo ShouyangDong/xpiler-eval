@@ -1,8 +1,8 @@
 import json
+from pathlib import Path
+
 import tvm
 from tvm import te, topi
-import os
-from pathlib import Path
 
 # output目录
 OUTPUT_DIR = Path("generated_kernels")
@@ -10,7 +10,7 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 
 
 def create_shapes(op_name, args):
-    """根据算子推断输入 shape"""
+    """根据算子推断输入 shape."""
     if "conv2d" in op_name:
         N, C, H, W = 1, args[0], args[1], args[2]
         if "NHWC" in op_name:
@@ -33,7 +33,7 @@ def create_shapes(op_name, args):
 
 
 def get_tvm_op(op_name, placeholders):
-    """Construct TVM 计算图"""
+    """Construct TVM 计算图."""
     A = placeholders[0]
     if len(placeholders) > 1:
         B = placeholders[1]
@@ -57,10 +57,19 @@ def get_tvm_op(op_name, placeholders):
     elif "conv" in op_name:
         layout = "NHWC" if "NHWC" in op_name else "NCHW"
         out_channels = placeholders[1].shape[-2 if layout == "NHWC" else 0]
-        return topi.nn.conv2d(A, B, strides=1, padding=1, layout=layout, out_channels=int(out_channels))
+        return topi.nn.conv2d(
+            A,
+            B,
+            strides=1,
+            padding=1,
+            layout=layout,
+            out_channels=int(out_channels),
+        )
     elif "pool2d" in op_name:
         pool_type = op_name.split("pool2d")[0]
-        return topi.nn.pool2d(A, kernel=(2, 2), stride=(2, 2), pool_type=pool_type, layout="NCHW")
+        return topi.nn.pool2d(
+            A, kernel=(2, 2), stride=(2, 2), pool_type=pool_type, layout="NCHW"
+        )
     elif op_name == "gemm":
         return topi.nn.dense(A, B)
     elif op_name == "bmm":
@@ -69,15 +78,19 @@ def get_tvm_op(op_name, placeholders):
         return topi.nn.dense(A, B)
     elif "norm" in op_name:
         if "batch" in op_name:
-            return topi.nn.batch_norm(A, tvm.te.placeholder((A.shape[1],), dtype=A.dtype))[0]
+            return topi.nn.batch_norm(
+                A, tvm.te.placeholder((A.shape[1],), dtype=A.dtype)
+            )[0]
         elif "layer" in op_name:
             return topi.nn.layer_norm(A, axes=[-1])
         elif "RMS" in op_name:
-            variance = topi.sum(te.power(A, 2), axis=-1, keepdims=True) / A.shape[-1]
+            variance = (
+                topi.sum(te.power(A, 2), axis=-1, keepdims=True) / A.shape[-1]
+            )
             return A / topi.sqrt(variance + 1e-6)
     elif op_name in ["self-atten", "DAT"]:
         Q, K, V = placeholders
-        scale = 1.0 / (Q.shape[-1]**0.5)
+        scale = 1.0 / (Q.shape[-1] ** 0.5)
         attn = topi.nn.batch_matmul(Q, topi.transpose(K, [0, 1, 3, 2])) * scale
         prob = topi.nn.softmax(attn)
         return topi.nn.batch_matmul(prob, V)
@@ -87,9 +100,12 @@ def get_tvm_op(op_name, placeholders):
 
 
 def generate_kernel(op_name, args, dtype="float32"):
-    """生成多后端 kernel"""
+    """生成多后端 kernel."""
     shapes = create_shapes(op_name, args)
-    placeholders = [te.placeholder(s, name=f"input{i}", dtype=dtype) for i, s in enumerate(shapes)]
+    placeholders = [
+        te.placeholder(s, name=f"input{i}", dtype=dtype)
+        for i, s in enumerate(shapes)
+    ]
 
     # Construct计算
     C = get_tvm_op(op_name, placeholders)
@@ -128,7 +144,7 @@ def generate_kernel(op_name, args, dtype="float32"):
 
 def main(json_file="kernels.json"):
     try:
-        with open(json_file, 'r') as f:
+        with open(json_file, "r") as f:
             kernels = json.load(f)
     except FileNotFoundError:
         print(f"{json_file} not found, using demo data.")
