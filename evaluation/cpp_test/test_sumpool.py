@@ -3,16 +3,18 @@
 import argparse
 import ctypes
 import logging
-import os
 from typing import Tuple
 
 import numpy as np
 import torch
 
-from evaluation.macros import CPP_MACROS as macro
-from evaluation.utils import parse_op_json
-from evaluation.utils import run_cpp_compilation as run_compilation
-from evaluation.utils import run_tests, sumpool_np, verify_torch_tensor
+from evaluation.utils import (
+    log_test_results_and_exit,
+    parse_op_json,
+    run_tests,
+    sumpool_np,
+    verify_torch_tensor,
+)
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -25,41 +27,6 @@ if not logger.handlers:
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-
-
-def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
-    """Compile one sumpool kernel."""
-    file_name = config["file"]
-    file_path = os.path.join(source_dir, file_name)
-    so_path = os.path.join(source_dir, file_name.replace(".cpp", ".so"))
-
-    temp_file = os.path.join(
-        source_dir,
-        f"{file_name.replace('.cpp', '')}_patched_{os.getpid()}.cpp",
-    )
-
-    if not os.path.isfile(file_path):
-        return config, False, f"[{op_name}] File not found: {file_path}"
-
-    try:
-        with open(file_path, "r") as f:
-            code = f.read()
-        code = macro + code
-        with open(temp_file, "w") as f:
-            f.write(code)
-    except Exception as e:
-        return config, False, f"[{op_name}] Patch failed {file_name}: {e}"
-
-    success, msg = run_compilation(so_path, temp_file)
-    try:
-        os.remove(temp_file)
-    except BaseException:
-        pass
-
-    if success:
-        return config, True, so_path
-    else:
-        return config, False, f"[{op_name}] Compile failed {file_name}: {msg}"
 
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
@@ -150,13 +117,12 @@ if __name__ == "__main__":
 
     # Run tests
     results = run_tests(
-        "sumpool",
         args.name,
         configs,
         args.source_dir,
+        __file__,
         args.target,
         num_workers=args.jobs,
     )
-
     # Log individual results
     log_test_results_and_exit(results, op_name=args.name)

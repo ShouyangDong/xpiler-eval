@@ -15,6 +15,7 @@ import torch
 from evaluation.utils import (
     log_test_results_and_exit,
     parse_op_json,
+    run_tests,
     verify_torch_tensor,
 )
 
@@ -97,6 +98,13 @@ if __name__ == "__main__":
     if not configs:
         logger.warning("No valid 'gemm' kernels found.")
         exit(0)
-
+    results = run_tests(
+        args.name,
+        configs,
+        args.source_dir,
+        __file__,
+        args.target,
+        num_workers=args.jobs,
+    )
     # Run test pipeline
     log_test_results_and_exit(results, op_name=args.name)

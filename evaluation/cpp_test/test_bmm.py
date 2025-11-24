@@ -99,7 +99,14 @@ if __name__ == "__main__":
         exit(0)
 
     # Run test pipeline
-    results = run_tests(configs, args.source_dir, args.target, args.jobs)
+    results = run_tests(
+        args.name,
+        configs,
+        args.source_dir,
+        __file__,
+        args.target,
+        num_workers=args.jobs,
+    )
 
     # Summarize results
     log_test_results_and_exit(results, op_name=args.name)
