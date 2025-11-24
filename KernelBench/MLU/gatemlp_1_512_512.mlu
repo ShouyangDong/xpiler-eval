@@ -1,5 +1,5 @@
-// Auto-generated: gatemlp with args [1, 512, 512]
-// TODO: Implement kernel for gatemlp_1_512_512.mlu
+
+
 
 void gatemlp_1_512_512.mlu() {
   std::cout << "Running gatemlp_1_512_512.mlu..." << std::endl;

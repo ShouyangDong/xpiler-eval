@@ -1,5 +1,5 @@
-// Auto-generated: concat with args [4, 32, 112, 112]
-// TODO: Implement kernel for concat_4_32_112_112.mlu
+
+
 
 void concat_4_32_112_112.mlu() {
   std::cout << "Running concat_4_32_112_112.mlu..." << std::endl;
