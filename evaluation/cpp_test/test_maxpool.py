@@ -35,7 +35,6 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     kernel = config["args"][4:6]
     stride = config["args"][6:8]
 
-    config["file"]
     dtype_str = config.get("dtype", "float32")
 
     # Load shared library

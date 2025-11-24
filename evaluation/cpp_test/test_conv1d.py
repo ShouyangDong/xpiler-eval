@@ -34,7 +34,7 @@ def conv1d_ref(input_array: np.ndarray, kernel: np.ndarray) -> np.ndarray:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled conv1d kernel."""
-    config["file"]
+
     output_size, input_length = config["args"]
     op_name = config["op_name"]
     # Generate random input

@@ -44,7 +44,7 @@ def ref_program(x_tensor, gamma, beta, eps=1e-5):
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled LayerNorm kernel."""
     shape = config["args"]
-    config["file"]
+
     op_name = config["op_name"]
     # Load shared library
     lib = ctypes.CDLL(so_path)

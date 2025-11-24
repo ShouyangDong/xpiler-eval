@@ -36,7 +36,7 @@ def reference_gelu(x: np.ndarray) -> np.ndarray:
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled GELU kernel."""
     N = np.prod(config["args"])
-    config["file"]
+
     op_name = config["op_name"]
     # Load shared library
     lib = ctypes.CDLL(so_path)

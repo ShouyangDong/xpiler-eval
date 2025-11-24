@@ -36,7 +36,7 @@ def ref_program(x: torch.Tensor) -> torch.Tensor:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled sin kernel (fp32 only)."""
-    config["file"]
+
     shape = config["args"]
     op_name = config["op_name"]
 

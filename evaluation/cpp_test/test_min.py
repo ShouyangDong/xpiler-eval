@@ -37,7 +37,7 @@ def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled min kernel."""
     shape = config["args"]
     axis = config["axis"]
-    config["file"]
+
     dtype_str = config.get("dtype", "float32")
     op_name = config["op_name"]
     output_shape = [1 if i == axis else size for i, size in enumerate(shape)]

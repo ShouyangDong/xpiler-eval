@@ -35,7 +35,7 @@ def ref_program(A: torch.Tensor, axes: List[int]) -> torch.Tensor:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled sum kernel."""
-    config["file"]
+
     shape = config["args"]
     axes = config["axis"]
     dtype_str = config["dtype"]

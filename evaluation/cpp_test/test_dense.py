@@ -42,7 +42,7 @@ def reference_dense_int16(
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled dense_int16_bias_int32 kernel."""
     M, N, K = config["args"]
-    config["file"]
+
     op_name = config["op_name"]
     # Generate inputs
     A = torch.randint(-10, 10, (M, K), dtype=torch.int16)

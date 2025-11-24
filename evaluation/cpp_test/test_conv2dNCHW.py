@@ -31,7 +31,7 @@ if not logger.handlers:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled conv2d_nchw kernel."""
-    config["file"]
+
     data_shape = config["args"][:4]
     kernel_shape = config["args"][4:8]
     stride, pad = config["args"][8], config["args"][9]

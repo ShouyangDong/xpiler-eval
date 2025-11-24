@@ -36,7 +36,7 @@ if not logger.handlers:
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled BMM kernel."""
     B, M, K, N = config["args"]
-    config["file"]
+
     op_name = config["op_name"]
 
     # Generate input tensors

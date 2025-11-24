@@ -52,7 +52,7 @@ def reference_gatemlp(
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled GateMLP kernel."""
     B, K, N = config["args"]
-    config["file"]
+
     op_name = config["op_name"]
     # Generate inputs in int16 range [-10, 10]
     torch.manual_seed(1234)

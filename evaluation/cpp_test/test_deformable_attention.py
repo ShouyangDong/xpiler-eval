@@ -84,7 +84,7 @@ def deformable_attention_pytorch(
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled deformable_attention kernel."""
-    config["file"]
+
     N, M, D, Lq, L, P = config["args"]
     op_name = config["op_name"]
     # Hardcoded spatial shapes (same as your example)

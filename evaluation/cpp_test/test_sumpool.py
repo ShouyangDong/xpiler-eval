@@ -64,7 +64,7 @@ def compile_kernel(config: dict, source_dir: str) -> Tuple[dict, bool, str]:
 
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Run correctness test on compiled sumpool kernel."""
-    config["file"]
+
     input_shape = config["args"][:4]
     kernel_size = config["args"][4:6]
     stride = config["args"][6:8]

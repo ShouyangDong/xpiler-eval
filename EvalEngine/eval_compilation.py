@@ -18,24 +18,19 @@ import argparse
 import glob
 import os
 import sys
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
+
 from tqdm import tqdm
 
 # Import target-specific macros and compilation functions
 # Ensure these are defined in the respective modules.
-from evaluation.macros import (
-    CUDA_MACROS,
-    CPP_MACROS,
-    HIP_MACROS,
-    MLU_MACROS,
-)
+from evaluation.macros import CPP_MACROS, CUDA_MACROS, HIP_MACROS, MLU_MACROS
 from evaluation.utils import (
-    run_cuda_compilation,
     run_cpp_compilation,
+    run_cuda_compilation,
     run_hip_compilation,
     run_mlu_compilation,
 )
-
 
 # Supported file extensions for each target.
 # Each entry defines the primary extension and allowed variants.
@@ -48,8 +43,7 @@ EXTENSION_MAPPING = {
 
 
 def get_extensions(primary_ext):
-    """
-    Get all allowed extensions that map to the same target.
+    """Get all allowed extensions that map to the same target.
 
     Args:
         primary_ext (str): The primary extension (e.g., '.cu', '.mlu').
@@ -61,8 +55,7 @@ def get_extensions(primary_ext):
 
 
 def compile_file(file_path, target):
-    """
-    Compile a single kernel source file with macros injected.
+    """Compile a single kernel source file with macros injected.
 
     Steps:
       1. Read original source
@@ -160,20 +153,19 @@ def main():
         description="Batch compile kernel files for various targets."
     )
     parser.add_argument(
-        "--src_dir",
-        help="Directory containing source files to compile"
+        "--src_dir", help="Directory containing source files to compile"
     )
     parser.add_argument(
         "--target",
         choices=BACKEND_CONFIG.keys(),
         required=True,
-        help="Target target: cuda | hip | cpp | mlu"
+        help="Target target: cuda | hip | cpp | mlu",
     )
     parser.add_argument(
         "--jobs",
         type=int,
         default=os.cpu_count(),
-        help="Number of parallel workers (default: CPU count)"
+        help="Number of parallel workers (default: CPU count)",
     )
 
     args = parser.parse_args()
@@ -193,26 +185,35 @@ def main():
         files.extend(glob.glob(pattern))
 
     if not files:
-        print(f"[WARN] No files found in {args.src_dir} with extensions {exts}", file=sys.stderr)
+        print(
+            f"[WARN] No files found in {args.src_dir} with extensions {exts}",
+            file=sys.stderr,
+        )
         sys.exit(0)
 
-    print(f"🚀 Compiling {len(files)} file(s) for {config['desc']} ({args.target.upper()})...")
+    print(
+        f"🚀 Compiling {len(files)} file(s) for {config['desc']} ({args.target.upper()})..."
+    )
 
     # Use appropriate executor (thread or process)
     ExecutorClass = config["executor"]
     with ExecutorClass(max_workers=args.jobs) as executor:
-        results = list(tqdm(
-            executor.map(lambda f: compile_file(f, args.target), files),
-            total=len(files),
-            desc=f"[{args.target.upper()}]",
-            unit="file"
-        ))
+        results = list(
+            tqdm(
+                executor.map(lambda f: compile_file(f, args.target), files),
+                total=len(files),
+                desc=f"[{args.target.upper()}]",
+                unit="file",
+            )
+        )
 
     # Print compilation statistics
     total = len(files)
     success_count = sum(results)
     success_rate = success_count / total
-    print(f"[INFO] {args.target.upper()} success rate: {success_count}/{total} = {success_rate:.2%}")
+    print(
+        f"[INFO] {args.target.upper()} success rate: {success_count}/{total} = {success_rate:.2%}"
+    )
 
     # Exit with error code if any compilation failed
     if success_count < total:

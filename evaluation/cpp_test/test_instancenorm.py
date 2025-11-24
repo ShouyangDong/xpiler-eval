@@ -44,7 +44,7 @@ def reference_instancenorm(input, weight, bias, eps=1e-5):
 # ========== Test One Kernel ==========
 def test_kernel(config: dict, so_path: str) -> Tuple[bool, str]:
     """Test compiled kernel correctness (run in subprocess)."""
-    config["file"]
+
     op_name = config["op_name"]
     N, C, H, W = config["args"]
     eps = 1e-5
