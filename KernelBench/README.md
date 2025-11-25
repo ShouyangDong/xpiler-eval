@@ -3,7 +3,7 @@ This directory contains source code implementations of deep learning operator ke
 
 Each subdirectory corresponds to a specific backend and includes platform-specific code used in conjunction with the JSON configuration files in the `TransEval/` directory.
 
-The JSON files (e.g., c.json, cuda.json, mlu.json, hip.json) define the list of operators to be tested and their input configurations.
+The JSON files (e.g., cpp.json, cuda.json, mlu.json, hip.json) define the list of operators to be tested and their input configurations.
 
 The source code here provides the ground-truth implementations for each platform, which are used as references during cross-platform translation and correctness verification.
 
@@ -12,15 +12,15 @@ The source code here provides the ground-truth implementations for each platform
 - MLU/ – Source code for Cambricon MLU platform (written in BANG-C)
 
     Corresponds to kernels defined in `TransEval/mlu.json`
-- C/ – Source code for CPU platform (written in standard C)
+- CPP/ – Source code for CPU platform (written in C with VNNI)
 
     Corresponds to kernels defined in `TransEval/c.json`
-- CUDA/ – Source code for NVIDIA GPUs (written in CUDA C)
+- CUDA/ – Source code for NVIDIA GPUs (written in CUDA C with Tensor Core)
 
     Includes both standard CUDA kernels and Tensor Core-optimized variants
 
     Corresponds to kernels defined in `TransEval/cuda.json`
-- HIP/ – Source code for AMD GPUs (written in HIP)
+- HIP/ – Source code for AMD GPUs (written in HIP with Matrix Core)
 
     Corresponds to kernels defined in `TransEval/hip.json`
 
@@ -43,7 +43,7 @@ This repository structure is designed for:
 - Compiler and backend development for deep learning frameworks
 
 ## Notes
-Kernels are organized by operator name (e.g., matmul/, conv2d/) within each platform directory.
+Kernels are organized by operator name (e.g., matmul_*, conv2d_*) within each platform directory.
 Code style, dependencies, and build requirements may vary across platforms.
 All implementations prioritize correctness and performance in deep learning workloads.
 The `TransEval/*.json` files are the authoritative source for which operators and shapes are tested.
