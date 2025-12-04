@@ -1,6 +1,0 @@
-
-
-
-void gqa_1_256_768_12.mlu() {
-  std::cout << "Running gqa_1_256_768_12.mlu..." << std::endl;
-}
