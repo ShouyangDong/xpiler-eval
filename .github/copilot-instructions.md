@@ -9,7 +9,7 @@ This file orients AI coding agents to the xpiler-eval benchmark repository so th
      - `EvalEngine/` : orchestration scripts (`eval_compilation.py`, `eval_computation.py`, `eval_performance.py`) used by the top-level runner.
      - `evaluation/` : per-backend test harnesses and helpers. Key files: `evaluation/utils.py` (compile/test pipeline, macros), `evaluation/macros.py`.
      - `TransEval/` and JSON files (`cuda.json`, `mlu.json`, etc.): per-target operator configs used by the runner.
-     - `KernelBench/` : benchmark documentation and sample kernels.
+     - `XpilerBench/` : benchmark documentation and sample kernels.
 
 2. Primary developer workflows (explicit commands)
    - Setup: source `env.sh` to prepare PATH/vars used by native compilers.

@@ -72,5 +72,5 @@ def process_directory(directory, extensions=".cu"):
 
 # === Usage Example ===
 if __name__ == "__main__":
-    target_dir = "./KernelBench/MLU"  # Change to your target directory
+    target_dir = "./XpilerBench/MLU"  # Change to your target directory
     process_directory(target_dir, ".mlu")  # Process all .mlu files

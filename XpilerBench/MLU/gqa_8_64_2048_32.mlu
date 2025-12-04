@@ -1,0 +1,6 @@
+
+
+
+void gqa_8_64_2048_32.mlu() {
+  std::cout << "Running gqa_8_64_2048_32.mlu..." << std::endl;
+}
