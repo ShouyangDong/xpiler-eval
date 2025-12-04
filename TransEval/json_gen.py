@@ -67,7 +67,7 @@ def generate_kernel_json(
 # ================ Example usage ===================
 if __name__ == "__main__":
     # Update this to your actual kernel directory path
-    kernel_folder = "KernelBench/CUDA"
+    kernel_folder = "XpilerBench/CUDA"
 
     generate_kernel_json(
         kernel_dir=kernel_folder,
